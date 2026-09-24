@@ -54,6 +54,68 @@ The application may optionally be packaged as a standalone `.app` or `.exe` usin
 
 ---
 
+## Frontend handoff plan
+
+The frontend is intentionally kept separate from the secure backend logic. The React app should act as a local client for the existing FastAPI endpoints and should not reimplement cryptographic validation on the browser.
+
+### Frontend goals
+
+- Admin panel: create election, close election, tally results
+- Voter panel: register voter, submit vote, view receipt
+- Verification panel: confirm ballot integrity and read final results
+- Local-only workflow: backend on `http://localhost:8080`, frontend dev server on `http://localhost:5173`
+
+### Local run flow
+
+```bash
+# backend
+cd /Users/hari/projects/01-code-projects/crypto\ project
+python run.py
+
+# frontend
+cd /Users/hari/projects/01-code-projects/crypto\ project/frontend
+npm install
+npm run dev -- --host 0.0.0.0
+```
+
+### Backend-to-frontend connection
+
+Use a Vite proxy so the browser uses relative paths instead of hard-coded backend URLs:
+
+```ts
+server: {
+  proxy: {
+    '/api': {
+      target: 'http://localhost:8080',
+      changeOrigin: true,
+    },
+  },
+}
+```
+
+Then call the backend with fetches like:
+
+```ts
+const response = await fetch('/api/elections', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ ...payload }),
+})
+```
+
+This avoids browser CORS errors while keeping the frontend decoupled from the backend port.
+
+### Integration checklist
+
+- [ ] configure Vite proxy to `localhost:8080`
+- [ ] map each screen to a backend route
+- [ ] handle loading, success, and error states
+- [ ] keep UI state local; backend remains source of truth
+- [ ] show API responses clearly in forms and receipts
+- [ ] validate required fields before submit
+
+---
+
 ## Tech Stack
 
 | Layer | Technology |
