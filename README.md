@@ -96,11 +96,11 @@ server: {
 Then call the backend with fetches like:
 
 ```ts
-const response = await fetch('/api/elections', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
+const response = await fetch("/api/elections", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({ ...payload }),
-})
+});
 ```
 
 This avoids browser CORS errors while keeping the frontend decoupled from the backend port.
@@ -118,17 +118,17 @@ This avoids browser CORS errors while keeping the frontend decoupled from the ba
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Backend | Python, FastAPI, Uvicorn |
-| Frontend | React, Vite |
-| Database | SQLite |
-| Digital Signatures | Ed25519 |
-| Encryption | AES-GCM |
-| Key Derivation | scrypt |
-| Audit Integrity | SHA-256 hash chain |
-| Result Verification | Merkle tree |
-| Packaging | PyInstaller |
+| Layer               | Technology               |
+| ------------------- | ------------------------ |
+| Backend             | Python, FastAPI, Uvicorn |
+| Frontend            | React, Vite              |
+| Database            | SQLite                   |
+| Digital Signatures  | Ed25519                  |
+| Encryption          | AES-GCM                  |
+| Key Derivation      | scrypt                   |
+| Audit Integrity     | SHA-256 hash chain       |
+| Result Verification | Merkle tree              |
+| Packaging           | PyInstaller              |
 
 ### Project Architecture
 
@@ -394,28 +394,28 @@ http://localhost:8080
 
 ## Elections
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/elections` | Create an election |
-| `GET` | `/api/elections` | List elections |
-| `POST` | `/api/elections/{id}/register` | Register a voter |
-| `POST` | `/api/elections/{id}/close` | Close an election |
-| `POST` | `/api/elections/{id}/tally` | Decrypt and tally results |
-| `GET` | `/api/elections/{id}/results` | Retrieve published results |
+| Method | Endpoint                       | Description                |
+| ------ | ------------------------------ | -------------------------- |
+| `POST` | `/api/elections`               | Create an election         |
+| `GET`  | `/api/elections`               | List elections             |
+| `POST` | `/api/elections/{id}/register` | Register a voter           |
+| `POST` | `/api/elections/{id}/close`    | Close an election          |
+| `POST` | `/api/elections/{id}/tally`    | Decrypt and tally results  |
+| `GET`  | `/api/elections/{id}/results`  | Retrieve published results |
 
 ## Voting
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/elections/{id}/vote` | Submit an encrypted vote |
-| `GET` | `/api/elections/{id}/verify/:commitment` | Verify ballot integrity |
+| Method | Endpoint                                 | Description              |
+| ------ | ---------------------------------------- | ------------------------ |
+| `POST` | `/api/elections/{id}/vote`               | Submit an encrypted vote |
+| `GET`  | `/api/elections/{id}/verify/:commitment` | Verify ballot integrity  |
 
 ## Auditing & Health
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/audit/log` | Retrieve the audit log |
-| `GET` | `/health` | API health check |
+| Method | Endpoint         | Description            |
+| ------ | ---------------- | ---------------------- |
+| `GET`  | `/api/audit/log` | Retrieve the audit log |
+| `GET`  | `/health`        | API health check       |
 
 ### Vote Validation
 
@@ -648,14 +648,14 @@ Unit tests are located in:
 tests/unit/
 ```
 
-| Test | Purpose |
-|---|---|
-| `test_keygen.py` | Ed25519 key generation and verification |
-| `test_sign_verify` | Signature round-trip |
-| `test_aes_gcm` | AES-GCM encryption/decryption |
-| `test_commitment` | Commitment properties |
-| `test_hash_chain` | Audit-chain integrity |
-| `test_db_schema` | SQLite schema validation |
+| Test               | Purpose                                 |
+| ------------------ | --------------------------------------- |
+| `test_keygen.py`   | Ed25519 key generation and verification |
+| `test_sign_verify` | Signature round-trip                    |
+| `test_aes_gcm`     | AES-GCM encryption/decryption           |
+| `test_commitment`  | Commitment properties                   |
+| `test_hash_chain`  | Audit-chain integrity                   |
+| `test_db_schema`   | SQLite schema validation                |
 
 Run:
 
@@ -693,13 +693,13 @@ pytest tests/e2e/ -v --timeout=60
 
 Current project progress:
 
-| Phase | Status | Focus |
-|---|:---:|---|
-| Phase 1 | ☐ | Foundation |
-| Phase 2 | ☐ | Voter Flow |
-| Phase 3 | ☐ | Vote Submission |
-| Phase 4 | ☐ | Verification & Tally |
-| Phase 5 | ☐ | Hardening & Packaging |
+| Phase   | Status | Focus                 |
+| ------- | :----: | --------------------- |
+| Phase 1 |   ☐    | Foundation            |
+| Phase 2 |   ☐    | Voter Flow            |
+| Phase 3 |   ☐    | Vote Submission       |
+| Phase 4 |   ☐    | Verification & Tally  |
+| Phase 5 |   ☐    | Hardening & Packaging |
 
 ### Progress Checklist
 

@@ -11,9 +11,11 @@ npm run dev -- --host 0.0.0.0
 ```
 
 Frontend runs on:
+
 - `http://localhost:5173`
 
 Backend runs on:
+
 - `http://localhost:8080`
 
 ## Backend proxy

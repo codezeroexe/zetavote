@@ -7,6 +7,7 @@ Build a clean, local-first React + Vite UI for ZetaVote that drives the existing
 ## Scope
 
 ### 1. Admin flows
+
 - Create election
 - View election status
 - Close election
@@ -14,12 +15,14 @@ Build a clean, local-first React + Vite UI for ZetaVote that drives the existing
 - Show results summary
 
 ### 2. Voter flows
+
 - Register voter
 - Unlock passphrase-protected key material
 - Cast vote
 - Receive ballot receipt
 
 ### 3. Verification flows
+
 - Verify ballot commitment
 - Check turnout and election status
 - Review result summary
@@ -34,6 +37,7 @@ Build a clean, local-first React + Vite UI for ZetaVote that drives the existing
 ## Local integration pattern
 
 ### Dev setup
+
 ```bash
 cd backend
 python run.py
@@ -46,25 +50,26 @@ npm run dev -- --host 0.0.0.0
 ```
 
 ### Vite proxy
+
 Add to `frontend/vite.config.ts`:
 
 ```ts
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: '0.0.0.0',
+    host: "0.0.0.0",
     port: 5173,
     proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
+      "/api": {
+        target: "http://localhost:8080",
         changeOrigin: true,
       },
     },
   },
-})
+});
 ```
 
 This keeps the browser on `http://localhost:5173` while proxying `/api/*` traffic to the backend.
@@ -72,6 +77,7 @@ This keeps the browser on `http://localhost:5173` while proxying `/api/*` traffi
 ## Recommended screen structure
 
 ### Admin dashboard
+
 - Election overview cards
 - Create election form
 - Close election form
@@ -79,6 +85,7 @@ This keeps the browser on `http://localhost:5173` while proxying `/api/*` traffi
 - Results panel
 
 ### Voter dashboard
+
 - Election selector
 - Registration form
 - Voter passphrase field
@@ -86,26 +93,28 @@ This keeps the browser on `http://localhost:5173` while proxying `/api/*` traffi
 - Receipt display
 
 ### Verification dashboard
+
 - Ballot commitment lookup
 - Verified / invalid status panel
 - Result summary
 
 ## API mapping
 
-| UI action | HTTP call |
-|---|---|
-| Create election | `POST /api/elections` |
-| Register voter | `POST /api/elections/{id}/register` |
-| Cast vote | `POST /api/elections/{id}/vote` |
-| Verify ballot | `GET /api/elections/{id}/verify/{commitment}` |
-| Close election | `POST /api/elections/{id}/close` |
-| Tally results | `POST /api/elections/{id}/tally` |
-| Show results | `GET /api/elections/{id}/results` |
-| Health check | `GET /health` |
+| UI action       | HTTP call                                     |
+| --------------- | --------------------------------------------- |
+| Create election | `POST /api/elections`                         |
+| Register voter  | `POST /api/elections/{id}/register`           |
+| Cast vote       | `POST /api/elections/{id}/vote`               |
+| Verify ballot   | `GET /api/elections/{id}/verify/{commitment}` |
+| Close election  | `POST /api/elections/{id}/close`              |
+| Tally results   | `POST /api/elections/{id}/tally`              |
+| Show results    | `GET /api/elections/{id}/results`             |
+| Health check    | `GET /health`                                 |
 
 ## Frontend state model
 
 Keep local state simple:
+
 - `electionList`
 - `selectedElection`
 - `voterRegistration`
@@ -121,47 +130,52 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`/api${path}`, {
     ...init,
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(init?.headers ?? {}),
     },
-  })
+  });
 
-  const payload = await response.json().catch(() => null)
+  const payload = await response.json().catch(() => null);
 
   if (!response.ok) {
-    throw new Error(payload?.detail ?? 'Request failed')
+    throw new Error(payload?.detail ?? "Request failed");
   }
 
-  return payload as T
+  return payload as T;
 }
 ```
 
 ## Delivery plan
 
 ### Phase 1 — App shell
+
 - [ ] landing layout
 - [ ] admin / voter / verify tabs
 - [ ] backend health indicator
 - [ ] base styling
 
 ### Phase 2 — Admin panel
+
 - [ ] create election form
 - [ ] list elections
 - [ ] close election action
 - [ ] tally action
 
 ### Phase 3 — Voter panel
+
 - [ ] voter registration form
 - [ ] vote form
 - [ ] receipt display
 - [ ] duplicate-vote messaging
 
 ### Phase 4 — Verification panel
+
 - [ ] commitment lookup
 - [ ] status card
 - [ ] result summary
 
 ### Phase 5 — Polish
+
 - [ ] error banners
 - [ ] loading states
 - [ ] empty states
