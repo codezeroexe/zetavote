@@ -1,203 +1,2186 @@
-.app-shell {
-  width: min(1200px, calc(100% - 32px));
-  margin: 0 auto;
-  padding: 32px 0 56px;
+/* ZetaVote App Shell & Design System Styles */
+
+.zv-app-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  isolation: isolate;
+  background-color: var(--zv-bg);
+  background-image:
+    radial-gradient(ellipse 70% 50% at 50% 115%, rgba(31, 21, 12, 0.55) 0%, transparent 65%);
+  background-attachment: fixed;
 }
 
-.topbar {
+/* Light theme: calm warm-beige washes, content stays dominant. */
+[data-theme="light"] .zv-app-root {
+  background-image:
+    radial-gradient(ellipse 70% 45% at 50% 0%, rgba(255, 255, 255, 0.75) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 40% at 85% 10%, rgba(255, 255, 255, 0.5) 0%, transparent 60%);
+}
+
+/* Light theme: supporting subtitle in warm muted tone, labels in espresso. */
+[data-theme="light"] .zv-hero-subtitle {
+  background: none;
+  color: var(--zv-muted);
+}
+
+[data-theme="light"] .zv-label-text {
+  color: var(--zv-text);
+}
+
+.zv-main-content {
+  flex: 1;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 24px 56px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* NAVBAR                                                                     */
+/* -------------------------------------------------------------------------- */
+
+.zv-navbar {
+  background: var(--zv-nav-bg);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.2);
+  border-bottom: 1px solid var(--zv-glass-border);
+  box-shadow:
+    var(--zv-shadow-md),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.02);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+[data-theme="light"] .zv-navbar {
+  box-shadow:
+    var(--zv-shadow-md),
+    inset 0 1px 0 #ffffff;
+}
+
+.zv-navbar-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 24px;
 }
 
-.eyebrow {
-  margin: 0 0 8px;
-  font-size: 12px;
+.zv-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+/* Real ring, matching .zv-nav-link. The old `opacity: 0.85` was dimmer than
+   this button's own :hover (0.9), so focus and hover looked identical. */
+.zv-brand:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--zv-focus), 0 0 0 5px var(--zv-focus-soft);
+}
+
+.zv-brand:hover {
+  opacity: 0.9;
+}
+
+.zv-brand:active {
+  transform: scale(0.98);
+}
+
+.zv-brand-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--zv-gradient-primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--zv-primary-border);
+  box-shadow:
+    var(--zv-shadow-action),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  flex-shrink: 0;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.zv-brand:hover .zv-brand-icon {
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+[data-theme="light"] .zv-brand:hover .zv-brand-icon {
+  box-shadow:
+    0 4px 16px rgba(65, 45, 21, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.zv-brand:active .zv-brand-icon {
+  transform: scale(0.95);
+}
+
+.zv-brand-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Approved artwork mark: self-contained tile, no double background. */
+.zv-brand-icon--img {
+  background: none;
+  border: none;
+  box-shadow: var(--zv-shadow-action);
+  padding: 0;
+}
+
+.zv-brand-icon--img img {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: block;
+}
+
+.zv-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.zv-brand-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--zv-text-primary);
+}
+
+.zv-brand-tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--zv-text-muted);
+  text-transform: uppercase;
+}
+
+.zv-nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--zv-glass-surface-subtle);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--zv-glass-border);
+  padding: 3px;
+  border-radius: 14px;
+}
+
+.zv-nav-link {
+  background: transparent;
+  border: none;
+  color: var(--zv-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+  position: relative;
+}
+
+.zv-nav-link:focus-visible {
+  outline: none;
+  color: var(--zv-text-primary);
+  background: var(--zv-glass-surface);
+  box-shadow: 0 0 0 2px var(--zv-focus);
+}
+
+.zv-nav-link:hover {
+  color: var(--zv-text-primary);
+  background: var(--zv-glass-surface);
+}
+
+.zv-nav-link.active {
+  color: #ffffff;
+  background: var(--zv-gradient-primary);
+  box-shadow: var(--zv-shadow-action);
+}
+
+/* Dark theme: espresso pill, ivory text, bronze inset edge (no glow). */
+[data-theme="dark"] .zv-nav-link.active {
+  color: var(--zv-text);
+  box-shadow: inset 0 0 0 1px #412d15;
+}
+
+.zv-nav-link.active:hover {
+  filter: brightness(1.05);
+}
+
+/* Navbar actions: theme toggle + status pill */
+.zv-navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.zv-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--zv-glass-surface-subtle);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--zv-glass-border);
+  color: var(--zv-accent-text);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease,
+    box-shadow 0.15s ease, color 0.15s ease;
+}
+
+.zv-theme-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.zv-theme-toggle:hover {
+  border-color: var(--zv-border-accent);
+  background: var(--zv-glass-surface);
+  box-shadow: var(--zv-shadow-sm);
+}
+
+.zv-theme-toggle:active {
+  transform: scale(0.94);
+}
+
+.zv-theme-toggle:focus-visible {
+  outline: none;
+  border-color: var(--zv-focus);
+  box-shadow: 0 0 0 3px var(--zv-focus-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zv-theme-toggle,
+  .zv-theme-toggle:active {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* BACKEND STATUS INDICATOR                                                   */
+/* -------------------------------------------------------------------------- */
+
+.zv-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--zv-glass-border);
+  background: var(--zv-glass-surface-subtle);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.zv-status-indicator:focus-within {
+  border-color: var(--zv-focus);
+  box-shadow: 0 0 0 2px var(--zv-focus-soft);
+}
+
+.zv-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.status-checking .zv-status-dot {
+  background-color: var(--zv-pending);
+  box-shadow: 0 0 10px var(--zv-pending);
+  animation: zv-pulse 1.5s ease-in-out infinite;
+}
+
+.status-online .zv-status-dot {
+  background-color: var(--zv-success);
+  box-shadow: 0 0 10px var(--zv-success);
+}
+
+.status-offline .zv-status-dot {
+  background-color: var(--zv-danger);
+  box-shadow: 0 0 10px var(--zv-danger);
+}
+
+@keyframes zv-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.9); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-checking .zv-status-dot {
+    animation: none;
+  }
+}
+
+.zv-status-text {
+  color: var(--zv-text-primary);
+}
+
+.zv-status-retry-btn {
+  background: var(--zv-danger-bg);
+  border: 1px solid var(--zv-danger-border);
+  color: var(--zv-danger);
+  padding: 2px 10px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.zv-status-retry-btn:hover {
+  background: var(--zv-danger);
+  color: #ffffff;
+}
+
+.zv-status-retry-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--zv-danger);
+}
+
+/* -------------------------------------------------------------------------- */
+/* LANDING PAGE & HERO                                                        */
+/* -------------------------------------------------------------------------- */
+
+.zv-landing-container {
+  display: flex;
+  flex-direction: column;
+  gap: 56px;
+}
+
+.zv-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+  padding: 40px 20px 24px;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.zv-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--zv-glass-surface-subtle);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--zv-glass-border);
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #7c8da5;
+  color: var(--zv-accent-text);
+  transition: border-color 0.2s ease, background 0.2s ease;
 }
 
-.topbar h1 {
+.zv-hero-badge:hover {
+  border-color: var(--zv-border-accent);
+  background: var(--zv-glass-surface);
+}
+
+.zv-pulse-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--zv-live);
+  box-shadow: 0 0 8px var(--zv-live), 0 0 16px var(--zv-live-soft);
+  animation: zv-pulse-glow 2.6s ease-in-out infinite;
+}
+
+/* Barely-there pulse: opacity + scale only. The glow stays a static
+   box-shadow so nothing large repaints every frame. */
+@keyframes zv-pulse-glow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.75; transform: scale(0.92); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zv-pulse-dot {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* The logo lockup is the visual title, so the real <h1> stays in the
+   accessibility tree but off-screen. Standard clip pattern, not display:none,
+   which would drop the heading entirely. */
+.zv-hero-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Approved lockup artwork: light theme shows the espresso lockup,
+   dark theme shows the ivory dark-background variant. No frame: the
+   mark sits directly on the page background. */
+.zv-hero-logo {
+  display: none;
+  width: min(100%, 600px);
+  height: auto;
+}
+
+[data-theme="light"] .zv-hero-logo-light,
+[data-theme="dark"] .zv-hero-logo-dark {
+  display: block;
+}
+
+.zv-hero-subtitle {
+  font-size: clamp(1.25rem, 2.8vw, 1.625rem);
+  font-weight: 600;
+  background: var(--zv-gradient-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.01em;
+}
+
+.zv-hero-description {
+  font-size: 1.1rem;
+  color: var(--zv-text-secondary);
+  line-height: 1.7;
+  max-width: 680px;
   margin: 0;
-  font-size: clamp(2rem, 3vw, 3rem);
 }
 
-.status-pill {
-  border-radius: 999px;
-  padding: 8px 14px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  border: 1px solid transparent;
-}
-
-.status-connecting {
-  background: #f3f4f6;
-  color: #415067;
-  border-color: #dbe3ee;
-}
-
-.status-ok {
-  background: rgba(22, 163, 74, 0.12);
-  color: #166534;
-  border-color: rgba(22, 163, 74, 0.2);
-}
-
-.status-error {
-  background: rgba(220, 38, 38, 0.08);
-  color: #991b1b;
-  border-color: rgba(220, 38, 38, 0.2);
-}
-
-.nav {
+.zv-hero-actions {
   display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
 }
 
-.nav-item {
-  border: 1px solid #d7deeb;
-  background: #f8fafc;
-  border-radius: 10px;
-  padding: 10px 16px;
+/* -------------------------------------------------------------------------- */
+/* CARDS & GRIDS                                                              */
+/* -------------------------------------------------------------------------- */
+
+.zv-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.zv-section-title {
+  font-size: 1.5rem;
   font-weight: 700;
-  color: #21314d;
-  cursor: pointer;
+  color: var(--zv-text-primary);
+  letter-spacing: -0.01em;
+  text-align: center;
 }
 
-.nav-item.active {
-  background: #111827;
-  color: #f8fafc;
-  border-color: #111827;
-}
-
-.dashboard {
+.zv-grid-3 {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.zv-card {
+  background: var(--zv-card-bg);
+  border: 1px solid var(--zv-glass-border);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: var(--zv-shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+[data-theme="light"] .zv-card {
+  box-shadow: var(--zv-shadow-md), inset 0 1px 0 #ffffff;
+}
+
+/* No hover lift on the shared .zv-card: every admin/voter/verify card holds
+   a form, not a link. Only the landing feature cards are interactive, and
+   they carry their own hover treatment below. */
+
+/* Danger-zone card (Close Election). Red is scoped to the top edge and a
+   barely-tinted surface, so the page does not read as an error screen. A left
+   border is deliberately avoided: it would not follow the 16px radius. */
+.zv-card-danger {
+  border-color: var(--zv-danger-border);
+  border-top: 3px solid var(--zv-danger);
+  background: linear-gradient(
+    180deg,
+    var(--zv-danger-bg) 0%,
+    var(--zv-card-bg) 45%
+  );
+}
+
+.zv-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.zv-card-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--zv-text-primary);
+  margin: 0 0 4px;
+}
+
+.zv-card-subtitle {
+  font-size: 0.85rem;
+  color: var(--zv-text-muted);
+  margin: 0;
+}
+
+/* Feature cards for landing page */
+.zv-feature-grid {
   gap: 20px;
 }
 
-.panel {
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid #dfe7f2;
-  border-radius: 18px;
-  padding: 22px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+.zv-feature-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.hero-panel {
-  grid-column: 1 / -1;
-  min-height: 150px;
+.zv-feature-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--zv-border-accent);
+  box-shadow:
+    var(--zv-shadow-lg),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
-.hero-panel h2 {
+@media (prefers-reduced-motion: reduce) {
+  .zv-feature-card:hover {
+    transform: none;
+  }
+}
+
+.zv-feature-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--zv-glass-surface-subtle);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--zv-glass-border);
+  color: var(--zv-accent-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.zv-feature-card:hover .zv-feature-icon {
+  color: var(--zv-text);
+  border-color: var(--zv-border-accent);
+  background: var(--zv-glass-surface);
+}
+
+.zv-feature-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.zv-feature-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--zv-text-primary);
   margin: 0;
-  font-size: clamp(1.5rem, 2vw, 2.25rem);
+  line-height: 1.3;
 }
 
-.metrics {
-  grid-column: 1 / -1;
+.zv-feature-desc {
+  font-size: 0.88rem;
+  color: var(--zv-text-secondary);
+  line-height: 1.55;
+  margin: 0;
+  flex: 1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* BUTTONS                                                                    */
+/* -------------------------------------------------------------------------- */
+
+.zv-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 9px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease-in-out;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.zv-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  /* Desaturate instead of glowing: a disabled destructive action must not
+     keep its red halo. */
+  filter: saturate(0.55) brightness(0.92);
+  box-shadow: none;
+}
+
+/* Sizes */
+.zv-btn-sm {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+.zv-btn-md {
+  padding: 10px 18px;
+  font-size: 0.9rem;
+}
+
+.zv-btn-lg {
+  padding: 14px 26px;
+  font-size: 1rem;
+}
+
+/* Variants */
+.zv-btn-primary {
+  background: var(--zv-gradient-primary);
+  color: var(--zv-primary-text);
+  border-color: var(--zv-primary-border);
+  box-shadow: var(--zv-shadow-action);
+}
+
+.zv-btn-primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+  border-color: var(--zv-primary-border-hover);
+}
+
+[data-theme="light"] .zv-btn-primary:hover:not(:disabled) {
+  box-shadow: 0 4px 18px rgba(60, 50, 35, 0.25);
+}
+
+.zv-btn-primary:active:not(:disabled) {
+  filter: brightness(0.97);
+}
+
+.zv-btn-secondary {
+  background-color: var(--zv-bg-elevated);
+  border-color: var(--zv-border-subtle);
+  color: var(--zv-text-primary);
+}
+
+.zv-btn-secondary:hover:not(:disabled) {
+  background-color: var(--zv-bg-surface-hover);
+  border-color: var(--zv-border-accent);
+}
+
+.zv-btn-outline {
+  background-color: transparent;
+  border-color: var(--zv-border-accent);
+  color: var(--zv-text-primary);
+}
+
+.zv-btn-outline:hover:not(:disabled) {
+  background-color: var(--zv-bg-surface);
+  border-color: var(--zv-primary);
+}
+
+.zv-btn-danger {
+  background: var(--zv-danger);
+  color: #ffffff;
+  box-shadow: var(--zv-shadow-action);
+}
+
+.zv-btn-danger:hover:not(:disabled) {
+  filter: brightness(1.08);
+  box-shadow: var(--zv-shadow-action), 0 4px 18px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="light"] .zv-btn-danger:hover:not(:disabled) {
+  box-shadow: var(--zv-shadow-action), 0 4px 18px rgba(60, 50, 35, 0.25);
+}
+
+.zv-btn-danger:active:not(:disabled) {
+  filter: brightness(0.97);
+}
+
+.zv-btn-ghost {
+  background-color: transparent;
+  color: var(--zv-text-secondary);
+  border: 1px solid transparent;
+}
+
+.zv-btn-ghost:hover:not(:disabled) {
+  color: var(--zv-text-primary);
+  background-color: var(--zv-glass-surface);
+  border-color: var(--zv-glass-border);
+}
+
+.zv-btn-ghost:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--zv-focus-soft);
+}
+
+/* Keyboard focus ring. Cast Vote / Verify already set their own on the
+   submit button; this covers primary, danger, outline and secondary. */
+.zv-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--zv-shadow-action), 0 0 0 3px var(--zv-focus-soft);
+}
+
+.zv-btn-icon {
+  display: flex;
+  align-items: center;
+}
+
+.zv-btn-icon svg,
+.zv-btn-icon-svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Loading Spinner */
+.zv-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #ffffff;
+  animation: zv-spin 0.8s linear infinite;
+}
+
+@keyframes zv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zv-spinner {
+    animation: none;
+    border-top-color: rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* ALERTS & NOTIFICATIONS                                                     */
+/* -------------------------------------------------------------------------- */
+
+.zv-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-size: 0.9rem;
+}
+
+.zv-alert-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.zv-alert-content {
+  flex: 1;
+}
+
+.zv-alert-title {
+  font-weight: 700;
+  margin: 0 0 4px;
+  color: inherit;
+}
+
+.zv-alert-message {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.zv-alert-info {
+  background-color: var(--zv-info-bg);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-color: var(--zv-glass-border);
+  color: var(--zv-info-text);
+}
+
+.zv-alert-success {
+  background: var(--zv-success-bg);
+  border-color: var(--zv-success-border);
+  color: var(--zv-success-text);
+}
+
+.zv-alert-warning {
+  background-color: var(--zv-warning-bg);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-color: var(--zv-warning-border);
+  color: var(--zv-warning-text);
+}
+
+.zv-alert-error {
+  background: var(--zv-danger-bg);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border-color: var(--zv-danger-border);
+  color: var(--zv-danger-text);
+}
+
+/* -------------------------------------------------------------------------- */
+/* DISCLAIMER BOX                                                             */
+/* -------------------------------------------------------------------------- */
+
+.zv-disclaimer-box {
+  background: var(--zv-glass-surface-subtle);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--zv-glass-border);
+  border-left: 4px solid var(--zv-warning);
+  border-radius: 14px;
+  padding: 20px 24px;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.zv-disclaimer-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.zv-disclaimer-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--zv-warning);
+  flex-shrink: 0;
+}
+
+.zv-disclaimer-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--zv-text-primary);
+  margin: 0;
+}
+
+.zv-disclaimer-text {
+  font-size: 0.85rem;
+  color: var(--zv-text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* PAGE SHELL STUBS (Admin, Voter, Verify)                                     */
+/* -------------------------------------------------------------------------- */
+
+.zv-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.zv-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--zv-border);
+}
+
+.zv-page-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--zv-eyebrow);
+  text-transform: uppercase;
+}
+
+.zv-page-title {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--zv-text-primary);
+  margin: 0;
+}
+
+.zv-page-subtitle {
+  font-size: 1rem;
+  color: var(--zv-text-secondary);
+  margin: 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* FOOTER                                                                     */
+/* -------------------------------------------------------------------------- */
+
+.zv-footer {
+  background: var(--zv-footer-bg);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
+  border-top: 1px solid var(--zv-glass-border);
+  box-shadow:
+    var(--zv-shadow-md),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  padding: 20px 0;
+  margin-top: auto;
+}
+
+[data-theme="light"] .zv-footer {
+  box-shadow:
+    var(--zv-shadow-md),
+    inset 0 1px 0 #ffffff;
+}
+
+.zv-footer-container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.zv-footer-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--zv-text-primary);
+  margin: 0 0 2px;
+}
+
+.zv-footer-desc {
+  font-size: 0.78rem;
+  color: var(--zv-text-muted);
+  margin: 0;
+}
+
+.zv-footer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.zv-footer-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--zv-glass-surface-subtle);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--zv-glass-border);
+  color: var(--zv-text-secondary);
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.zv-footer-badge:hover {
+  color: var(--zv-text-primary);
+  border-color: var(--zv-border-accent);
+  background: var(--zv-glass-surface);
+}
+
+/* -------------------------------------------------------------------------- */
+/* ADMIN PAGE LAYOUT                                                          */
+/* -------------------------------------------------------------------------- */
+
+.zv-admin-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.zv-admin-row {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.zv-admin-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.zv-admin-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.zv-admin-section-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--zv-text-primary);
+  margin: 0;
+}
+
+.zv-admin-section-desc {
+  font-size: 0.85rem;
+  color: var(--zv-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Small kicker above a section heading. Danger variant is the only
+   coloured one on this page: red stays reserved for destructive work. */
+.zv-admin-section-eyebrow {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--zv-eyebrow);
+}
+
+.zv-admin-section-eyebrow--danger {
+  color: var(--zv-danger-text);
+}
+
+/* -------------------------------------------------------------------------- */
+/* FORMS                                                                      */
+/* -------------------------------------------------------------------------- */
+
+.zv-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.zv-form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.zv-label-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--zv-text-secondary);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.zv-required {
+  color: var(--zv-danger);
+}
+
+.zv-input {
+  width: 100%;
+  /* Keeps text, password, datetime-local and date fields the same height
+     despite their different intrinsic metrics. */
+  min-height: 44px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--zv-glass-border);
+  background: var(--zv-input-bg);
+  color: var(--zv-text-primary);
+  font-size: 0.92rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.zv-input::placeholder {
+  color: var(--zv-text-muted);
+}
+
+.zv-input:focus {
+  outline: none;
+  border-color: var(--zv-focus);
+  box-shadow: 0 0 0 3px var(--zv-focus-soft);
+  background: var(--zv-input-bg-focus);
+}
+
+.zv-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--zv-input-bg-disabled);
+}
+
+.zv-input[type="datetime-local"] {
+  font-family: var(--zv-font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+
+/* Secure credential entry — passphrase fields get a distinct,
+   lock-like treatment while keeping the bronze focus ring. */
+.zv-input[type="password"] {
+  letter-spacing: 0.14em;
+  font-family: var(--zv-font-mono);
+  border-left: 3px solid var(--zv-border-strong);
+  background: var(--zv-input-hero-bg);
+}
+
+.zv-input[type="password"]::placeholder {
+  letter-spacing: normal;
+  font-family: inherit;
+}
+
+.zv-input[type="password"]:focus {
+  border-left-color: var(--zv-focus);
+}
+
+.zv-textarea {
+  resize: vertical;
+  min-height: 88px;
+  font-family: inherit;
+}
+
+.zv-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 16px;
 }
 
-.metric-card {
-  background: #f8fafc;
-  border: 1px solid #dfe7f2;
-  border-radius: 14px;
-  padding: 18px 20px;
+.zv-form-hint {
+  font-size: 0.75rem;
+  color: var(--zv-text-muted);
+  line-height: 1.4;
+}
+
+.zv-form-actions {
+  display: flex;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+/* Destructive submit is fenced off from the ordinary inputs above it, so it
+   reads as a separate decision rather than the next field in the list. */
+.zv-card-danger .zv-form-actions {
+  margin-top: 4px;
+  padding-top: 20px;
+  border-top: 1px solid var(--zv-danger-border);
+}
+
+.zv-input-error {
+  border-color: var(--zv-danger) !important;
+}
+
+.zv-input-error:focus {
+  box-shadow: 0 0 0 3px var(--zv-danger-bg) !important;
+}
+
+.zv-form-error-hint {
+  font-size: 0.78rem;
+  color: var(--zv-danger);
+  font-weight: 600;
+}
+
+.zv-mono {
+  font-family: var(--zv-font-mono) !important;
+}
+
+.zv-hash-truncate {
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  font-size: 0.82rem !important;
+}
+
+.zv-result-valid {
+  color: var(--zv-success) !important;
+  font-weight: 700;
+}
+
+.zv-result-invalid {
+  color: var(--zv-danger) !important;
+  font-weight: 700;
+}
+
+/* -------------------------------------------------------------------------- */
+/* ADMIN RESULT DISPLAY                                                       */
+/* -------------------------------------------------------------------------- */
+
+.zv-admin-result {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 20px;
 }
 
-.metric-card .label {
-  font-size: 0.8rem;
+.zv-result-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--zv-glass-border);
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--zv-surface-2);
+}
+
+.zv-result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--zv-glass-border);
+  transition: background 0.15s ease;
+}
+
+.zv-result-row:last-child {
+  border-bottom: none;
+}
+
+.zv-result-row:hover {
+  background: var(--zv-glass-surface);
+}
+
+.zv-result-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--zv-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  flex-shrink: 0;
+  margin-right: 16px;
+}
+
+.zv-result-value {
+  font-size: 0.9rem;
+  color: var(--zv-text-primary);
+  text-align: right;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.zv-result-value code {
+  font-family: var(--zv-font-mono);
+  background: var(--zv-glass-surface);
+  border: 1px solid var(--zv-glass-border);
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+}
+
+.zv-result-status-closed {
+  color: var(--zv-warning);
+  font-weight: 700;
+}
+
+.zv-result-total {
+  font-size: 1.25rem;
+  font-weight: 800;
+  background: var(--zv-gradient-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* -------------------------------------------------------------------------- */
+/* REGISTRATION SUCCESS / RECEIPT PANEL                                       */
+/* -------------------------------------------------------------------------- */
+
+/* Receipt panel. Sits inside .zv-card, so it is a tinted inset rather than a
+   second card: one success border, no inner ring, no glass. */
+.zv-register-success {
+  border: 1px solid var(--zv-success-border);
+  border-radius: 14px;
+  padding: 20px;
+  background: var(--zv-success-bg);
+}
+
+.zv-register-success .zv-result-details {
+  border-color: var(--zv-success-border);
+}
+
+.zv-register-success .zv-form-actions .zv-btn-primary {
+  flex: 1 1 auto;
+}
+
+/* -------------------------------------------------------------------------- */
+/* CAST VOTE INTERFACE (Part A: options + passphrase presentation)            */
+/* NOTE: the ballot choice is a free-text identifier in the current          */
+/* implementation — no discrete options exist to render as radio cards,      */
+/* so the choice field is styled as the hero ballot input instead.           */
+/* -------------------------------------------------------------------------- */
+
+.zv-cast-form {
+  gap: 20px;
+}
+
+/* Compact contextual ID fields (election / voter) */
+.zv-cast-form .zv-input.zv-mono {
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+}
+
+/* Ballot choice — hero glass field */
+.zv-choice-field .zv-label-text {
+  color: var(--zv-text-primary);
+}
+
+.zv-choice-input {
+  padding: 14px 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-left: 3px solid var(--zv-border-strong);
+  background: var(--zv-input-hero-bg);
+  transition: border-color 0.15s ease, box-shadow 0.2s ease, background 0.15s ease;
+}
+
+.zv-choice-input::placeholder {
+  font-weight: 400;
+  font-size: 0.9rem;
+}
+
+.zv-choice-input:hover:not(:disabled) {
+  border-color: var(--zv-border-accent);
+  border-left-color: var(--zv-border-strong);
+}
+
+.zv-choice-input:focus {
+  outline: none;
+  border-color: var(--zv-focus);
+  border-left-color: var(--zv-focus);
+  box-shadow:
+    0 0 0 3px var(--zv-focus-soft);
+  background: var(--zv-input-bg-focus);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zv-choice-input {
+    transition: none;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* CAST VOTE SUBMISSION + SUCCESS (Part B)                                    */
+/* NOTE: CastVote has no confirmation step — none is invented here.           */
+/* -------------------------------------------------------------------------- */
+
+/* Submit states (hover / active / focus-visible / disabled) come from the
+   shared .zv-btn-primary and .zv-btn rules. */
+
+/* Receipt panel. Sits inside .zv-card, so it is a tinted inset rather than a
+   second card: one success border, no inner ring, no hardcoded green. */
+.zv-vote-success {
+  border: 1px solid var(--zv-success-border);
+  border-radius: 14px;
+  padding: 20px;
+  background: var(--zv-success-bg);
+}
+
+.zv-vote-success .zv-result-details {
+  border-color: var(--zv-success-border);
+}
+
+/* Ballot commitment stays selectable, wraps safely, never overflows */
+.zv-vote-success .zv-merkle-hash {
+  overflow-wrap: anywhere;
+  user-select: text;
+  cursor: text;
+}
+
+/* Download receipt stays dominant; the reset remains secondary. */
+.zv-vote-success .zv-form-actions .zv-btn-primary {
+  flex: 1 1 auto;
+}
+
+.zv-vote-success .zv-form-actions .zv-btn-outline {
+  flex: 0 1 auto;
+}
+
+/* -------------------------------------------------------------------------- */
+/* VERIFICATION INTERFACE (Phase 7)                                           */
+/* -------------------------------------------------------------------------- */
+
+/* Verify form — commitment as hero cryptographic identifier */
+.zv-verify-form .zv-input.zv-mono {
+  font-size: 0.88rem;
+  letter-spacing: 0.04em;
+  padding: 12px 14px;
+  border-left: 3px solid var(--zv-border-strong);
+  background: var(--zv-input-hero-bg);
+  transition: border-color 0.15s ease, box-shadow 0.2s ease, background 0.15s ease;
+}
+
+.zv-verify-form .zv-input.zv-mono:hover:not(:disabled) {
+  border-color: var(--zv-border-accent);
+  border-left-color: var(--zv-border-strong);
+}
+
+.zv-verify-form .zv-input.zv-mono:focus {
+  outline: none;
+  border-color: var(--zv-focus);
+  border-left-color: var(--zv-focus);
+  box-shadow:
+    0 0 0 3px var(--zv-focus-soft);
+  background: var(--zv-input-bg-focus);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zv-verify-form .zv-input.zv-mono {
+    transition: none;
+  }
+}
+
+/* Verify submit states (hover / active / focus-visible / disabled) come from
+   the shared .zv-btn-primary and .zv-btn rules. */
+
+/* Verification success — tinted inset, matching Registration / Cast Vote.
+   Sits inside .zv-card, so no second card shadow. */
+.zv-verify-success {
+  border: 1px solid var(--zv-success-border);
+  border-radius: 14px;
+  padding: 20px;
+  background: var(--zv-success-bg);
+}
+
+.zv-verify-success .zv-result-details {
+  border-color: var(--zv-success-border);
+}
+
+/* Commitment hash — selectable, wraps safely, never overflows */
+.zv-verify-success .zv-merkle-hash {
+  overflow-wrap: anywhere;
+  user-select: text;
+  cursor: text;
+}
+
+/* Failure panel — tinted inset with danger accent */
+.zv-verify-failure {
+  border: 1px solid var(--zv-danger-border);
+  border-radius: 14px;
+  padding: 20px;
+  background: var(--zv-danger-bg);
+}
+
+/* Reset action — secondary outline */
+.zv-verify-success .zv-form-actions .zv-btn-outline,
+.zv-verify-failure .zv-form-actions .zv-btn-outline {
+  flex: 1 1 auto;
+}
+
+/* -------------------------------------------------------------------------- */
+
+.zv-confirm-box {
+  background: linear-gradient(
+    180deg,
+    var(--zv-danger-bg) 0%,
+    var(--zv-card-bg) 70%
+  );
+  border: 1px solid var(--zv-danger-border);
+  border-radius: 14px;
+  padding: 20px 24px;
+}
+
+.zv-confirm-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.zv-confirm-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--zv-danger);
+  flex-shrink: 0;
+}
+
+.zv-confirm-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--zv-danger);
+}
+
+.zv-confirm-text {
+  font-size: 0.9rem;
+  color: var(--zv-text-secondary);
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+.zv-confirm-text code {
+  font-family: var(--zv-font-mono);
+  background: var(--zv-glass-surface);
+  border: 1px solid var(--zv-glass-border);
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-size: 0.82rem;
+}
+
+.zv-confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* -------------------------------------------------------------------------- */
+/* TALLY BREAKDOWN                                                            */
+/* -------------------------------------------------------------------------- */
+
+.zv-tally-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.zv-tally-breakdown-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--zv-text-secondary);
+  margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #64748b;
 }
 
-.metric-card strong {
-  font-size: 1.1rem;
-  color: #111827;
-}
-
-.form-panel {
-  min-height: 250px;
-}
-
-.form-panel h3 {
-  margin-top: 0;
-  margin-bottom: 18px;
-  font-size: 1.25rem;
-  color: #111827;
-}
-
-.stacked-form {
-  display: grid;
+.zv-tally-bars {
+  display: flex;
+  flex-direction: column;
   gap: 14px;
 }
 
-.stacked-form label {
-  display: grid;
+.zv-tally-row {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  font-size: 0.9rem;
+}
+
+.zv-tally-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.zv-tally-choice {
+  font-size: 0.95rem;
   font-weight: 600;
-  color: #334155;
+  color: var(--zv-text-primary);
 }
 
-.stacked-form input,
-.stacked-form textarea {
-  width: 100%;
-  box-sizing: border-box;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font: inherit;
-  background: #fff;
+.zv-tally-count {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--zv-text-secondary);
+  font-family: var(--zv-font-mono);
 }
 
-.stacked-form button {
-  border: none;
-  border-radius: 10px;
-  padding: 12px 14px;
-  background: linear-gradient(135deg, #111827, #374151);
-  color: white;
+.zv-tally-bar-track {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--zv-glass-surface);
+  border: 1px solid var(--zv-glass-border);
+  overflow: hidden;
+}
+
+.zv-tally-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: var(--zv-tally-fill);
+  min-width: 2px;
+  transition: width 0.4s ease;
+}
+
+/* -------------------------------------------------------------------------- */
+/* MERKLE ROOT                                                                */
+/* -------------------------------------------------------------------------- */
+
+.zv-merkle-root {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  border: 1px solid var(--zv-glass-border);
+  border-radius: 14px;
+  background: var(--zv-surface-2);
+}
+
+.zv-merkle-label {
+  font-size: 0.72rem;
   font-weight: 700;
-  cursor: pointer;
+  color: var(--zv-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
-.success-message {
-  margin: 0;
-  color: #166534;
-  background: rgba(22, 163, 74, 0.08);
-  border: 1px solid rgba(22, 163, 74, 0.25);
-  border-radius: 10px;
-  padding: 10px 12px;
+.zv-merkle-hash {
+  font-family: var(--zv-font-mono);
+  font-size: 0.8rem;
+  color: var(--zv-success);
+  word-break: break-all;
+  line-height: 1.6;
+  background: var(--zv-bg);
+  border: 1px solid var(--zv-glass-border);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
 }
 
-.error-message {
-  margin: 0;
-  color: #991b1b;
-  background: rgba(220, 38, 38, 0.08);
-  border: 1px solid rgba(220, 38, 38, 0.25);
-  border-radius: 10px;
-  padding: 10px 12px;
+/* -------------------------------------------------------------------------- */
+/* RESPONSIVE MEDIA QUERIES                                                   */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 1024px) {
+  .zv-main-content {
+    max-width: 100%;
+    padding: 32px 20px 48px;
+  }
+  .zv-footer-container {
+    max-width: 100%;
+    padding: 0 20px;
+  }
+  .zv-navbar-container {
+    padding: 10px 20px;
+  }
+  .zv-hero {
+    padding: 32px 20px 20px;
+  }
+}
+
+@media (max-width: 880px) {
+  .zv-grid-3.zv-feature-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 768px) {
-  .dashboard,
-  .metrics {
+  .zv-navbar-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 10px 16px;
+  }
+
+  .zv-brand {
+    justify-content: center;
+  }
+
+  .zv-nav-tabs {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .zv-nav-link {
+    padding: 8px 14px;
+    font-size: 0.7rem;
+  }
+
+  .zv-navbar-status {
+    align-self: center;
+  }
+
+  .zv-navbar-actions {
+    align-self: center;
+  }
+
+  .zv-main-content {
+    padding: 24px 16px 40px;
+  }
+
+  .zv-hero {
+    padding: 28px 16px 20px;
+  }
+
+  .zv-hero-subtitle {
+    font-size: clamp(1.1rem, 3.5vw, 1.375rem);
+  }
+
+  .zv-hero-description {
+    font-size: 1rem;
+  }
+
+  .zv-hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .zv-hero-actions .zv-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .zv-grid-3,
+  .zv-grid-3.zv-feature-grid {
     grid-template-columns: 1fr;
   }
 
-  .topbar {
-    align-items: flex-start;
+  .zv-admin-row {
+    grid-template-columns: 1fr;
+  }
+
+  .zv-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .zv-page-title {
+    font-size: 1.5rem;
+  }
+
+  .zv-section-title {
+    font-size: 1.25rem;
+  }
+
+  .zv-admin-section-title {
+    font-size: 1rem;
+  }
+
+  .zv-admin-section-desc {
+    font-size: 0.8rem;
+  }
+
+  .zv-result-label {
+    font-size: 0.72rem;
+  }
+
+  .zv-result-value {
+    font-size: 0.85rem;
+  }
+
+  .zv-result-value code {
+    font-size: 0.78rem;
+    padding: 2px 8px;
+  }
+
+  .zv-tally-choice {
+    font-size: 0.9rem;
+  }
+
+  .zv-tally-bar-track {
+    height: 8px;
+  }
+
+  .zv-confirm-box {
+    padding: 16px 18px;
+  }
+
+  .zv-confirm-title {
+    font-size: 0.9rem;
+  }
+
+  .zv-confirm-text {
+    font-size: 0.85rem;
+  }
+
+  .zv-confirm-actions {
     flex-direction: column;
+  }
+
+  .zv-confirm-actions .zv-btn {
+    width: 100%;
+  }
+
+  .zv-merkle-root {
+    padding: 12px 14px;
+  }
+
+  .zv-merkle-hash {
+    font-size: 0.75rem;
+    padding: 10px;
+  }
+
+  .zv-footer-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 0 16px;
+  }
+
+  .zv-footer-meta {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .zv-brand-text {
+    display: none;
+  }
+
+  .zv-nav-link {
+    padding: 8px 10px;
+  }
+
+  .zv-status-text {
+    display: none;
+  }
+
+  .zv-footer-badge {
+    font-size: 0.62rem;
+    padding: 3px 8px;
+  }
+
+  .zv-hero {
+    padding: 24px 12px 16px;
+  }
+
+  .zv-hero-badge {
+    font-size: 0.65rem;
+    padding: 6px 12px;
+  }
+
+  .zv-hero-subtitle {
+    font-size: clamp(1rem, 4vw, 1.25rem);
+  }
+
+  .zv-hero-description {
+    font-size: 0.95rem;
+  }
+
+  .zv-hero-actions .zv-btn {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+
+  .zv-feature-card {
+    padding: 20px;
+  }
+
+  .zv-feature-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .zv-feature-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .zv-feature-title {
+    font-size: 1rem;
+  }
+
+  .zv-feature-desc {
+    font-size: 0.82rem;
+  }
+
+  .zv-disclaimer-box {
+    padding: 16px;
+    border-radius: 10px;
+  }
+
+  .zv-admin-section-header {
+    padding: 2px 0;
+  }
+
+  .zv-admin-section-title {
+    font-size: 0.95rem;
+  }
+
+  .zv-admin-section-desc {
+    font-size: 0.75rem;
+  }
+
+  .zv-input {
+    padding: 10px 12px;
+    font-size: 0.88rem;
+  }
+
+  .zv-label-text {
+    font-size: 0.72rem;
+  }
+
+  .zv-form-hint {
+    font-size: 0.7rem;
+  }
+
+  .zv-result-row {
+    padding: 10px 12px;
+  }
+
+  .zv-result-label {
+    font-size: 0.68rem;
+  }
+
+  .zv-result-value {
+    font-size: 0.8rem;
+  }
+
+  .zv-result-value code {
+    font-size: 0.72rem;
+    padding: 2px 6px;
+  }
+
+  .zv-tally-choice {
+    font-size: 0.85rem;
+  }
+
+  .zv-tally-count {
+    font-size: 0.72rem;
+  }
+
+  .zv-tally-bar-track {
+    height: 7px;
+  }
+
+  .zv-confirm-box {
+    padding: 14px 16px;
+  }
+
+  .zv-confirm-title {
+    font-size: 0.85rem;
+  }
+
+  .zv-confirm-text {
+    font-size: 0.8rem;
+  }
+
+  .zv-merkle-root {
+    padding: 10px 12px;
+  }
+
+  .zv-merkle-hash {
+    font-size: 0.7rem;
+    padding: 8px;
+  }
+
+  .zv-btn-lg {
+    padding: 12px 20px;
+    font-size: 0.9rem;
+  }
+
+  /* Registration receipt: stack label above long values, full-width actions */
+  .zv-register-success {
+    padding: 16px;
+  }
+
+  .zv-register-success .zv-result-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .zv-register-success .zv-result-value {
+    text-align: left;
+  }
+
+  .zv-register-success .zv-form-actions {
+    flex-direction: column;
+  }
+
+  .zv-register-success .zv-form-actions .zv-btn {
+    width: 100%;
+  }
+
+  /* Cast Vote: keep hero choice field tappable, guard against overflow */
+  .zv-cast-form {
+    gap: 18px;
+  }
+
+  .zv-choice-input {
+    padding: 12px 14px;
+    font-size: 1rem;
+  }
+
+  /* Submit goes full width; success panel stacks label-above-value */
+  .zv-cast-form .zv-form-actions {
+    flex-direction: column;
+  }
+
+  .zv-cast-form .zv-form-actions .zv-btn {
+    width: 100%;
+  }
+
+  .zv-vote-success {
+    padding: 16px;
+  }
+
+  .zv-vote-success .zv-result-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .zv-vote-success .zv-result-value {
+    text-align: left;
+  }
+
+  .zv-vote-success .zv-form-actions {
+    flex-direction: column;
+  }
+
+  .zv-vote-success .zv-form-actions .zv-btn {
+    width: 100%;
+  }
+
+  /* Verification: commit field tappable, success/failure panels stack cleanly */
+  .zv-verify-form {
+    gap: 16px;
+  }
+
+  .zv-verify-form .zv-input {
+    max-width: 100%;
+  }
+
+  .zv-verify-success,
+  .zv-verify-failure {
+    padding: 16px;
+  }
+
+  .zv-verify-success .zv-result-row,
+  .zv-verify-failure .zv-result-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .zv-verify-success .zv-result-value,
+  .zv-verify-failure .zv-result-value {
+    text-align: left;
+  }
+
+  .zv-verify-success .zv-form-actions,
+  .zv-verify-failure .zv-form-actions {
+    flex-direction: column;
+  }
+
+  .zv-verify-success .zv-form-actions .zv-btn,
+  .zv-verify-failure .zv-form-actions .zv-btn {
+    width: 100%;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* MOTION                                                                      */
+/*                                                                            */
+/* Entrance keyframes are declarative and one-shot, so they need no JS and   */
+/* no React state: they replay whenever the element mounts. Only opacity and  */
+/* transform are animated, so nothing reflows during playback.               */
+/* -------------------------------------------------------------------------- */
+
+@keyframes zv-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zv-mark-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Hero entrance: one shared keyframe, staggered by delay. */
+.zv-hero-badge,
+.zv-hero-subtitle,
+.zv-hero-description,
+.zv-hero-actions {
+  animation: zv-rise 0.5s ease both;
+}
+
+.zv-hero-badge { animation-delay: 0ms; }
+.zv-hero-logo { animation: zv-mark-in 0.6s ease both; animation-delay: 80ms; }
+.zv-hero-subtitle { animation-delay: 160ms; }
+.zv-hero-description { animation-delay: 240ms; }
+.zv-hero-actions { animation-delay: 320ms; }
+
+/* Section entrance on Admin / Voter / Verify navigation. */
+.zv-page-container {
+  animation: zv-rise 0.28s ease both;
+}
+
+/* Success / error / info states fade in instead of snapping. */
+.zv-alert {
+  animation: zv-rise 0.28s ease both;
+}
+
+/* Button hover lift. `transform` is already in the .zv-btn transition. */
+.zv-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.zv-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Theme swap cross-fade. Declared last so it wins over the per-component
+   transitions above; the property list is a superset of theirs, so no
+   existing hover or focus animation is lost. */
+.zv-app-root,
+.zv-app-root .zv-navbar,
+.zv-app-root .zv-footer,
+.zv-app-root .zv-card,
+.zv-app-root .zv-feature-card,
+.zv-app-root .zv-btn,
+.zv-app-root .zv-input,
+.zv-app-root .zv-alert,
+.zv-app-root .zv-hero-badge,
+.zv-app-root .zv-status-indicator,
+.zv-app-root .zv-footer-badge,
+.zv-app-root .zv-page-badge {
+  transition:
+    background 0.25s ease,
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    box-shadow 0.2s ease,
+    transform 0.18s ease,
+    filter 0.15s ease,
+    opacity 0.2s ease;
+}
+
+/* Reduced motion: kill every entrance and every movement. Browsers that do
+   not support the query simply keep the un-animated base styles, which is
+   the desired behaviour anyway. */
+@media (prefers-reduced-motion: reduce) {
+  .zv-hero-badge,
+  .zv-hero-logo,
+  .zv-hero-subtitle,
+  .zv-hero-description,
+  .zv-hero-actions,
+  .zv-page-container,
+  .zv-alert {
+    animation: none;
+  }
+
+  .zv-btn:hover:not(:disabled),
+  .zv-btn:active:not(:disabled) {
+    transform: none;
+  }
+
+  .zv-app-root,
+  .zv-app-root * {
+    transition-duration: 0.01ms;
   }
 }

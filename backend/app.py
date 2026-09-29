@@ -1,10 +1,11 @@
 import base64
 import json
+import sqlite3
 from datetime import datetime, timezone
 
+from cryptography.exceptions import InvalidTag
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from .config import AUDIT_LOG_PATH, KEYS_DIR
@@ -71,9 +72,13 @@ class TallyRequest(BaseModel):
     master_passphrase: str = Field(..., min_length=1)
 
 
-@app.on_event("startup")
-def startup_event() -> None:
-    init_db()
+def require_election(conn: sqlite3.Connection, election_id: str, passphrase: str):
+    election = conn.execute("SELECT id, active, master_passphrase FROM elections WHERE id = ?", (election_id,)).fetchone()
+    if not election:
+        raise HTTPException(status_code=404, detail="Election not found")
+    if passphrase != election["master_passphrase"]:
+        raise HTTPException(status_code=401, detail="Invalid master passphrase")
+    return election
 
 
 @app.get("/health")
@@ -184,7 +189,13 @@ def cast_vote(election_id: str, payload: VoteCastRequest) -> dict[str, object]:
 
     key_data = json.loads(open(voter["key_path"], "r", encoding="utf-8").read())
     key_material = derive_key_from_passphrase(payload.passphrase, base64.b64decode(key_data["salt"]))[0]
-    private_key_blob = decrypt_bytes({"nonce": key_data["nonce"], "ciphertext": key_data["ciphertext"]}, key_material)
+    # AES-GCM authenticates the tag, so a wrong passphrase surfaces as
+    # InvalidTag. Translate just that failure into a controlled 401; any
+    # other exception is a real bug and must still surface as a 500.
+    try:
+        private_key_blob = decrypt_bytes({"nonce": key_data["nonce"], "ciphertext": key_data["ciphertext"]}, key_material)
+    except InvalidTag:
+        raise HTTPException(status_code=401, detail="Invalid master passphrase") from None
     private_key_b64 = base64.b64encode(private_key_blob).decode("ascii")
 
     ballot_payload = {
@@ -268,12 +279,7 @@ def verify_vote(election_id: str, commitment: str) -> dict[str, object]:
 @app.post("/api/elections/{election_id}/close")
 def close_election(election_id: str, payload: CloseElectionRequest) -> dict[str, str]:
     with get_connection() as conn:
-        election = conn.execute("SELECT id, active, master_passphrase FROM elections WHERE id = ?", (election_id,)).fetchone()
-        if not election:
-            raise HTTPException(status_code=404, detail="Election not found")
-
-        if payload.master_passphrase != election["master_passphrase"]:
-            raise HTTPException(status_code=401, detail="Invalid master passphrase")
+        election = require_election(conn, election_id, payload.master_passphrase)
 
         if election["active"] != 1:
             return {"status": "closed", "election_id": election_id}
@@ -290,12 +296,7 @@ def close_election(election_id: str, payload: CloseElectionRequest) -> dict[str,
 @app.post("/api/elections/{election_id}/tally")
 def tally_election(election_id: str, payload: TallyRequest) -> dict[str, object]:
     with get_connection() as conn:
-        election = conn.execute("SELECT id, active, master_passphrase FROM elections WHERE id = ?", (election_id,)).fetchone()
-        if not election:
-            raise HTTPException(status_code=404, detail="Election not found")
-
-        if payload.master_passphrase != election["master_passphrase"]:
-            raise HTTPException(status_code=401, detail="Invalid master passphrase")
+        require_election(conn, election_id, payload.master_passphrase)
 
         ballots = conn.execute(
             "SELECT voter_id, ballot_data, commitment FROM ballots WHERE election_id = ?",

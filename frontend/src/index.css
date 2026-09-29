@@ -1,45 +1,86 @@
+/* ZetaVote global base — consumes tokens from src/theme.css (imported first
+   in src/main.tsx). This file holds only base resets + element defaults. */
 :root {
-  font-family: Inter, "Segoe UI", sans-serif;
-  line-height: 1.5;
+  font-family: var(--zv-font-sans);
+  line-height: var(--zv-line-height);
   font-weight: 400;
-  color: #1f2937;
-  background: #eef4fb;
+
+  --zv-font-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color-scheme: dark;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
 }
 
 * {
   box-sizing: border-box;
 }
 
-html {
-  background: #eef4fb;
-}
-
-body {
+html, body {
   margin: 0;
+  padding: 0;
   min-width: 320px;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top, rgba(59, 130, 246, 0.14), transparent 30%),
-    #eef4fb;
-}
-
-button,
-input,
-textarea {
-  font: inherit;
+  background-color: var(--zv-bg-base);
+  color: var(--zv-text-main);
 }
 
 #root {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-h1,
-h2,
-h3,
-p {
-  margin-top: 0;
+/* Consistent, accessible focus ring in brand bronze */
+:focus-visible {
+  outline: 2px solid var(--zv-focus);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px var(--zv-focus-soft);
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+code, pre {
+  font-family: var(--zv-font-mono);
+}
+
+::selection {
+  background: rgba(65, 45, 21, 0.35);
+  color: inherit;
+}
+
+[data-theme="light"] ::selection {
+  background: rgba(65, 45, 21, 0.18);
+  color: inherit;
+}
+
+[data-theme="dark"] ::selection {
+  background: rgba(65, 45, 21, 0.6);
+  color: #fff;
+}
+
+/* Restrained scrollbar matching the active theme */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--zv-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--zv-border-strong);
+  border-radius: 999px;
+  border: 2px solid var(--zv-bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--zv-muted);
 }
