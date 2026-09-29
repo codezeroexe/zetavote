@@ -1,7 +1,8 @@
 import base64
+import hashlib
 import os
 
-from cryptography.hazmat.primitives import hashes, hmac, serialization
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
@@ -61,13 +62,8 @@ def verify_signature(public_key_b64: str, message: bytes, signature_b64: str) ->
 
 
 def sha256_hex(value: str) -> str:
-    digest = hashes.Hash(hashes.SHA256())
-    digest.update(value.encode("utf-8"))
-    return digest.finalize().hex()
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
 def compute_commitment(choice: str, vote_nonce: str) -> str:
-    message = f"{choice}:{vote_nonce}".encode("utf-8")
-    digest = hashes.Hash(hashes.SHA256())
-    digest.update(message)
-    return digest.finalize().hex()
+    return sha256_hex(f"{choice}:{vote_nonce}")

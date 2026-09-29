@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment / secrets
+.env
+.env.local
+
+# Frontend dependencies and builds
+frontend/node_modules/
+frontend/dist/
+
+# Local application data - NEVER commit
+data/
