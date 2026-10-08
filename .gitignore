@@ -1,3 +1,33 @@
+# The machine-wide excludesFile (~/.config/git/ignore) contains a blanket
+# `**/*`, which hides every new file from git. These negations re-include real
+# source; per-directory .gitignore rules take precedence over core.excludesFile.
+
+# 1. re-include directories so git can descend into them
+!*/
+
+# 2. re-include source files by extension
+!*.py
+!*.ts
+!*.tsx
+!*.css
+!*.html
+!*.json
+!*.md
+!*.svg
+!*.txt
+!*.png
+!*.webmanifest
+!*.gitignore
+
+# 3. then ignore build and runtime artifacts (later rules win)
+node_modules/
+dist/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+*.log
+
 # Python
 __pycache__/
 *.py[cod]

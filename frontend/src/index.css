@@ -1,12 +1,40 @@
-/* ZetaVote global base — consumes tokens from src/theme.css (imported first
-   in src/main.tsx). This file holds only base resets + element defaults. */
+/* ZetaVote — base layer. Resets, element defaults, and the browser surfaces that
+   belong to no design system. Consumes the tokens in theme.css. */
+
+/* The card's own voice. Self-hosted from the OFL release and subset to the
+   Latin range plus the punctuation the app actually prints, because this is an
+   offline product and a runtime font fetch is not an option. Fixed pitch is not
+   a costume here — a punched card is fixed pitch by construction, which is the
+   whole reason the labels line up. */
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/fonts/ibm-plex-mono-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/fonts/ibm-plex-mono-semibold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* The wordmark, unchanged: brand artwork, byte-identical to versions/hero.svg. */
+@font-face {
+  font-family: "ZetaVote Wordmark";
+  src: url("/fonts/geist-mono-wordmark.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   font-family: var(--zv-font-sans);
   line-height: var(--zv-line-height);
   font-weight: 400;
-
-  --zv-font-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -18,17 +46,27 @@
   color-scheme: light;
 }
 
-* {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   min-width: 320px;
   min-height: 100vh;
   background-color: var(--zv-bg-base);
-  color: var(--zv-text-main);
+  color: var(--zv-ink);
+}
+
+body {
+  /* Nothing on this page is a text field, so the caret colour is never seen.
+     Set anyway: it costs one line and the iOS caret is a browser default that
+     belongs to nobody. */
+  caret-color: var(--zv-ink);
 }
 
 #root {
@@ -37,50 +75,91 @@ html, body {
   flex-direction: column;
 }
 
-/* Consistent, accessible focus ring in brand bronze */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* The one global focus ring. Components that need their own shape set
+   box-shadow, but nothing may remove the ring without replacing it. */
 :focus-visible {
   outline: 2px solid var(--zv-focus);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px var(--zv-focus-soft);
 }
 
-button, input, select, textarea {
-  font-family: inherit;
-  color: inherit;
-}
-
-code, pre {
+code,
+pre,
+kbd {
   font-family: var(--zv-font-mono);
 }
 
+/* Selection is themed rather than left at the browser default, which is a
+   saturated blue that belongs to neither theme. */
 ::selection {
-  background: rgba(65, 45, 21, 0.35);
-  color: inherit;
+  background: color-mix(in srgb, var(--zv-ink) 26%, transparent);
+  color: var(--zv-ink);
 }
 
 [data-theme="light"] ::selection {
-  background: rgba(65, 45, 21, 0.18);
-  color: inherit;
+  background: color-mix(in srgb, var(--zv-ink) 18%, transparent);
+  color: var(--zv-ink);
 }
 
-[data-theme="dark"] ::selection {
-  background: rgba(65, 45, 21, 0.6);
-  color: #fff;
+/* Scrollbars are a browser default that ships with every page. Unthemed they
+   are the one grey that is in neither ramp. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--zv-line-strong) transparent;
 }
 
-/* Restrained scrollbar matching the active theme */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
 }
+
 ::-webkit-scrollbar-track {
-  background: var(--zv-bg);
+  background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: var(--zv-border-strong);
-  border-radius: 999px;
-  border: 2px solid var(--zv-bg);
+  background: var(--zv-line-strong);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: var(--zv-radius-pill);
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--zv-muted);
+  background: var(--zv-ink-faint);
+  background-clip: content-box;
+}
+
+/* Date and number inputs ship a native picker glyph in the platform colour. */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.55;
+  cursor: pointer;
+}
+
+[data-theme="light"]
+  input[type="date"]::-webkit-calendar-picker-indicator,
+[data-theme="light"]
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  filter: none;
+  opacity: 0.5;
+}
+
+input[type="number"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Underline offset and thickness on real links, so they do not read as a row
+   of the paragraph they sit in. */
+a {
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
 }

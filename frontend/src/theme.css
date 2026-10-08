@@ -1,216 +1,201 @@
 /* ==========================================================================
-   ZetaVote Design System — espresso/bronze/ivory dark identity,
-   warm ivory/white/bronze light identity.
-   PHASE 14: light theme = inverse of the approved dark palette.
-   Frontend-only. No functional changes.
+   ZetaVote design tokens — the slate and sky world.
 
-   Single source of truth for color tokens, surfaces, typography, spacing,
-   radii, shadows and focus styles.
-   Imported once from src/main.tsx (before index.css / App.css).
+   A calm civic portal: navy chrome, white cards on a cool grey page, one sky
+   accent for the action that moves a person forward, and one red reserved for
+   what cannot be undone. The layout is a standard site (header, section nav,
+   breadcrumbs, cards, status badges); the tokens below are its entire palette.
 
-   Theme architecture: shared component styles consume the tokens below.
-   `:root` carries the DARK defaults; `[data-theme="light"]` overrides only
-   token values — no duplicated component stylesheet.
+   Authored in OKLCH and checked by `scripts/zv_contrast.py tokens`. The hex
+   tables in that script mirror the values here; change both together.
+
+   Two inks, and neither is ever the only channel:
+
+       sky     the accent — the primary action, the active section, the
+               "open" and "in progress" signals.
+       red     the exception — SEAL, void, irreversible, destructive, broken.
+               Never spent on a routine confirmation.
+
+   Every state carries a word and a badge shape, so it reads in greyscale.
+
+   Card surfaces are white in both themes. Holes and keyway shapes (Hole.tsx)
+   remain as the state marks used inside the app; they are no longer a theme.
+
+   `:root` carries the DARK defaults and `[data-theme="light"]` overrides values
+   only. Imported once from src/main.tsx, before index.css and App.css.
    ========================================================================== */
 
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
 
-  /* ---- Core palette: black + espresso + ivory ---- */
-  --zv-bg-base: #000000;
-  --zv-text-main: #e1dcc9;
-  --zv-text-muted: #96939a;
-  --zv-success: #22c55e;
-  --zv-glass-border: #38322a;
+  /* ---- Surfaces ----------------------------------------------------------
+     Deep slate page, a lifted slate for panels, and a recessed well for inputs. */
+  --zv-bg-base: oklch(0.2 0.03 262);
+  --zv-page: oklch(0.2 0.03 262);
+  --zv-surface: oklch(0.245 0.032 262);
+  --zv-surface-hover: oklch(0.29 0.034 262);
+  --zv-sunken: oklch(0.185 0.03 262);
+  --zv-sunken-focus: oklch(0.215 0.032 262);
+  --zv-sunken-disabled: oklch(0.225 0.03 262);
+  --zv-tray: oklch(0.16 0.03 262);
 
-  /* ---- Brand: bronze accents, red reserved for danger ---- */
-  --zv-primary: #412d15;
-  --zv-primary-text: #e1dcc9;
-  --zv-primary-border: rgba(225, 220, 201, 0.16);
-  --zv-primary-border-hover: rgba(225, 220, 201, 0.32);
-  --zv-danger: #d64545;
-  --zv-eyebrow: #e1dcc9;
-  --zv-live: #22c55e;
-  --zv-live-soft: rgba(34, 197, 94, 0.3);
-  --zv-pending: #e1dcc9;
-  --zv-focus: #e1dcc9;
-  /* 45% ivory over the #1f150c card ≈ 3.6:1, clearing the 3:1 non-text
-     contrast target while still reading as a soft warm halo. */
-  --zv-focus-soft: rgba(225, 220, 201, 0.45);
+  /* ---- Ink ---------------------------------------------------------------- */
+  --zv-ink: oklch(0.965 0.008 240);
+  --zv-ink-muted: oklch(0.8 0.02 240);
+  --zv-ink-faint: oklch(0.7 0.02 240);
+  --zv-ink-invert: oklch(0.2 0.03 262);
 
-  /* ---- Semantic surfaces ---- */
-  --zv-bg: #000000;
-  --zv-surface-2: #251b0e;
-  --zv-text: #e1dcc9;
-  --zv-muted: #96939a;
-  --zv-border: #38322a;
-  --zv-border-strong: #412d15;
+  /* ---- Rules -------------------------------------------------------------- */
+  --zv-line: oklch(0.33 0.03 262);
+  --zv-line-strong: oklch(0.56 0.03 255);
+  --zv-line-input: oklch(0.6 0.03 255);
 
-  /* ---- Derived tokens ---- */
-  --zv-gradient-primary: #412d15;
-  --zv-gradient-text: linear-gradient(100deg, #e1dcc9 0%, #e1dcc9 100%);
-  --zv-accent-text: #e1dcc9;
-  --zv-tally-fill: #412d15;
+  /* ---- Cards -------------------------------------------------------------
+     White cards with navy print. The card is a sheet on the page, not a tint. */
+  --zv-card: oklch(0.955 0.012 240);
+  --zv-card-ink: oklch(0.25 0.04 262);
+  --zv-card-muted: oklch(0.42 0.035 262);
+  --zv-card-line: oklch(0.6 0.03 255);
+  --zv-card-well: oklch(0.9 0.014 240);
 
-  /* ---- Surfaces: solid, minimal translucency (pills/tabs only) ---- */
-  --zv-glass-surface: rgba(31, 21, 12, 0.55);
-  --zv-glass-surface-subtle: rgba(31, 21, 12, 0.35);
+  /* ---- Sky (accent) ------------------------------------------------------- */
+  --zv-punch: oklch(0.76 0.12 238);
+  --zv-punch-ink: oklch(0.86 0.07 238);
+  --zv-punch-bg: oklch(0.27 0.05 238);
+  --zv-punch-line: oklch(0.4 0.07 238);
+  /* On a card. Non-text marks clear 3:1; sky labels clear 4.5:1. */
+  --zv-punch-mark: oklch(0.52 0.1 238);
+  --zv-punch-text: oklch(0.45 0.08 238);
 
-  /* ---- Themed component surfaces ---- */
-  --zv-nav-bg: linear-gradient(
-    180deg,
-    rgba(20, 14, 8, 0.94) 0%,
-    rgba(0, 0, 0, 0.96) 100%
-  );
-  --zv-footer-bg: linear-gradient(
-    180deg,
-    rgba(20, 14, 8, 0.94) 0%,
-    rgba(0, 0, 0, 0.96) 100%
-  );
-  --zv-card-bg: #1f150c;
-  --zv-input-bg: #1f150c;
-  --zv-input-bg-focus: #2a1d0f;
-  --zv-input-bg-disabled: rgba(0, 0, 0, 0.5);
-  --zv-input-hero-bg: #1f150c;
-  --zv-info-bg: rgba(65, 45, 21, 0.22);
+  /* ---- Red (exception) ---------------------------------------------------- */
+  --zv-seal: oklch(0.7 0.16 25);
+  --zv-seal-ink: oklch(0.8 0.11 25);
+  --zv-seal-bg: oklch(0.26 0.05 25);
+  --zv-seal-line: oklch(0.4 0.08 25);
+  --zv-seal-mark: oklch(0.56 0.17 25);
+  --zv-seal-text: oklch(0.48 0.17 25);
 
-  /* ---- Soft neutral shadows (no color glow) ---- */
-  --zv-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --zv-shadow-md: 0 6px 20px rgba(0, 0, 0, 0.35);
-  --zv-shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
-  --zv-shadow-action: 0 2px 10px rgba(0, 0, 0, 0.4);
+  /* ---- Primary action ----------------------------------------------------- */
+  --zv-fill: oklch(0.76 0.12 238);
+  --zv-fill-ink: oklch(0.2 0.03 262);
+  --zv-fill-line: transparent;
+  --zv-fill-line-hover: oklch(0.7 0.12 238);
 
-  /* ---- Typography ---- */
+  /* ---- Focus -------------------------------------------------------------- */
+  --zv-focus: oklch(0.965 0.008 240);
+  --zv-focus-halo: oklch(0.76 0.12 238 / 0.5);
+
+  /* ---- Chrome: the navy header band ---------------------------------------- */
+  --zv-on-chrome: oklch(0.965 0.008 240);
+  --zv-chrome: oklch(0.2 0.03 262 / 0.96);
+  --zv-chrome-line: oklch(0.33 0.03 262);
+
+  /* ---- Type --------------------------------------------------------------- */
+  --zv-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, monospace;
   --zv-font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-  --zv-font-mono: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo,
-    Monaco, Consolas, monospace;
+    Roboto, sans-serif;
+  --zv-font-wordmark: "ZetaVote Wordmark", var(--zv-font-sans);
   --zv-line-height: 1.6;
+  --zv-measure: 68ch;
 
-  /* ---- Status: red reserved for warning/danger, green for success ---- */
-  --zv-success-bg: rgba(34, 197, 94, 0.1);
-  --zv-success-border: rgba(34, 197, 94, 0.25);
-  --zv-success-text: #6ee7b7;
-  --zv-warning: #d64545;
-  --zv-warning-bg: rgba(214, 69, 69, 0.1);
-  --zv-warning-border: rgba(214, 69, 69, 0.3);
-  --zv-warning-text: #ee9090;
-  --zv-danger: #d64545;
-  --zv-danger-bg: rgba(214, 69, 69, 0.12);
-  --zv-danger-border: rgba(214, 69, 69, 0.32);
-  --zv-danger-text: #ee9090;
-  --zv-info-text: #c7c3b9;
+  /* ---- Space -------------------------------------------------------------- */
+  --zv-space-1: 4px;
+  --zv-space-2: 8px;
+  --zv-space-3: 12px;
+  --zv-space-4: 16px;
+  --zv-space-5: 20px;
+  --zv-space-6: 24px;
+  --zv-space-8: 32px;
+  --zv-space-10: 40px;
+  --zv-space-12: 48px;
 
-  /* ---- Legacy aliases (backward compatible with existing components) ---- */
-  --zv-bg-surface: var(--zv-glass-surface-subtle);
-  --zv-bg-surface-hover: rgba(31, 21, 12, 0.6);
-  --zv-bg-elevated: #1f150c;
-  --zv-border-subtle: var(--zv-border);
-  --zv-border-accent: var(--zv-border-strong);
-  --zv-text-primary: var(--zv-text);
-  --zv-text-secondary: var(--zv-muted);
+  /* ---- State mark --------------------------------------------------------- */
+  --zv-hole-w: 10px;
+  --zv-hole-h: 14px;
+  --zv-hole-r: 2px;
+  --zv-hole-pitch: 18px;
+
+  /* ---- Radius ------------------------------------------------------------- */
+  --zv-radius-sm: 4px;
+  --zv-radius-md: 6px;
+  --zv-radius-lg: 8px;
+  --zv-radius-pill: 999px;
+
+  /* ---- Depth -------------------------------------------------------------- */
+  --zv-shadow-sm: 0 1px 2px oklch(0 0 0 / 0.4);
+  --zv-shadow-md: 0 8px 22px oklch(0 0 0 / 0.45);
+  --zv-shadow-lg: 0 20px 48px oklch(0 0 0 / 0.55);
+  --zv-shadow-action: 0 2px 0 oklch(0 0 0 / 0.3);
+  --zv-shadow-card: 0 1px 2px oklch(0 0 0 / 0.2), 0 6px 18px oklch(0 0 0 / 0.25);
+
+  /* ---- Motion ------------------------------------------------------------- */
+  --zv-dur-press: 90ms;
+  --zv-dur-state: 160ms;
+  --zv-dur-panel: 240ms;
+  --zv-dur-scene: 520ms;
+  --zv-ease-punch: cubic-bezier(0.2, 0.9, 0.1, 1);
+  --zv-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --zv-ease-inout: cubic-bezier(0.4, 0, 0.2, 1);
 }
-
-/* ==========================================================================
-   LIGHT THEME — warm ivory surfaces, bronze primary (dark-theme inverse).
-   Only token values change; component styles are shared.
-   ========================================================================== */
 
 [data-theme="light"] {
   color-scheme: light;
 
-  /* ---- Core palette: warm ivory + white ---- */
-  --zv-bg-base: #e1dcc9;
-  --zv-text-main: #1f150c;
-  --zv-text-muted: #6f6353;
-  --zv-success: #15803d;
-  --zv-glass-border: #d8d0c2;
+  --zv-bg-base: oklch(0.965 0.007 250);
+  --zv-page: oklch(0.965 0.007 250);
+  --zv-surface: oklch(0.995 0.002 250);
+  --zv-surface-hover: oklch(0.945 0.008 250);
+  --zv-sunken: oklch(1 0 0);
+  --zv-sunken-focus: oklch(1 0 0);
+  --zv-sunken-disabled: oklch(0.94 0.008 250);
+  --zv-tray: oklch(0.93 0.01 250);
 
-  /* ---- Brand: #412D15 primary bronze-espresso ---- */
-  --zv-primary: #412d15;
-  --zv-primary-text: #ffffff;
-  --zv-primary-border: transparent;
-  --zv-primary-border-hover: transparent;
-  --zv-danger: #c62828;
-  --zv-eyebrow: #1f150c;
-  --zv-live: #15803d;
-  --zv-live-soft: rgba(21, 128, 61, 0.2);
-  --zv-pending: #412d15;
-  --zv-focus: #412d15;
-  /* 60% bronze over a white/near-white card ≈ 3.8:1, clearing the 3:1
-     non-text contrast target. Both themes use the same approved bronze and
-     ivory tones, so the ring is a brand colour, not a system accent. */
-  --zv-focus-soft: rgba(65, 45, 21, 0.6);
+  --zv-ink: oklch(0.25 0.04 262);
+  --zv-ink-muted: oklch(0.45 0.03 262);
+  --zv-ink-faint: oklch(0.5 0.03 262);
+  --zv-ink-invert: oklch(0.995 0.002 250);
 
-  /* ---- Semantic surfaces: cream environment, white cards ---- */
-  --zv-bg: #e1dcc9;
-  --zv-surface-2: #f4edda;
-  --zv-text: #1f150c;
-  --zv-muted: #6f6353;
-  --zv-border: #d8d0c2;
-  --zv-border-strong: #c0b59c;
+  --zv-line: oklch(0.9 0.01 250);
+  --zv-line-strong: oklch(0.6 0.02 255);
+  --zv-line-input: oklch(0.575 0.02 255);
 
-  /* ---- Derived tokens ---- */
-  --zv-gradient-primary: #412d15;
-  --zv-gradient-text: linear-gradient(100deg, #1f150c 0%, #1f150c 100%);
-  --zv-accent-text: #412d15;
-  --zv-tally-fill: #412d15;
+  --zv-card: oklch(0.995 0.002 250);
+  --zv-card-ink: oklch(0.25 0.04 262);
+  --zv-card-muted: oklch(0.42 0.035 262);
+  --zv-card-line: oklch(0.62 0.02 255);
+  --zv-card-well: oklch(0.96 0.006 250);
 
-  /* ---- Surfaces: solid / near-solid ---- */
-  --zv-glass-surface: rgba(255, 253, 248, 0.7);
-  --zv-glass-surface-subtle: rgba(255, 253, 248, 0.55);
+  --zv-punch: oklch(0.5 0.1 240);
+  --zv-punch-ink: oklch(0.42 0.09 240);
+  --zv-punch-bg: oklch(0.94 0.03 240);
+  --zv-punch-line: oklch(0.84 0.05 240);
+  --zv-punch-mark: oklch(0.56 0.1 240);
+  --zv-punch-text: oklch(0.5 0.1 240);
 
-  /* ---- Themed component surfaces ---- */
-  --zv-nav-bg: rgba(255, 255, 255, 0.92);
-  --zv-footer-bg: rgba(255, 255, 255, 0.94);
-  --zv-card-bg: #ffffff;
-  --zv-input-bg: #ffffff;
-  --zv-input-bg-focus: #ffffff;
-  --zv-input-bg-disabled: #efe9db;
-  --zv-input-hero-bg: #ffffff;
-  --zv-info-bg: rgba(65, 45, 21, 0.06);
+  --zv-seal: oklch(0.5 0.16 27);
+  --zv-seal-ink: oklch(0.43 0.15 27);
+  --zv-seal-bg: oklch(0.94 0.03 27);
+  --zv-seal-line: oklch(0.84 0.05 27);
+  --zv-seal-mark: oklch(0.56 0.16 27);
+  --zv-seal-text: oklch(0.5 0.16 27);
 
-  /* ---- Soft neutral shadows ---- */
-  --zv-shadow-sm: 0 1px 2px rgba(60, 50, 35, 0.08);
-  --zv-shadow-md: 0 8px 24px rgba(60, 50, 35, 0.09);
-  --zv-shadow-lg: 0 16px 40px rgba(60, 50, 35, 0.13);
-  --zv-shadow-action: 0 2px 10px rgba(65, 45, 21, 0.18);
+  --zv-fill: oklch(0.76 0.12 238);
+  --zv-fill-ink: oklch(0.2 0.03 262);
+  --zv-fill-line: transparent;
+  --zv-fill-line-hover: oklch(0.7 0.12 238);
 
-  /* ---- Status ---- */
-  --zv-success-bg: rgba(21, 128, 61, 0.08);
-  --zv-success-border: rgba(21, 128, 61, 0.28);
-  --zv-success-text: #15803d;
-  --zv-warning: #c62828;
-  --zv-warning-bg: rgba(198, 40, 40, 0.07);
-  --zv-warning-border: rgba(198, 40, 40, 0.3);
-  --zv-warning-text: #b71c1c;
-  --zv-danger: #c62828;
-  --zv-danger-bg: rgba(198, 40, 40, 0.07);
-  --zv-danger-border: rgba(198, 40, 40, 0.3);
-  --zv-danger-text: #b71c1c;
-  --zv-info-text: #4f4638;
+  --zv-focus: oklch(0.25 0.04 262);
+  --zv-focus-halo: oklch(0.5 0.1 240 / 0.42);
 
-  /* ---- Legacy aliases ---- */
-  --zv-bg-surface-hover: #e9e2d2;
-  --zv-bg-elevated: #ffffff;
-}
+  --zv-chrome: oklch(0.2 0.03 262 / 0.97);
+  --zv-chrome-line: oklch(0.33 0.03 262);
 
-/* ==========================================================================
-   Reusable surface primitives — theme-aware via tokens.
-   ========================================================================== */
-
-/* Primary bronze surface (important/active only) */
-.zv-gradient-primary {
-  background: var(--zv-gradient-primary);
-  color: #fff;
-  border: 1px solid transparent;
-}
-
-/* Gradient text for sparing accent use (headings, totals) */
-.zv-gradient-text {
-  background: var(--zv-gradient-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  --zv-shadow-sm: 0 1px 2px oklch(0.2 0.03 262 / 0.08);
+  --zv-shadow-md: 0 8px 20px oklch(0.2 0.03 262 / 0.1);
+  --zv-shadow-lg: 0 20px 48px oklch(0.2 0.03 262 / 0.14);
+  --zv-shadow-action: 0 2px 0 oklch(0.2 0.03 262 / 0.25);
+  --zv-shadow-card: 0 1px 2px oklch(0.2 0.03 262 / 0.06),
+    0 6px 18px oklch(0.2 0.03 262 / 0.08);
 }

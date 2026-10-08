@@ -4,21 +4,19 @@ export type Theme = "light" | "dark";
 
 const STORAGE_KEY = "zetavote-theme";
 
-function getInitialTheme(): Theme {
-  if (typeof window !== "undefined") {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === "light" || stored === "dark") {
-      return stored;
-    }
-    if (window.matchMedia("(prefers-color-scheme: light)").matches) {
-      return "light";
-    }
-  }
-  return "dark";
+/**
+ * The pre-paint script in index.html has already resolved and applied the theme
+ * to <html> by the time this runs. Reading that attribute back keeps one
+ * implementation of the stored-value-then-system-preference rule; recomputing it
+ * here would be a second copy free to drift out of sync with the script that
+ * decides what the user actually sees on first paint.
+ */
+function readAppliedTheme(): Theme {
+  return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
 }
 
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [theme, setTheme] = useState<Theme>(readAppliedTheme);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;

@@ -1,0 +1,44 @@
+/**
+ * The brand mark, inlined so `fill="currentColor"` resolves against the
+ * surrounding text colour. As an <img> the SVG cannot inherit, so serving it
+ * from a file would need a second copy for the dark theme; inlined, the same
+ * artwork reads correctly on the page background and on the navbar chip.
+ *
+ * Geometry is the source file verbatim: every <g transform> and <path d> is
+ * byte-identical to versions/hero.svg. The only change is the viewBox, which
+ * the Affinity export set to 0 0 1712 1712 and so clipped the artwork by 83px
+ * on the left and 343px on the right. These are the true ink bounds.
+ */
+export const ZvMark: React.FC<{ className?: string }> = ({ className }) => (
+  <svg
+    className={className}
+    viewBox="-87.04 -32.4 2146.19 1979.86"
+    fill="currentColor"
+    style={{ fillRule: "evenodd", clipRule: "evenodd", strokeLinejoin: "round", strokeMiterlimit: 2 }}
+    aria-hidden="true"
+    focusable="false"
+  >
+    <g transform="matrix(1,0,0,1,-144,-144)">
+    <g transform="matrix(1.332296,0,0,1.332296,-318.306615,-418.228794)">
+    <g transform="matrix(0.958606,0,0,0.958606,261.1939,1082.46841)">
+    <rect x="347" y="422" width="1083" height="229.5"/>
+    </g>
+    <g transform="matrix(1.089109,0,0,1.264368,-30.920792,-150.635808)">
+    <rect x="347" y="751" width="202" height="174"/>
+    </g>
+    <g transform="matrix(0.726369,-0.743685,0.86953,0.849284,-1092.641863,801.539322)">
+    <path d="M1319.371,1189L1531,1370L347,1370L558.629,1189L1319.371,1189Z"/>
+    </g>
+    <g transform="matrix(-0.732791,0.737358,-0.862133,-0.856793,3066.433599,1339.942704)">
+    <path d="M1319.371,1189L1531,1370L347,1370L558.629,1189L1319.371,1189Z"/>
+    </g>
+    <g transform="matrix(1.089109,0,0,1.264368,1034.079208,152.829732)">
+    <rect x="347" y="751" width="202" height="174"/>
+    </g>
+    <g transform="matrix(0.958606,0,0,0.958606,14.363834,17.46841)">
+    <rect x="347" y="422" width="1083" height="229.5"/>
+    </g>
+    </g>
+    </g>
+  </svg>
+);

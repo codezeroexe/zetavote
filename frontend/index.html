@@ -7,6 +7,9 @@
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Keeps the mobile browser chrome from staying on its own default colour
+         against a black app. The script below flips this with the theme. -->
+    <meta name="theme-color" content="#000000" />
     <title>ZetaVote — Local Secure Voting</title>
     <script>
       // Apply saved/system theme before first paint to avoid flashing.
@@ -15,16 +18,31 @@
           var stored = localStorage.getItem("zetavote-theme");
           var theme = stored === "light" || stored === "dark" ? stored : null;
           if (!theme) {
-            theme = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+            theme = "light";
           }
           document.documentElement.dataset.theme = theme;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute("content", theme === "light" ? "#e1dcc9" : "#000000");
         } catch (e) {
-          document.documentElement.dataset.theme = "dark";
+          document.documentElement.dataset.theme = "light";
         }
       })();
     </script>
   </head>
   <body>
+    <noscript>
+      <div style="font-family: system-ui, sans-serif; max-width: 34rem; margin: 4rem auto; padding: 0 1.5rem; line-height: 1.6">
+        <h1 style="font-size: 1.25rem">ZetaVote needs JavaScript</h1>
+        <p>
+          Ballots are encrypted and signed in the browser, so there is no
+          server-side fallback for this page. Enable JavaScript and reload.
+        </p>
+        <p>
+          ZetaVote is an academic proof-of-concept for local cryptographic
+          voting. It is not intended for binding, real-world elections.
+        </p>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

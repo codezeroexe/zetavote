@@ -1,4 +1,26 @@
-/* ZetaVote App Shell & Design System Styles */
+/* ==========================================================================
+   ZetaVote — application layer.
+
+   Consumes the tokens in theme.css. No colour, spacing, radius or duration is
+   written literally in this file; if a value is needed twice it becomes a
+   token, and if it is needed once it is written once.
+
+   Layout notes the CSS alone cannot say:
+
+   - The page ground is the machine. The only warm surface is card stock, and it
+     appears where a real card would: the ballot being punched, the published
+     total, the receipt the machine prints back. Everything else is the desk.
+   - A card's structure is a band across the top, a punch gutter down one side,
+     and field rules between the fields. That is what a card is, so that is what
+     the card component is, and it is used on the cards and nowhere else — the
+     grid is never a page texture and never a table substitute.
+   - Every state is a hole with its own keyway shape. There is no pill, badge or
+     coloured dot, because a card does not badge its entries; it punches them.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Shell
+   -------------------------------------------------------------------------- */
 
 .zv-app-root {
   min-height: 100vh;
@@ -6,763 +28,1285 @@
   flex-direction: column;
   position: relative;
   isolation: isolate;
-  background-color: var(--zv-bg);
-  background-image:
-    radial-gradient(ellipse 70% 50% at 50% 115%, rgba(31, 21, 12, 0.55) 0%, transparent 65%);
-  background-attachment: fixed;
+  background-color: var(--zv-page);
 }
 
-/* Light theme: calm warm-beige washes, content stays dominant. */
-[data-theme="light"] .zv-app-root {
-  background-image:
-    radial-gradient(ellipse 70% 45% at 50% 0%, rgba(255, 255, 255, 0.75) 0%, transparent 60%),
-    radial-gradient(ellipse 55% 40% at 85% 10%, rgba(255, 255, 255, 0.5) 0%, transparent 60%);
-}
+/* No page-level wash and no wall texture.
 
-/* Light theme: supporting subtitle in warm muted tone, labels in espresso. */
-[data-theme="light"] .zv-hero-subtitle {
-  background: none;
-  color: var(--zv-muted);
-}
-
-[data-theme="light"] .zv-label-text {
-  color: var(--zv-text);
-}
+   The discarded world put a repeating vertical hairline behind everything on the
+   reasoning that a ledger is ruled ground. Structure that does not align to the
+   content is wallpaper, and the grid belongs to the card — so the ruling lives on
+   the card, in its band and its gutter, where it means something. */
 
 .zv-main-content {
   flex: 1;
   width: 100%;
   max-width: 1120px;
   margin: 0 auto;
-  padding: 40px 24px 56px;
+  padding: var(--zv-space-10) var(--zv-space-6) var(--zv-space-12);
+  /* Focus moves here on every section change. Without this the heading lands
+     under the sticky bar. */
+  scroll-margin-top: 96px;
 }
 
-/* -------------------------------------------------------------------------- */
-/* NAVBAR                                                                     */
-/* -------------------------------------------------------------------------- */
+.zv-main-content:focus {
+  outline: none;
+}
+
+.zv-page-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zv-space-8);
+}
+
+/* --------------------------------------------------------------------------
+   2. The hole — the whole state system
+
+   Five shapes, one measurement. A card hole is a slot with a keyway, so the mark
+   is a slot, and what changes between states is what is inside it:
+
+     live     punched through. The card is on the machine.
+     pending  keyed but still whole. The key is seated and has not been pressed.
+     warn     a chad is still hanging in it — the hole is part-made.
+     spent    struck across. The punch was cancelled.
+     risk     punched through in the exception ink.
+     muted    an empty keyed slot. No punch was ever ordered here.
+
+   Colour is the last channel, never the first. Every one of these also carries a
+   word, and a punched-through mark reads differently from a chad in greyscale, to
+   a colour-blind reader and on a monochrome print.
+   -------------------------------------------------------------------------- */
+
+.zv-hole {
+  --hole-ink: var(--zv-ink-faint);
+  --hole-fill: transparent;
+  width: 9px;
+  height: 13px;
+  flex: 0 0 auto;
+  position: relative;
+  display: inline-block;
+  border: 1px solid var(--hole-ink);
+  border-radius: var(--zv-hole-r);
+  background: var(--hole-fill);
+}
+
+/* The keyway: the notch at the top of a real slot, and the reason an empty slot
+   still reads as a card's hole rather than as a small rectangle. */
+.zv-hole::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  translate: -50% 0;
+  width: 3px;
+  height: 2px;
+  background: var(--hole-ink);
+}
+
+.zv-state-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--zv-font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--zv-ink);
+}
+
+/* live — punched through, in the punch ink. */
+.zv-hole[data-tone="live"] {
+  --hole-ink: var(--zv-punch);
+  --hole-fill: var(--zv-punch);
+}
+
+.zv-hole[data-tone="live"]::before {
+  background: var(--zv-punch-bg);
+}
+
+/* pending — the key is seated and the slot is still whole. */
+.zv-hole[data-tone="pending"] {
+  --hole-ink: var(--zv-punch-line);
+  --hole-fill: transparent;
+}
+
+/* warn — a part-made hole: the chad is still in the slot, unpressed. */
+.zv-hole[data-tone="warn"] {
+  --hole-ink: var(--zv-punch-line);
+}
+
+.zv-hole[data-tone="warn"]::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 2px;
+  translate: -50% 0;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--zv-punch);
+}
+
+/* spent — struck across. A cancelled punch leaves the slot closed and ruled. */
+.zv-hole[data-tone="spent"] {
+  --hole-ink: var(--zv-line-strong);
+}
+
+.zv-hole[data-tone="spent"]::after {
+  content: "";
+  position: absolute;
+  inset: 4px 0;
+  background: var(--zv-line-strong);
+}
+
+/* risk — punched in the exception ink. Void, broken, or not to be touched. */
+.zv-hole[data-tone="risk"] {
+  --hole-ink: var(--zv-seal);
+  --hole-fill: var(--zv-seal);
+}
+
+.zv-hole[data-tone="risk"]::before {
+  background: var(--zv-seal-bg);
+}
+
+/* muted — an empty keyed slot. Nothing was ever punched here. */
+.zv-hole[data-tone="muted"] {
+  --hole-ink: var(--zv-line-strong);
+  --hole-fill: transparent;
+}
+
+/* On card stock the same marks take the card's own values, because a hole in buff
+   stock is inked in the card's ink and not in the machine's. */
+.zv-card-stock .zv-hole[data-tone="live"] {
+  --hole-ink: var(--zv-punch-mark);
+  --hole-fill: var(--zv-punch-mark);
+}
+
+.zv-card-stock .zv-hole[data-tone="live"]::before {
+  background: var(--zv-card);
+}
+
+.zv-card-stock .zv-hole[data-tone="risk"] {
+  --hole-ink: var(--zv-seal-mark);
+  --hole-fill: var(--zv-seal-mark);
+}
+
+.zv-card-stock .zv-hole[data-tone="risk"]::before {
+  background: var(--zv-card);
+}
+
+.zv-card-stock .zv-hole[data-tone="warn"] {
+  --hole-ink: var(--zv-card-line);
+}
+
+.zv-card-stock .zv-hole[data-tone="warn"]::after {
+  background: var(--zv-punch-mark);
+}
+
+.zv-card-stock .zv-hole[data-tone="spent"],
+.zv-card-stock .zv-hole[data-tone="muted"] {
+  --hole-ink: var(--zv-card-line);
+}
+
+.zv-card-stock .zv-hole[data-tone="spent"]::after {
+  background: var(--zv-card-line);
+}
+
+/* ---- the machine key pattern ----------------------------------------------
+   The eight digits of this build's seed key, punched four rows deep, in the dead
+   zone a card carries in its corner to say which keying station made it. Drawn
+   as holes, so it is read the same way everything else in this world is. */
+.zv-key-pattern {
+  display: grid;
+  grid-template-columns: repeat(8, 4px);
+  grid-auto-rows: 4px;
+  gap: 2px 3px;
+  flex: 0 0 auto;
+}
+
+.zv-key-pattern i {
+  display: block;
+  width: 4px;
+  height: 4px;
+  border-radius: 1px;
+  background: var(--zv-card-line);
+}
+
+.zv-key-pattern i[data-on="1"] {
+  background: var(--zv-punch-mark);
+}
+
+.zv-key-pattern--chrome i {
+  background: var(--zv-line);
+}
+
+.zv-key-pattern--chrome i[data-on="1"] {
+  background: var(--zv-punch);
+}
+
+/* ---- the binary column ----------------------------------------------------
+   A count is a bit pattern before it is a number, and a bit pattern is what gets
+   hashed. So a tally is printed as the pattern: MSB at the top, the powers of
+   two down the margin the way they sit on a printed column, the decimal figure
+   set beside it. This is the world's one signature move. */
+.zv-bits {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  flex: 0 0 auto;
+  padding: var(--zv-space-1) 0;
+}
+
+.zv-bit {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.zv-bit-weight {
+  font-family: var(--zv-font-mono);
+  font-size: 0.5625rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--zv-card-muted);
+  min-width: 5ch;
+  text-align: right;
+}
+
+/* An unpunched bit is dimmed rather than removed: the column has to be all the
+   same height or it stops being a column. */
+.zv-bit[data-on="0"] .zv-hole {
+  opacity: 0.4;
+}
+
+.zv-bits-caption {
+  font-family: var(--zv-font-mono);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--zv-card-muted);
+  margin: var(--zv-space-1) 0 0;
+}
+
+/* ---- the SEAL stamp -------------------------------------------------------
+   Drawn, not a glyph: a struck stamp, ruled twice, tilted the way a hand puts
+   it down, in the exception ink. It marks the moment a card stops accepting
+   anything further. */
+.zv-seal {
+  display: block;
+  pointer-events: none;
+  color: var(--zv-seal-mark);
+  /* A stamp never prints solid. This is also what stops it fighting the field it
+     is stamped over. */
+  opacity: 0.9;
+}
+
+.zv-seal-word {
+  font-family: var(--zv-font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.26em;
+}
+
+/* ---- the certify mark -----------------------------------------------------
+   The word that says a value has been attested, and it wears the punch ink,
+   because on a tabulator the certified thing is the total and the total is
+   punched in the data ribbon. */
+.zv-certify {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px var(--zv-space-2);
+  border: 1px solid var(--zv-punch-line);
+  border-radius: var(--zv-radius-sm);
+  background: var(--zv-punch-bg);
+  color: var(--zv-punch-ink);
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* --------------------------------------------------------------------------
+   3. Chrome — the machine's own panel
+   -------------------------------------------------------------------------- */
 
 .zv-navbar {
-  background: var(--zv-nav-bg);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2);
-  backdrop-filter: blur(16px) saturate(1.2);
-  border-bottom: 1px solid var(--zv-glass-border);
-  box-shadow:
-    var(--zv-shadow-md),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.02);
   position: sticky;
   top: 0;
   z-index: 100;
-}
-
-[data-theme="light"] .zv-navbar {
-  box-shadow:
-    var(--zv-shadow-md),
-    inset 0 1px 0 #ffffff;
+  background: var(--zv-chrome);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  backdrop-filter: blur(16px) saturate(1.2);
+  border-bottom: 1px solid var(--zv-chrome-line);
+  /* A machine panel has a lip: the top edge catches light, the bottom edge is
+     where the panel meets the desk. */
+  box-shadow: 0 1px 0 oklch(1 0 0 / 0.04);
+  /* The header is navy in both themes, so its text and panels are re-scoped to
+     light-on-navy here rather than inheriting the page's ink. */
+  --zv-ink: oklch(0.965 0.008 240);
+  --zv-ink-muted: oklch(0.8 0.02 240);
+  --zv-ink-faint: oklch(0.74 0.02 240);
+  --zv-line: oklch(0.36 0.03 262);
+  --zv-sunken: oklch(0.16 0.03 262);
+  --zv-surface-hover: oklch(0.28 0.035 262);
+  --zv-focus: oklch(0.965 0.008 240);
 }
 
 .zv-navbar-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 12px 24px;
+  padding: 9px var(--zv-space-6);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: var(--zv-space-4);
 }
 
 .zv-brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--zv-space-3);
   background: none;
-  border: none;
+  border: 0;
   padding: 0;
   cursor: pointer;
   text-align: left;
-  transition: opacity 0.15s ease, transform 0.15s ease;
-}
-
-/* Real ring, matching .zv-nav-link. The old `opacity: 0.85` was dimmer than
-   this button's own :hover (0.9), so focus and hover looked identical. */
-.zv-brand:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--zv-focus), 0 0 0 5px var(--zv-focus-soft);
+  color: var(--zv-ink);
+  border-radius: var(--zv-radius-md);
+  transition: opacity var(--zv-dur-state) var(--zv-ease-out);
 }
 
 .zv-brand:hover {
-  opacity: 0.9;
+  opacity: 0.75;
 }
 
-.zv-brand:active {
-  transform: scale(0.98);
+.zv-brand:focus-visible {
+  outline: 2px solid var(--zv-focus);
+  outline-offset: 4px;
 }
 
+/* The mark sits in a punched slot rather than on a filled chip. The mark is
+   monochrome black-on-white brand artwork, so the honest way to put it on a cool
+   ground is to punch through to the card and let the paper carry it. */
 .zv-brand-icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--zv-gradient-primary);
-  color: #ffffff;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--zv-radius-sm);
+  border: 1px solid var(--zv-punch-line);
+  background: var(--zv-card);
+  color: #16130d;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--zv-primary-border);
-  box-shadow:
-    var(--zv-shadow-action),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
   flex-shrink: 0;
-  transition: box-shadow 0.2s ease, transform 0.15s ease;
-}
-
-.zv-brand:hover .zv-brand-icon {
-  box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-}
-
-[data-theme="light"] .zv-brand:hover .zv-brand-icon {
-  box-shadow:
-    0 4px 16px rgba(65, 45, 21, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: transform var(--zv-dur-press) var(--zv-ease-punch);
 }
 
 .zv-brand:active .zv-brand-icon {
-  transform: scale(0.95);
+  transform: translateY(1px);
 }
 
-.zv-brand-icon svg {
-  width: 22px;
-  height: 22px;
-}
-
-/* Approved artwork mark: self-contained tile, no double background. */
-.zv-brand-icon--img {
-  background: none;
-  border: none;
-  box-shadow: var(--zv-shadow-action);
-  padding: 0;
-}
-
-.zv-brand-icon--img img {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+.zv-brand-mark {
+  width: 20px;
+  height: 18px;
   display: block;
 }
 
 .zv-brand-text {
   display: flex;
   flex-direction: column;
-  line-height: 1.1;
+  line-height: 1.2;
 }
 
 .zv-brand-name {
-  font-size: 1.25rem;
+  font-family: var(--zv-font-wordmark);
+  font-size: 1.0625rem;
   font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--zv-text-primary);
+  letter-spacing: -0.01em;
+  color: var(--zv-ink);
 }
 
 .zv-brand-tag {
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  color: var(--zv-text-muted);
+  font-family: var(--zv-font-mono);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--zv-ink-faint);
   text-transform: uppercase;
 }
 
+/* Tabs are slots in the panel, and the current section is the punched one. */
 .zv-nav-tabs {
   display: flex;
   align-items: center;
-  gap: 4px;
-  background: var(--zv-glass-surface-subtle);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--zv-glass-border);
+  gap: 2px;
+  background: var(--zv-sunken);
+  border: 1px solid var(--zv-line);
   padding: 3px;
-  border-radius: 14px;
+  border-radius: var(--zv-radius-md);
 }
 
 .zv-nav-link {
   background: transparent;
-  border: none;
-  color: var(--zv-text-secondary);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  padding: 10px 20px;
-  border-radius: 10px;
+  border: 0;
+  color: var(--zv-ink-muted);
+  font-family: var(--zv-font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 6px 16px;
+  border-radius: var(--zv-radius-sm);
   cursor: pointer;
+  white-space: nowrap;
   transition:
-    color 0.15s ease,
-    background 0.15s ease,
-    box-shadow 0.15s ease;
-  position: relative;
-}
-
-.zv-nav-link:focus-visible {
-  outline: none;
-  color: var(--zv-text-primary);
-  background: var(--zv-glass-surface);
-  box-shadow: 0 0 0 2px var(--zv-focus);
+    color var(--zv-dur-state) var(--zv-ease-out),
+    background-color var(--zv-dur-state) var(--zv-ease-out);
 }
 
 .zv-nav-link:hover {
-  color: var(--zv-text-primary);
-  background: var(--zv-glass-surface);
+  color: var(--zv-ink);
+  background: var(--zv-surface-hover);
 }
 
 .zv-nav-link.active {
-  color: #ffffff;
-  background: var(--zv-gradient-primary);
+  color: var(--zv-fill-ink);
+  background: var(--zv-fill);
+  /* The key goes down 2px. The press is felt, not eased. */
   box-shadow: var(--zv-shadow-action);
 }
 
-/* Dark theme: espresso pill, ivory text, bronze inset edge (no glow). */
-[data-theme="dark"] .zv-nav-link.active {
-  color: var(--zv-text);
-  box-shadow: inset 0 0 0 1px #412d15;
+.zv-nav-link:focus-visible {
+  outline: 2px solid var(--zv-focus);
+  outline-offset: 2px;
 }
 
-.zv-nav-link.active:hover {
-  filter: brightness(1.05);
+.zv-navbar-entry {
+  flex: 0 0 auto;
 }
 
-/* Navbar actions: theme toggle + status pill */
 .zv-navbar-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--zv-space-2);
+  flex: 0 0 auto;
+}
+
+.zv-account {
+  display: flex;
+  align-items: center;
+  gap: var(--zv-space-2);
+}
+
+.zv-account-name {
+  max-width: 16ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  color: var(--zv-ink-muted);
+}
+
+.zv-signout-btn {
+  min-height: 32px;
+  padding: 0 var(--zv-space-3);
+  border-radius: var(--zv-radius-sm);
+  border: 1px solid var(--zv-line);
+  background: transparent;
+  color: var(--zv-ink-muted);
+  font-family: var(--zv-font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    color var(--zv-dur-state) var(--zv-ease-out),
+    border-color var(--zv-dur-state) var(--zv-ease-out),
+    background-color var(--zv-dur-state) var(--zv-ease-out);
+}
+
+.zv-signout-btn:hover {
+  color: var(--zv-ink);
+  border-color: var(--zv-line-input);
+  background: var(--zv-surface-hover);
+}
+
+.zv-signout-btn:focus-visible,
+.zv-theme-toggle:focus-visible {
+  outline: 2px solid var(--zv-focus);
+  outline-offset: 2px;
 }
 
 .zv-theme-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  background: var(--zv-glass-surface-subtle);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--zv-glass-border);
-  color: var(--zv-accent-text);
+  width: 34px;
+  height: 34px;
+  border-radius: var(--zv-radius-sm);
+  background: transparent;
+  border: 1px solid var(--zv-line);
+  color: var(--zv-ink);
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease,
-    box-shadow 0.15s ease, color 0.15s ease;
-}
-
-.zv-theme-toggle svg {
-  width: 18px;
-  height: 18px;
+  transition:
+    border-color var(--zv-dur-state) var(--zv-ease-out),
+    background-color var(--zv-dur-state) var(--zv-ease-out),
+    transform var(--zv-dur-press) var(--zv-ease-punch);
 }
 
 .zv-theme-toggle:hover {
-  border-color: var(--zv-border-accent);
-  background: var(--zv-glass-surface);
-  box-shadow: var(--zv-shadow-sm);
+  border-color: var(--zv-line-input);
+  background: var(--zv-surface-hover);
 }
 
 .zv-theme-toggle:active {
-  transform: scale(0.94);
+  transform: translateY(1px);
 }
 
-.zv-theme-toggle:focus-visible {
-  outline: none;
-  border-color: var(--zv-focus);
-  box-shadow: 0 0 0 3px var(--zv-focus-soft);
+.zv-theme-toggle svg {
+  width: 17px;
+  height: 17px;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .zv-theme-toggle,
-  .zv-theme-toggle:active {
-    transition: none;
-    transform: none;
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-/* BACKEND STATUS INDICATOR                                                   */
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+   4. Backend status — an indicator lamp on the panel
+   -------------------------------------------------------------------------- */
 
 .zv-status-indicator {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 14px;
-  border-radius: 999px;
+  gap: 7px;
+  padding: 0 var(--zv-space-2);
+  min-height: 34px;
+  border-radius: var(--zv-radius-sm);
+  font-family: var(--zv-font-mono);
   font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  border: 1px solid var(--zv-glass-border);
-  background: var(--zv-glass-surface-subtle);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  color: var(--zv-ink-muted);
+  white-space: nowrap;
 }
 
-.zv-status-indicator:focus-within {
-  border-color: var(--zv-focus);
-  box-shadow: 0 0 0 2px var(--zv-focus-soft);
-}
-
+/* A lamp, not a chip: round, seated in a bezel, and the only thing on the panel
+   allowed to glow. */
 .zv-status-dot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
   border-radius: 50%;
-  display: inline-block;
-  transition: box-shadow 0.2s ease, transform 0.15s ease;
-}
-
-.status-checking .zv-status-dot {
-  background-color: var(--zv-pending);
-  box-shadow: 0 0 10px var(--zv-pending);
-  animation: zv-pulse 1.5s ease-in-out infinite;
+  background: var(--zv-ink-faint);
+  box-shadow: 0 0 0 2px var(--zv-bg-base);
+  transition: background-color var(--zv-dur-panel) var(--zv-ease-out);
 }
 
 .status-online .zv-status-dot {
-  background-color: var(--zv-success);
-  box-shadow: 0 0 10px var(--zv-success);
+  background: var(--zv-punch);
 }
 
 .status-offline .zv-status-dot {
-  background-color: var(--zv-danger);
-  box-shadow: 0 0 10px var(--zv-danger);
+  background: var(--zv-seal);
 }
 
-@keyframes zv-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(0.9); }
+/* The only looping animation in the app, and it runs only while the answer is
+   genuinely unknown. It stops the moment the server answers. */
+.status-checking .zv-status-dot {
+  background: var(--zv-punch-line);
+  animation: zv-lamp 1.6s var(--zv-ease-inout) infinite;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .status-checking .zv-status-dot {
-    animation: none;
+@keyframes zv-lamp {
+  0%,
+  100% {
+    opacity: 1;
   }
-}
-
-.zv-status-text {
-  color: var(--zv-text-primary);
+  50% {
+    opacity: 0.35;
+  }
 }
 
 .zv-status-retry-btn {
-  background: var(--zv-danger-bg);
-  border: 1px solid var(--zv-danger-border);
-  color: var(--zv-danger);
-  padding: 2px 10px;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  font-weight: 700;
+  background: transparent;
+  border: 1px solid var(--zv-seal-line);
+  color: var(--zv-seal);
+  padding: 3px 10px;
+  border-radius: var(--zv-radius-sm);
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background-color var(--zv-dur-state) var(--zv-ease-out);
 }
 
 .zv-status-retry-btn:hover {
-  background: var(--zv-danger);
-  color: #ffffff;
+  background: var(--zv-seal-bg);
 }
 
-.zv-status-retry-btn:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--zv-danger);
+.zv-offline-banner {
+  background: var(--zv-seal-bg);
+  border-bottom: 1px solid var(--zv-seal-line);
+  color: var(--zv-ink);
 }
 
-/* -------------------------------------------------------------------------- */
-/* LANDING PAGE & HERO                                                        */
-/* -------------------------------------------------------------------------- */
-
-.zv-landing-container {
-  display: flex;
-  flex-direction: column;
-  gap: 56px;
-}
-
-.zv-hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 20px;
-  padding: 40px 20px 24px;
-  max-width: 880px;
+.zv-offline-inner {
+  max-width: 1200px;
   margin: 0 auto;
+  padding: var(--zv-space-3) var(--zv-space-6);
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
-.zv-hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  background: var(--zv-glass-surface-subtle);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--zv-glass-border);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--zv-accent-text);
-  transition: border-color 0.2s ease, background 0.2s ease;
+.zv-offline-inner strong {
+  margin-right: var(--zv-space-2);
 }
 
-.zv-hero-badge:hover {
-  border-color: var(--zv-border-accent);
-  background: var(--zv-glass-surface);
+.zv-offline-inner code {
+  padding: 2px 6px;
+  border-radius: var(--zv-radius-sm);
+  background: var(--zv-sunken);
+  border: 1px solid var(--zv-line);
 }
 
-.zv-pulse-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: var(--zv-live);
-  box-shadow: 0 0 8px var(--zv-live), 0 0 16px var(--zv-live-soft);
-  animation: zv-pulse-glow 2.6s ease-in-out infinite;
-}
+/* --------------------------------------------------------------------------
+   5. Page frame
+   -------------------------------------------------------------------------- */
 
-/* Barely-there pulse: opacity + scale only. The glow stays a static
-   box-shadow so nothing large repaints every frame. */
-@keyframes zv-pulse-glow {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.75; transform: scale(0.92); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .zv-pulse-dot {
-    animation: none;
-    opacity: 1;
-  }
-}
-
-/* The logo lockup is the visual title, so the real <h1> stays in the
-   accessibility tree but off-screen. Standard clip pattern, not display:none,
-   which would drop the heading entirely. */
-.zv-hero-title {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* Approved lockup artwork: light theme shows the espresso lockup,
-   dark theme shows the ivory dark-background variant. No frame: the
-   mark sits directly on the page background. */
-.zv-hero-logo {
-  display: none;
-  width: min(100%, 600px);
-  height: auto;
-}
-
-[data-theme="light"] .zv-hero-logo-light,
-[data-theme="dark"] .zv-hero-logo-dark {
-  display: block;
-}
-
-.zv-hero-subtitle {
-  font-size: clamp(1.25rem, 2.8vw, 1.625rem);
-  font-weight: 600;
-  background: var(--zv-gradient-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  letter-spacing: -0.01em;
-}
-
-.zv-hero-description {
-  font-size: 1.1rem;
-  color: var(--zv-text-secondary);
-  line-height: 1.7;
-  max-width: 680px;
-  margin: 0;
-}
-
-.zv-hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  justify-content: center;
-}
-
-/* -------------------------------------------------------------------------- */
-/* CARDS & GRIDS                                                              */
-/* -------------------------------------------------------------------------- */
-
-.zv-section {
+.zv-page-header {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: var(--zv-space-2);
+  padding-bottom: var(--zv-space-5);
+  border-bottom: 1px solid var(--zv-line);
 }
 
-.zv-section-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--zv-text-primary);
-  letter-spacing: -0.01em;
-  text-align: center;
+/* Display voice is machine lettering, not the platform sans: this is a card
+   field, and a card's headings are set by the same punch that sets its data. */
+.zv-page-title {
+  margin: 0;
+  font-family: var(--zv-font-mono);
+  font-size: clamp(1.375rem, 1.2rem + 0.8vw, 1.75rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--zv-ink);
+  text-wrap: balance;
 }
 
-.zv-grid-3 {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 24px;
+.zv-page-subtitle {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--zv-ink-muted);
+  max-width: var(--zv-measure);
 }
+
+.zv-page-subtitle code {
+  font-size: 0.8125rem;
+  padding: 1px 6px;
+  border-radius: var(--zv-radius-sm);
+  background: var(--zv-sunken);
+  border: 1px solid var(--zv-line);
+}
+
+/* A tab bar switches between views of one thing, so it carries a punched rule
+   under the current view. A segmented switch changes the thing itself, so it
+   carries a fill. They must not look the same. */
+.zv-tabs {
+  display: flex;
+  align-items: stretch;
+  gap: var(--zv-space-5);
+  border-bottom: 1px solid var(--zv-line);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.zv-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.zv-tab {
+  position: relative;
+  background: none;
+  border: 0;
+  padding: var(--zv-space-3) 2px calc(var(--zv-space-3) - 2px);
+  font-family: var(--zv-font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--zv-ink-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color var(--zv-dur-state) var(--zv-ease-out);
+}
+
+/* The current view's rule punches up from the bottom edge in the punch ink, so
+   the tab bar and the ballot agree on what a punched thing looks like. */
+.zv-tab::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -1px 0;
+  height: 2px;
+  background: var(--zv-punch);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--zv-dur-panel) var(--zv-ease-out);
+}
+
+.zv-tab:hover {
+  color: var(--zv-ink);
+}
+
+.zv-tab[aria-pressed="true"],
+.zv-tab[aria-selected="true"] {
+  color: var(--zv-ink);
+}
+
+.zv-tab[aria-pressed="true"]::after,
+.zv-tab[aria-selected="true"]::after {
+  transform: scaleX(1);
+}
+
+.zv-tab:focus-visible {
+  outline: 2px solid var(--zv-focus);
+  outline-offset: -2px;
+  border-radius: var(--zv-radius-sm);
+}
+
+.zv-segment {
+  /* Inside a flex-column page container an inline-flex child still stretches,
+     which is how a two-word control became a full-width bar. */
+  align-self: flex-start;
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  max-width: 100%;
+  background: var(--zv-sunken);
+  border: 1px solid var(--zv-line);
+  border-radius: var(--zv-radius-md);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.zv-segment::-webkit-scrollbar {
+  display: none;
+}
+
+.zv-segment-option {
+  flex: 0 0 auto;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: var(--zv-radius-sm);
+  background: transparent;
+  color: var(--zv-ink-muted);
+  font-family: var(--zv-font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--zv-dur-state) var(--zv-ease-out),
+    color var(--zv-dur-state) var(--zv-ease-out);
+}
+
+.zv-segment-option:hover {
+  color: var(--zv-ink);
+}
+
+/* Written after :hover on purpose. The hover rule is one class more specific
+   than the state rule, and an earlier version let it win — which made every tab
+   label machine-ground-on-punch the moment it was clicked. */
+.zv-segment-option[aria-pressed="true"] {
+  background: var(--zv-fill);
+  color: var(--zv-fill-ink);
+}
+
+.zv-segment-option:focus-visible {
+  outline: 2px solid var(--zv-focus);
+  outline-offset: 1px;
+}
+
+/* ---- sections ------------------------------------------------------------ */
+
+.zv-admin-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zv-space-10);
+}
+
+.zv-admin-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zv-space-4);
+  min-width: 0;
+}
+
+.zv-admin-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  /* More air above a heading than below it. */
+  margin-bottom: var(--zv-space-1);
+}
+
+.zv-admin-section-title {
+  margin: 0;
+  font-family: var(--zv-font-mono);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--zv-ink);
+  text-wrap: balance;
+}
+
+.zv-admin-section-desc {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--zv-ink-muted);
+  max-width: var(--zv-measure);
+}
+
+.zv-subsection-title {
+  margin: var(--zv-space-6) 0 var(--zv-space-1);
+  font-family: var(--zv-font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--zv-ink-faint);
+  text-transform: uppercase;
+}
+
+/* --------------------------------------------------------------------------
+   6. Card stock and the tray
+
+   Two surfaces, and the difference between them is the point of this world.
+
+   .zv-card is a panel of the machine: cool, hard, squared. Almost everything on
+   the desk is one of these — the sign-in form, the verify form, the disclosure
+   under a row.
+
+   .zv-card-stock is the card: warm manila, clipped at the corner, banded across
+   the top, punched down one side. It is used on exactly three things — the
+   ballot being punched, the published total, and the receipt the machine prints
+   back — so the one warm object on the page is always the object that carries
+   the claim.
+   -------------------------------------------------------------------------- */
 
 .zv-card {
-  background: var(--zv-card-bg);
-  border: 1px solid var(--zv-glass-border);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: var(--zv-shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  background: var(--zv-surface);
+  border: 1px solid var(--zv-line);
+  border-radius: var(--zv-radius-md);
+  padding: var(--zv-space-6);
+  box-shadow: var(--zv-shadow-sm);
 }
 
-[data-theme="light"] .zv-card {
-  box-shadow: var(--zv-shadow-md), inset 0 1px 0 #ffffff;
+/* A machined lip along the top edge: the panel catches light on one side, and
+   that single highlight is the only thing that makes it read as metal rather
+   than as a div with a border. */
+.zv-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: oklch(1 0 0 / 0.05);
+  pointer-events: none;
 }
 
-/* No hover lift on the shared .zv-card: every admin/voter/verify card holds
-   a form, not a link. Only the landing feature cards are interactive, and
-   they carry their own hover treatment below. */
+.zv-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zv-space-5);
+}
 
-/* Danger-zone card (Close Election). Red is scoped to the top edge and a
-   barely-tinted surface, so the page does not read as an error screen. A left
-   border is deliberately avoided: it would not follow the 16px radius. */
+/* Destructive work is fenced by tint, a 1px exception-ink boundary and an
+   exception-ink heading — never by a heavy one-sided rule, which reads as a
+   costume at any width. */
 .zv-card-danger {
-  border-color: var(--zv-danger-border);
-  border-top: 3px solid var(--zv-danger);
-  background: linear-gradient(
-    180deg,
-    var(--zv-danger-bg) 0%,
-    var(--zv-card-bg) 45%
+  border-color: var(--zv-seal-line);
+  background: var(--zv-seal-bg);
+}
+
+.zv-card-danger .zv-admin-section-title,
+.zv-card-danger .zv-confirm-title {
+  color: var(--zv-seal-ink);
+}
+
+/* ---- the card ------------------------------------------------------------- */
+
+.zv-card-stock {
+  position: relative;
+  background: var(--zv-card);
+  color: var(--zv-card-ink);
+  border: 1px solid var(--zv-card-line);
+  border-radius: var(--zv-radius-lg);
+  padding: 0;
+  box-shadow: var(--zv-shadow-card);
+}
+
+/* The band across the top: where a card carries its own printed identity and the
+   keying station's dead-zone punch. */
+.zv-card-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--zv-space-4);
+  padding: var(--zv-space-3) var(--zv-space-6);
+  padding-right: 42px;
+  border-bottom: 1px solid var(--zv-card-line);
+  background: color-mix(in srgb, var(--zv-card-well) 60%, var(--zv-card));
+}
+
+.zv-card-band-left {
+  display: flex;
+  align-items: center;
+  gap: var(--zv-space-3);
+  min-width: 0;
+}
+
+.zv-card-band-title {
+  font-family: var(--zv-font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--zv-card-ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zv-card-band-id {
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
+  color: var(--zv-card-muted);
+  white-space: nowrap;
+}
+
+/* The 80, printed in the corner a card is sorted by. */
+.zv-card-cols {
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--zv-card-muted);
+  white-space: nowrap;
+}
+
+/* The card's face. The 80-column grid is printed here and only here, at the
+   pitch of a real card, behind the fields rather than under the text. */
+.zv-card-face {
+  position: relative;
+  padding: var(--zv-space-6);
+  padding-right: var(--zv-space-6);
+}
+
+.zv-card-face::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to right,
+    color-mix(in srgb, var(--zv-card-line) 34%, transparent) 0 1px,
+    transparent 1px calc(100% / 40)
+  );
+  /* The grid is the faintest thing on the card: it is under the ink, not on it,
+     and it fades out before it reaches the fields' own rules. */
+  opacity: 0.4;
+  mask-image: linear-gradient(
+    to bottom,
+    oklch(0 0 0) 0 46%,
+    transparent 100%
   );
 }
 
-.zv-card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
+.zv-card-face > * {
+  position: relative;
 }
 
-.zv-card-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--zv-text-primary);
-  margin: 0 0 4px;
+/* The punch gutter: the column of slots a key enters, running down the leading
+   edge of the card. It is where the candidate's own hole is punched, and it is
+   drawn rather than marked up, so it costs no nodes and cannot misalign. */
+.zv-card-gutter {
+  position: absolute;
+  top: var(--zv-space-4);
+  bottom: var(--zv-space-4);
+  left: 11px;
+  width: 3px;
+  pointer-events: none;
+  background-image: linear-gradient(
+    var(--zv-card-line),
+    var(--zv-card-line)
+  );
+  background-size: 3px 8px;
+  background-repeat: repeat-y;
+  opacity: 0.6;
 }
 
-.zv-card-subtitle {
-  font-size: 0.85rem;
-  color: var(--zv-text-muted);
-  margin: 0;
+/* The card's own field rules. Warm, because they are printed on the card. */
+.zv-card-stock .zv-card-detail {
+  border-bottom: 1px solid color-mix(in srgb, var(--zv-card-line) 55%, transparent);
+  padding-bottom: 6px;
 }
 
-/* Feature cards for landing page */
-.zv-feature-grid {
-  gap: 20px;
+.zv-card-stock .zv-label-text,
+.zv-card-stock .zv-form-hint,
+.zv-card-stock .zv-required {
+  color: var(--zv-card-muted);
 }
 
-.zv-feature-card {
+/* A printed notice on the card: prose, in the card's ink, ruled off from what it
+   is about. This is where "one ballot only" lives, because on this product the
+   warning belongs on the object the act is performed on rather than in a dialog
+   that appears afterwards. */
+.zv-clause-set .zv-clause:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.zv-card-print {
+  margin: 0 0 var(--zv-space-4);
+  padding-bottom: var(--zv-space-4);
+  border-bottom: 1px solid color-mix(in srgb, var(--zv-card-line) 60%, transparent);
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--zv-card-ink);
+  max-width: var(--zv-measure);
+}
+
+/* A sub-panel printed on the card takes the card's own well and rule, because a
+   cool machine surface pasted onto a warm card reads as a mistake rather than as
+   a field. */
+.zv-card-stock .zv-result-details {
+  background: var(--zv-card-well);
+  border-color: var(--zv-card-line);
+}
+
+.zv-card-stock .zv-result-row {
+  border-bottom-color: color-mix(in srgb, var(--zv-card-line) 70%, transparent);
+}
+
+.zv-card-stock .zv-result-label,
+.zv-card-stock .zv-result-value {
+  color: var(--zv-card-ink);
+}
+
+.zv-card-stock .zv-result-valid {
+  color: var(--zv-punch-text) !important;
+}
+
+.zv-card-stock .zv-result-invalid {
+  color: var(--zv-seal-text) !important;
+}
+
+.zv-card-stock .zv-hash-block,
+.zv-card-stock .zv-hash-block--live,
+.zv-card-stock .zv-hash-block--secret {
+  background: var(--zv-card-well);
+  border-color: var(--zv-card-line);
+}
+
+
+
+.zv-card-stock .zv-merkle-label {
+  color: var(--zv-card-ink);
+}
+
+.zv-card-stock .zv-merkle-hash {
+  background: color-mix(in srgb, var(--zv-card-line) 16%, var(--zv-card));
+  border-color: var(--zv-card-line);
+  color: var(--zv-card-ink);
+}
+
+.zv-card-stock .zv-form-hint {
+  color: var(--zv-card-muted);
+}
+
+.zv-card-stock .zv-certify {
+  background: var(--zv-card-well);
+  border-color: var(--zv-punch-mark);
+  color: var(--zv-punch-text);
+}
+
+.zv-card-stock .zv-copy-btn {
+  border-color: var(--zv-card-line);
+  color: var(--zv-card-muted);
+}
+
+.zv-card-stock .zv-copy-btn:hover:not(:disabled) {
+  color: var(--zv-card-ink);
+  border-color: var(--zv-punch-mark);
+  background: color-mix(in srgb, var(--zv-punch-bg) 40%, transparent);
+}
+
+/* The ballot and the receipt stack the card in the tray beneath it. */
+.zv-cast {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  gap: var(--zv-space-5);
 }
 
-.zv-feature-card:hover {
-  transform: translateY(-4px);
-  border-color: var(--zv-border-accent);
-  box-shadow:
-    var(--zv-shadow-lg),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .zv-feature-card:hover {
-    transform: none;
-  }
-}
-
-.zv-feature-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
-  background: var(--zv-glass-surface-subtle);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--zv-glass-border);
-  color: var(--zv-accent-text);
+/* A field printed on the card: a fixed-pitch head, the value in its own darker
+   slot, and the note under it. The receipt is two of these, because a receipt is
+   two values and nothing else. */
+.zv-card-field {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--zv-space-4) 0;
+  border-top: 1px solid color-mix(in srgb, var(--zv-card-line) 60%, transparent);
 }
 
-.zv-feature-card:hover .zv-feature-icon {
-  color: var(--zv-text);
-  border-color: var(--zv-border-accent);
-  background: var(--zv-glass-surface);
+.zv-card-field:first-of-type {
+  border-top: 0;
+  padding-top: 0;
 }
 
-.zv-feature-icon svg {
-  width: 26px;
-  height: 26px;
+.zv-card-field--secret {
+  border-top: 0;
 }
 
-.zv-feature-title {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--zv-text-primary);
-  margin: 0;
-  line-height: 1.3;
+.zv-card-hash {
+  display: block;
+  font-family: var(--zv-font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  color: var(--zv-card-ink);
+  background: color-mix(in srgb, var(--zv-card-line) 20%, var(--zv-card));
+  border: 1px solid var(--zv-card-line);
+  border-radius: var(--zv-radius-sm);
+  padding: var(--zv-space-3);
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  user-select: text;
+  cursor: text;
 }
 
-.zv-feature-desc {
-  font-size: 0.88rem;
-  color: var(--zv-text-secondary);
-  line-height: 1.55;
-  margin: 0;
-  flex: 1;
+/* The tray: the recess a stack of cards sits in. Cool, and below the ground. */
+.zv-tray {
+  background: var(--zv-tray);
+  border-top: 1px solid var(--zv-line-strong);
+  padding: var(--zv-space-5) var(--zv-space-6);
 }
 
-/* -------------------------------------------------------------------------- */
-/* BUTTONS                                                                    */
-/* -------------------------------------------------------------------------- */
+/* --------------------------------------------------------------------------
+   7. Buttons
+
+   A keypunch key: square, hard, and it goes down. The primary action is the
+   punch ink because pressing it is the moment the card is punched.
+   -------------------------------------------------------------------------- */
 
 .zv-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  border-radius: 9px;
+  gap: var(--zv-space-2);
+  border-radius: var(--zv-radius-sm);
+  font-family: var(--zv-font-mono);
   font-weight: 600;
+  line-height: 1.2;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: all 0.15s ease-in-out;
   text-decoration: none;
   white-space: nowrap;
+  transition:
+    background-color var(--zv-dur-state) var(--zv-ease-out),
+    border-color var(--zv-dur-state) var(--zv-ease-out),
+    color var(--zv-dur-state) var(--zv-ease-out),
+    box-shadow var(--zv-dur-state) var(--zv-ease-out),
+    transform var(--zv-dur-press) var(--zv-ease-punch);
+}
+
+.zv-btn:focus-visible {
+  outline: 2px solid var(--zv-focus);
+  outline-offset: 2px;
+}
+
+/* The press. 2px down, no scale: a key does not shrink, it descends. */
+.zv-btn:active:not(:disabled) {
+  transform: translateY(2px);
 }
 
 .zv-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.45;
   cursor: not-allowed;
-  /* Desaturate instead of glowing: a disabled destructive action must not
-     keep its red halo. */
-  filter: saturate(0.55) brightness(0.92);
-  box-shadow: none;
 }
 
-/* Sizes */
 .zv-btn-sm {
   padding: 6px 12px;
-  font-size: 0.8rem;
+  font-size: 0.8125rem;
 }
 
 .zv-btn-md {
-  padding: 10px 18px;
-  font-size: 0.9rem;
+  padding: 8px 16px;
+  font-size: 0.875rem;
 }
 
 .zv-btn-lg {
-  padding: 14px 26px;
-  font-size: 1rem;
+  padding: 12px 24px;
+  font-size: 0.9375rem;
 }
 
-/* Variants */
 .zv-btn-primary {
-  background: var(--zv-gradient-primary);
-  color: var(--zv-primary-text);
-  border-color: var(--zv-primary-border);
+  background: var(--zv-fill);
+  color: var(--zv-fill-ink);
+  border-color: var(--zv-fill-line);
   box-shadow: var(--zv-shadow-action);
 }
 
 .zv-btn-primary:hover:not(:disabled) {
-  filter: brightness(1.08);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
-  border-color: var(--zv-primary-border-hover);
-}
-
-[data-theme="light"] .zv-btn-primary:hover:not(:disabled) {
-  box-shadow: 0 4px 18px rgba(60, 50, 35, 0.25);
-}
-
-.zv-btn-primary:active:not(:disabled) {
-  filter: brightness(0.97);
+  background: color-mix(in srgb, var(--zv-fill) 88%, var(--zv-page));
+  border-color: var(--zv-fill-line-hover);
 }
 
 .zv-btn-secondary {
-  background-color: var(--zv-bg-elevated);
-  border-color: var(--zv-border-subtle);
-  color: var(--zv-text-primary);
+  background: var(--zv-surface);
+  border-color: var(--zv-line);
+  color: var(--zv-ink);
 }
 
 .zv-btn-secondary:hover:not(:disabled) {
-  background-color: var(--zv-bg-surface-hover);
-  border-color: var(--zv-border-accent);
+  border-color: var(--zv-line-input);
+  background: var(--zv-surface-hover);
 }
 
 .zv-btn-outline {
-  background-color: transparent;
-  border-color: var(--zv-border-accent);
-  color: var(--zv-text-primary);
+  background: transparent;
+  border-color: var(--zv-line-input);
+  color: var(--zv-ink);
 }
 
 .zv-btn-outline:hover:not(:disabled) {
-  background-color: var(--zv-bg-surface);
-  border-color: var(--zv-primary);
+  background: var(--zv-surface-hover);
+  border-color: var(--zv-ink-faint);
 }
 
+/* Destructive is a solid exception-ink fill. With the inks spent it no longer has
+   to be the same slab the primary action is. */
 .zv-btn-danger {
-  background: var(--zv-danger);
-  color: #ffffff;
+  background: var(--zv-seal);
+  color: var(--zv-ink-invert);
+  border-color: transparent;
+  font-weight: 600;
   box-shadow: var(--zv-shadow-action);
 }
 
+[data-theme="dark"] .zv-btn-danger {
+  color: #1a0906;
+}
+
 .zv-btn-danger:hover:not(:disabled) {
-  filter: brightness(1.08);
-  box-shadow: var(--zv-shadow-action), 0 4px 18px rgba(0, 0, 0, 0.35);
-}
-
-[data-theme="light"] .zv-btn-danger:hover:not(:disabled) {
-  box-shadow: var(--zv-shadow-action), 0 4px 18px rgba(60, 50, 35, 0.25);
-}
-
-.zv-btn-danger:active:not(:disabled) {
-  filter: brightness(0.97);
+  background: color-mix(in srgb, var(--zv-seal) 86%, var(--zv-ink));
 }
 
 .zv-btn-ghost {
-  background-color: transparent;
-  color: var(--zv-text-secondary);
-  border: 1px solid transparent;
+  background: transparent;
+  color: var(--zv-ink-muted);
+  border-color: transparent;
 }
 
 .zv-btn-ghost:hover:not(:disabled) {
-  color: var(--zv-text-primary);
-  background-color: var(--zv-glass-surface);
-  border-color: var(--zv-glass-border);
-}
-
-.zv-btn-ghost:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px var(--zv-focus-soft);
-}
-
-/* Keyboard focus ring. Cast Vote / Verify already set their own on the
-   submit button; this covers primary, danger, outline and secondary. */
-.zv-btn:focus-visible {
-  outline: none;
-  box-shadow: var(--zv-shadow-action), 0 0 0 3px var(--zv-focus-soft);
+  color: var(--zv-ink);
+  background: var(--zv-surface-hover);
 }
 
 .zv-btn-icon {
@@ -770,20 +1314,17 @@
   align-items: center;
 }
 
-.zv-btn-icon svg,
-.zv-btn-icon-svg {
-  width: 18px;
-  height: 18px;
-}
-
-/* Loading Spinner */
+/* The only spinner in the app, and it turns like a key. */
 .zv-spinner {
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  border: 2px solid currentColor;
+  /* Transparent, not currentColor: with the same colour on the leading edge this
+     drew a full ring that merely looked faint, not a spinner. */
+  border-top-color: transparent;
   border-radius: 50%;
-  border-top-color: #ffffff;
-  animation: zv-spin 0.8s linear infinite;
+  animation: zv-spin 0.7s linear infinite;
 }
 
 @keyframes zv-spin {
@@ -792,1297 +1333,664 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .zv-spinner {
-    animation: none;
-    border-top-color: rgba(255, 255, 255, 0.3);
-  }
-}
+/* --------------------------------------------------------------------------
+   8. Alerts
 
-/* -------------------------------------------------------------------------- */
-/* ALERTS & NOTIFICATIONS                                                     */
-/* -------------------------------------------------------------------------- */
+   A card's machine prints its verdicts on a band, so an alert is a band: a tint,
+   a 1px boundary in the ink that means it, a drawn icon, and a word. Nothing
+   here is a pill, and no alert is ever only a colour.
+   -------------------------------------------------------------------------- */
 
 .zv-alert {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
-  padding: 16px;
-  border-radius: 10px;
+  gap: var(--zv-space-3);
+  padding: var(--zv-space-4);
+  border-radius: var(--zv-radius-sm);
   border: 1px solid transparent;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  line-height: 1.55;
 }
 
-.zv-alert-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  margin-top: 1px;
+/* The hole is the alert's only mark. A card states its verdict with a punched
+   slot and a word; giving it an icon as well put two symbols in front of one
+   sentence, and the icon is the half a screen reader can only describe. */
+.zv-alert-mark {
+  margin-top: 3px;
 }
 
 .zv-alert-content {
   flex: 1;
+  min-width: 0;
 }
 
 .zv-alert-title {
-  font-weight: 700;
-  margin: 0 0 4px;
+  margin: 0 0 3px;
+  font-family: var(--zv-font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   color: inherit;
 }
 
 .zv-alert-message {
   margin: 0;
-  line-height: 1.4;
+  max-width: var(--zv-measure);
 }
 
 .zv-alert-info {
-  background-color: var(--zv-info-bg);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border-color: var(--zv-glass-border);
-  color: var(--zv-info-text);
+  background: var(--zv-sunken);
+  border-color: var(--zv-line);
+  color: var(--zv-ink);
 }
 
+.zv-alert-info .zv-alert-title {
+  color: var(--zv-ink-muted);
+}
+
+/* Proven, recorded, running. */
 .zv-alert-success {
-  background: var(--zv-success-bg);
-  border-color: var(--zv-success-border);
-  color: var(--zv-success-text);
+  background: var(--zv-punch-bg);
+  border-color: var(--zv-punch-line);
+  color: var(--zv-ink);
 }
 
+.zv-alert-success .zv-alert-title {
+  color: var(--zv-punch-ink);
+}
+
+/* Needs a person. It takes the punch ink at its quiet end and a warning triangle,
+   never the exception ink: nothing is broken and nothing has been destroyed. */
 .zv-alert-warning {
-  background-color: var(--zv-warning-bg);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border-color: var(--zv-warning-border);
-  color: var(--zv-warning-text);
+  background: var(--zv-sunken);
+  border-color: var(--zv-line-strong);
+  color: var(--zv-ink);
 }
 
+.zv-alert-warning .zv-alert-title {
+  color: var(--zv-ink-muted);
+}
+
+/* Destructive, or broken. The exception ribbon, and the only place it is spent
+   on a fill. */
 .zv-alert-error {
-  background: var(--zv-danger-bg);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border-color: var(--zv-danger-border);
-  color: var(--zv-danger-text);
+  background: var(--zv-seal-bg);
+  border-color: var(--zv-seal-line);
+  color: var(--zv-ink);
 }
 
-/* -------------------------------------------------------------------------- */
-/* DISCLAIMER BOX                                                             */
-/* -------------------------------------------------------------------------- */
-
-.zv-disclaimer-box {
-  background: var(--zv-glass-surface-subtle);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--zv-glass-border);
-  border-left: 4px solid var(--zv-warning);
-  border-radius: 14px;
-  padding: 20px 24px;
-  max-width: 880px;
-  margin: 0 auto;
+.zv-alert-error .zv-alert-title {
+  color: var(--zv-seal-ink);
 }
 
-.zv-disclaimer-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
+/* The proof is the one thing in the app that gets to move. */
+.zv-alert-success .zv-alert-mark {
+  animation: zv-punch var(--zv-dur-scene) var(--zv-ease-punch) both;
 }
 
-.zv-disclaimer-icon {
-  width: 20px;
-  height: 20px;
-  color: var(--zv-warning);
-  flex-shrink: 0;
+@keyframes zv-punch {
+  from {
+    opacity: 0;
+    scale: 0.6;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
 }
 
-.zv-disclaimer-title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--zv-text-primary);
-  margin: 0;
-}
+/* --------------------------------------------------------------------------
+   9. Forms
 
-.zv-disclaimer-text {
-  font-size: 0.85rem;
-  color: var(--zv-text-secondary);
-  line-height: 1.6;
-  margin: 0;
-}
-
-/* -------------------------------------------------------------------------- */
-/* PAGE SHELL STUBS (Admin, Voter, Verify)                                     */
-/* -------------------------------------------------------------------------- */
-
-.zv-page-container {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-
-.zv-page-header {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-bottom: 24px;
-  border-bottom: 1px solid var(--zv-border);
-}
-
-.zv-page-badge {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--zv-eyebrow);
-  text-transform: uppercase;
-}
-
-.zv-page-title {
-  font-size: 2rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--zv-text-primary);
-  margin: 0;
-}
-
-.zv-page-subtitle {
-  font-size: 1rem;
-  color: var(--zv-text-secondary);
-  margin: 0;
-}
-
-/* -------------------------------------------------------------------------- */
-/* FOOTER                                                                     */
-/* -------------------------------------------------------------------------- */
-
-.zv-footer {
-  background: var(--zv-footer-bg);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
-  backdrop-filter: blur(14px) saturate(1.2);
-  border-top: 1px solid var(--zv-glass-border);
-  box-shadow:
-    var(--zv-shadow-md),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  padding: 20px 0;
-  margin-top: auto;
-}
-
-[data-theme="light"] .zv-footer {
-  box-shadow:
-    var(--zv-shadow-md),
-    inset 0 1px 0 #ffffff;
-}
-
-.zv-footer-container {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 0 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-}
-
-.zv-footer-title {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--zv-text-primary);
-  margin: 0 0 2px;
-}
-
-.zv-footer-desc {
-  font-size: 0.78rem;
-  color: var(--zv-text-muted);
-  margin: 0;
-}
-
-.zv-footer-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.zv-footer-badge {
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: var(--zv-glass-surface-subtle);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--zv-glass-border);
-  color: var(--zv-text-secondary);
-  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-}
-
-.zv-footer-badge:hover {
-  color: var(--zv-text-primary);
-  border-color: var(--zv-border-accent);
-  background: var(--zv-glass-surface);
-}
-
-/* -------------------------------------------------------------------------- */
-/* ADMIN PAGE LAYOUT                                                          */
-/* -------------------------------------------------------------------------- */
-
-.zv-admin-sections {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-
-.zv-admin-row {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
-}
-
-.zv-admin-section {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-width: 0;
-}
-
-.zv-admin-section-header {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.zv-admin-section-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--zv-text-primary);
-  margin: 0;
-}
-
-.zv-admin-section-desc {
-  font-size: 0.85rem;
-  color: var(--zv-text-secondary);
-  margin: 0;
-  line-height: 1.5;
-}
-
-/* Small kicker above a section heading. Danger variant is the only
-   coloured one on this page: red stays reserved for destructive work. */
-.zv-admin-section-eyebrow {
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--zv-eyebrow);
-}
-
-.zv-admin-section-eyebrow--danger {
-  color: var(--zv-danger-text);
-}
-
-/* -------------------------------------------------------------------------- */
-/* FORMS                                                                      */
-/* -------------------------------------------------------------------------- */
+   The label is the card's pre-printed field head: fixed pitch, uppercase, small,
+   tracked. The control is a keyed slot you type into — a sunken well with a
+   machined boundary.
+   -------------------------------------------------------------------------- */
 
 .zv-form {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--zv-space-5);
 }
 
 .zv-form-label {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .zv-label-text {
-  font-size: 0.8rem;
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
   font-weight: 600;
-  color: var(--zv-text-secondary);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.14em;
+  color: var(--zv-ink-muted);
   text-transform: uppercase;
 }
 
 .zv-required {
-  color: var(--zv-danger);
+  color: var(--zv-seal);
 }
 
 .zv-input {
   width: 100%;
-  /* Keeps text, password, datetime-local and date fields the same height
-     despite their different intrinsic metrics. */
-  min-height: 44px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  border: 1px solid var(--zv-glass-border);
-  background: var(--zv-input-bg);
-  color: var(--zv-text-primary);
-  font-size: 0.92rem;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  min-height: 42px;
+  padding: 10px var(--zv-space-3);
+  border-radius: var(--zv-radius-sm);
+  border: 1px solid var(--zv-line-input);
+  background: var(--zv-sunken);
+  color: var(--zv-ink);
+  font-family: var(--zv-font-mono);
+  font-size: 0.875rem;
+  transition:
+    border-color var(--zv-dur-state) var(--zv-ease-out),
+    box-shadow var(--zv-dur-state) var(--zv-ease-out),
+    background-color var(--zv-dur-state) var(--zv-ease-out);
 }
 
 .zv-input::placeholder {
-  color: var(--zv-text-muted);
+  color: var(--zv-ink-faint);
+}
+
+.zv-input:hover:not(:disabled):not(:focus) {
+  border-color: var(--zv-ink-faint);
 }
 
 .zv-input:focus {
   outline: none;
   border-color: var(--zv-focus);
-  box-shadow: 0 0 0 3px var(--zv-focus-soft);
-  background: var(--zv-input-bg-focus);
+  box-shadow: 0 0 0 3px var(--zv-focus-halo);
 }
 
 .zv-input:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background: var(--zv-input-bg-disabled);
+  background: var(--zv-sunken-disabled);
+}
+
+.zv-input.zv-mono {
+  font-family: var(--zv-font-mono);
+  font-size: 0.875rem;
 }
 
 .zv-input[type="datetime-local"] {
   font-family: var(--zv-font-mono);
-  font-size: 0.85rem;
-  letter-spacing: 0.02em;
+  font-size: 0.8125rem;
 }
 
-/* Secure credential entry — passphrase fields get a distinct,
-   lock-like treatment while keeping the bronze focus ring. */
+/* A passphrase is a credential, not a display element. It gets the same boundary
+   as every other control, a Show control, and nothing else. */
 .zv-input[type="password"] {
-  letter-spacing: 0.14em;
   font-family: var(--zv-font-mono);
-  border-left: 3px solid var(--zv-border-strong);
-  background: var(--zv-input-hero-bg);
+  letter-spacing: 0.1em;
 }
 
 .zv-input[type="password"]::placeholder {
   letter-spacing: normal;
-  font-family: inherit;
-}
-
-.zv-input[type="password"]:focus {
-  border-left-color: var(--zv-focus);
 }
 
 .zv-textarea {
   resize: vertical;
-  min-height: 88px;
-  font-family: inherit;
+  min-height: 84px;
+  line-height: 1.55;
+}
+
+.zv-reveal-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--zv-space-2);
+}
+
+.zv-reveal-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.zv-reveal-btn {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 0 var(--zv-space-3);
+  border-radius: var(--zv-radius-sm);
+  border: 1px solid var(--zv-line-input);
+  background: transparent;
+  color: var(--zv-ink-muted);
+  font-family: var(--zv-font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color var(--zv-dur-state) var(--zv-ease-out),
+    border-color var(--zv-dur-state) var(--zv-ease-out);
+}
+
+.zv-reveal-btn:hover,
+.zv-reveal-btn[aria-pressed="true"] {
+  color: var(--zv-ink);
+  border-color: var(--zv-punch);
+  background: var(--zv-punch-bg);
 }
 
 .zv-form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: var(--zv-space-4);
 }
 
 .zv-form-hint {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--zv-ink-muted);
+  max-width: var(--zv-measure);
+}
+
+.zv-form-hint code {
+  padding: 1px 5px;
+  border-radius: var(--zv-radius-sm);
+  background: var(--zv-sunken);
+  border: 1px solid var(--zv-line);
   font-size: 0.75rem;
-  color: var(--zv-text-muted);
-  line-height: 1.4;
 }
 
 .zv-form-actions {
   display: flex;
-  gap: 12px;
-  padding-top: 8px;
-}
-
-/* Destructive submit is fenced off from the ordinary inputs above it, so it
-   reads as a separate decision rather than the next field in the list. */
-.zv-card-danger .zv-form-actions {
-  margin-top: 4px;
-  padding-top: 20px;
-  border-top: 1px solid var(--zv-danger-border);
-}
-
-.zv-input-error {
-  border-color: var(--zv-danger) !important;
-}
-
-.zv-input-error:focus {
-  box-shadow: 0 0 0 3px var(--zv-danger-bg) !important;
+  flex-wrap: wrap;
+  gap: var(--zv-space-2);
+  padding-top: var(--zv-space-1);
 }
 
 .zv-form-error-hint {
-  font-size: 0.78rem;
-  color: var(--zv-danger);
+  font-family: var(--zv-font-mono);
+  font-size: 0.75rem;
   font-weight: 600;
+  color: var(--zv-seal-ink);
+}
+
+/* The error channel is three things at once: the word, the boundary, and the
+   icon a screen reader gets. */
+.zv-input.zv-input-error,
+.zv-input-error {
+  border-color: var(--zv-seal);
+}
+
+.zv-input.zv-input-error:focus {
+  box-shadow: 0 0 0 3px var(--zv-seal-line);
+}
+
+.zv-context-line {
+  padding: var(--zv-space-3);
+  border-radius: var(--zv-radius-sm);
+  background: var(--zv-sunken);
+  border: 1px solid var(--zv-line-strong);
+  color: var(--zv-ink-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.zv-context-line strong {
+  color: var(--zv-ink);
+}
+
+.zv-context-line code {
+  color: var(--zv-ink);
 }
 
 .zv-mono {
   font-family: var(--zv-font-mono) !important;
 }
 
-.zv-hash-truncate {
-  word-break: break-all;
-  overflow-wrap: anywhere;
-  font-size: 0.82rem !important;
-}
+/* --------------------------------------------------------------------------
+   10. The election rows
 
-.zv-result-valid {
-  color: var(--zv-success) !important;
-  font-weight: 700;
-}
+   A row and whichever of its panels is open, as one unit. Each row is a card in
+   a tray: cool stock here, because these are records being *read*, not cards
+   being punched. The figures sit in a fixed field zone on the left and the action
+   on the same baseline at the right, because a row whose numbers are far from the
+   control that changes them is two things instead of one.
+   -------------------------------------------------------------------------- */
 
-.zv-result-invalid {
-  color: var(--zv-danger) !important;
-  font-weight: 700;
-}
-
-/* -------------------------------------------------------------------------- */
-/* ADMIN RESULT DISPLAY                                                       */
-/* -------------------------------------------------------------------------- */
-
-.zv-admin-result {
+.zv-election-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: var(--zv-space-3);
 }
 
-.zv-result-details {
+.zv-election-group {
   display: flex;
   flex-direction: column;
-  gap: 0;
-  border: 1px solid var(--zv-glass-border);
-  border-radius: 14px;
-  overflow: hidden;
-  background: var(--zv-surface-2);
+  gap: var(--zv-space-2);
 }
 
-.zv-result-row {
+.zv-election-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--zv-space-3);
+  padding: var(--zv-space-4) var(--zv-space-5) var(--zv-space-4) var(--zv-space-8);
+  transition:
+    border-color var(--zv-dur-state) var(--zv-ease-out),
+    box-shadow var(--zv-dur-state) var(--zv-ease-out);
+}
+
+/* The gutter of slots down the leading edge, the same one the ballot carries. */
+.zv-election-card::after {
+  content: "";
+  position: absolute;
+  top: var(--zv-space-4);
+  bottom: var(--zv-space-4);
+  left: 11px;
+  width: 3px;
+  pointer-events: none;
+  background-image: linear-gradient(
+    var(--zv-card-line),
+    var(--zv-card-line)
+  );
+  background-size: 3px 8px;
+  background-repeat: repeat-y;
+  opacity: 0.6;
+}
+
+/* A row's own ink, because it is a card and not a panel. */
+.zv-card-stock .zv-election-card-title {
+  color: var(--zv-card-ink);
+}
+
+.zv-card-stock .zv-election-card-id,
+.zv-card-stock .zv-count-label,
+.zv-card-stock .zv-counts-note {
+  color: var(--zv-card-muted);
+}
+
+.zv-card-stock .zv-election-card-desc,
+.zv-card-stock .zv-countdown,
+.zv-card-stock .zv-vote-closed-note,
+.zv-card-stock .zv-card-detail-value {
+  color: var(--zv-card-muted);
+}
+
+.zv-card-stock .zv-state-mark {
+  color: var(--zv-card-ink);
+}
+
+.zv-card-stock .zv-count-value {
+  color: var(--zv-card-ink);
+}
+
+.zv-card-stock .zv-copy-btn {
+  color: var(--zv-card-muted);
+}
+
+/* Controls on a card take the card's boundary and the card's ink. Left on the
+   machine ramp they are not a style disagreement — a cool ink at 1.4:1 on buff
+   stock is unreadable, and the capture is the only thing that catches it. */
+.zv-card-stock .zv-card-detail-label {
+  color: var(--zv-card-muted);
+}
+
+.zv-card-stock .zv-btn-outline {
+  background: transparent;
+  border-color: var(--zv-card-line);
+  color: var(--zv-card-ink);
+}
+
+.zv-card-stock .zv-btn-outline:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--zv-card-line) 16%, transparent);
+  border-color: var(--zv-punch-mark);
+}
+
+.zv-card-stock .zv-btn-ghost {
+  background: transparent;
+  color: var(--zv-card-muted);
+}
+
+.zv-card-stock .zv-btn-ghost:hover:not(:disabled) {
+  color: var(--zv-card-ink);
+  background: color-mix(in srgb, var(--zv-card-line) 16%, transparent);
+}
+
+.zv-card-stock .zv-btn-secondary {
+  background: var(--zv-card-well);
+  border-color: var(--zv-card-line);
+  color: var(--zv-card-ink);
+}
+
+/* A window with under a day left has to say so in the exception ink, and that ink
+   drops to its card step when it lands on a card. */
+.zv-card-stock .zv-countdown--soon {
+  color: var(--zv-seal-text);
+}
+
+/* A row that still needs a decision from this person carries a punched rule down
+   its leading edge — 3px is a punch here, not a tab, because it is in the punch
+   ink and because it sits where a key would enter the slot. */
+/* A row that still needs a decision from this person carries a punched hole in
+   its gutter, because the gutter is what the key enters — and a hole says
+   "this one" in a way a coloured bar down the edge never did. */
+.zv-election-card[data-state="ready"] .zv-hole[data-tone="live"],
+.zv-election-card[data-state="urgent"] .zv-hole[data-tone="warn"] {
+  outline: 2px solid var(--zv-punch-mark);
+  outline-offset: 2px;
+}
+
+.zv-election-card[data-state="urgent"] .zv-hole[data-tone="warn"] {
+  outline-color: var(--zv-seal-mark);
+}
+
+.zv-election-card-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--zv-glass-border);
-  transition: background 0.15s ease;
+  gap: var(--zv-space-4);
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: var(--zv-space-2);
+  border-top: 1px solid color-mix(in srgb, var(--zv-card-line) 60%, transparent);
 }
 
-.zv-result-row:last-child {
-  border-bottom: none;
+.zv-counts-note {
+  font-family: var(--zv-font-mono);
+  font-size: 0.75rem;
+  color: var(--zv-ink-faint);
 }
 
-.zv-result-row:hover {
-  background: var(--zv-glass-surface);
+.zv-election-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zv-space-2);
+  min-width: 0;
+  flex: 1;
 }
 
-.zv-result-label {
-  font-size: 0.78rem;
+.zv-election-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--zv-space-2);
+  flex-wrap: wrap;
+}
+
+.zv-election-card-title {
+  margin: 0;
+  font-family: var(--zv-font-mono);
+  font-size: 1rem;
   font-weight: 600;
-  color: var(--zv-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  flex-shrink: 0;
-  margin-right: 16px;
+  letter-spacing: -0.015em;
+  color: var(--zv-ink);
 }
 
-.zv-result-value {
-  font-size: 0.9rem;
-  color: var(--zv-text-primary);
-  text-align: right;
-  word-break: break-all;
-  overflow-wrap: anywhere;
+.zv-election-card-id {
+  font-size: 0.75rem;
+  color: var(--zv-ink-faint);
+}
+
+.zv-election-card-desc {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--zv-ink-muted);
+  max-width: var(--zv-measure);
+}
+
+.zv-election-card-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--zv-space-3);
+  flex-wrap: wrap;
+}
+
+.zv-election-card-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--zv-space-2);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.zv-countdown {
+  font-family: var(--zv-font-mono);
+  font-size: 0.8125rem;
+  color: var(--zv-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A window with under a day left says so in words and in a punched mark. */
+.zv-countdown--soon {
+  color: var(--zv-seal-ink);
+  font-weight: 600;
+}
+
+/* ---- figures: the fixed field zone ---------------------------------------- */
+
+.zv-counts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px var(--zv-space-5);
+}
+
+.zv-count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.zv-count-value {
+  font-family: var(--zv-font-mono);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--zv-ink);
+}
+
+.zv-count-label {
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--zv-ink-faint);
+}
+
+/* ---- card facts ----------------------------------------------------------- */
+
+/* A <p> in the markup, so the user-agent's 1em block margins have to go: they were
+   adding 28px between two lines of metadata. */
+.zv-card-detail {
+  display: flex;
+  gap: var(--zv-space-2);
+  align-items: baseline;
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.zv-card-detail-label {
+  flex: 0 0 auto;
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--zv-ink-faint);
+}
+
+.zv-card-detail-value {
+  color: var(--zv-ink-muted);
   min-width: 0;
 }
 
-.zv-result-value code {
+.zv-vote-closed-note {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--zv-ink-muted);
+  text-align: right;
+  max-width: 22ch;
+}
+
+/* ---- first-run checklist --------------------------------------------------
+   The one ordered thing on the page, and it reads as a punched run-down rather
+   than as a highlighted panel: a keyed box with a rule above it, the way a card
+   separates one field from the next. */
+
+.zv-checklist {
+  padding: var(--zv-space-5);
+  border: 1px solid var(--zv-line-strong);
+  border-radius: var(--zv-radius-sm);
+  background: var(--zv-surface);
+}
+
+.zv-checklist-title {
+  margin: 0 0 var(--zv-space-2);
   font-family: var(--zv-font-mono);
-  background: var(--zv-glass-surface);
-  border: 1px solid var(--zv-glass-border);
-  padding: 3px 10px;
-  border-radius: 6px;
-  font-size: 0.82rem;
-}
-
-.zv-result-status-closed {
-  color: var(--zv-warning);
-  font-weight: 700;
-}
-
-.zv-result-total {
-  font-size: 1.25rem;
-  font-weight: 800;
-  background: var(--zv-gradient-text);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-
-/* -------------------------------------------------------------------------- */
-/* REGISTRATION SUCCESS / RECEIPT PANEL                                       */
-/* -------------------------------------------------------------------------- */
-
-/* Receipt panel. Sits inside .zv-card, so it is a tinted inset rather than a
-   second card: one success border, no inner ring, no glass. */
-.zv-register-success {
-  border: 1px solid var(--zv-success-border);
-  border-radius: 14px;
-  padding: 20px;
-  background: var(--zv-success-bg);
-}
-
-.zv-register-success .zv-result-details {
-  border-color: var(--zv-success-border);
-}
-
-.zv-register-success .zv-form-actions .zv-btn-primary {
-  flex: 1 1 auto;
-}
-
-/* -------------------------------------------------------------------------- */
-/* CAST VOTE INTERFACE (Part A: options + passphrase presentation)            */
-/* NOTE: the ballot choice is a free-text identifier in the current          */
-/* implementation — no discrete options exist to render as radio cards,      */
-/* so the choice field is styled as the hero ballot input instead.           */
-/* -------------------------------------------------------------------------- */
-
-.zv-cast-form {
-  gap: 20px;
-}
-
-/* Compact contextual ID fields (election / voter) */
-.zv-cast-form .zv-input.zv-mono {
-  font-size: 0.85rem;
-  letter-spacing: 0.02em;
-}
-
-/* Ballot choice — hero glass field */
-.zv-choice-field .zv-label-text {
-  color: var(--zv-text-primary);
-}
-
-.zv-choice-input {
-  padding: 14px 16px;
   font-size: 1rem;
   font-weight: 600;
-  border-left: 3px solid var(--zv-border-strong);
-  background: var(--zv-input-hero-bg);
-  transition: border-color 0.15s ease, box-shadow 0.2s ease, background 0.15s ease;
+  color: var(--zv-ink);
 }
 
-.zv-choice-input::placeholder {
-  font-weight: 400;
-  font-size: 0.9rem;
-}
-
-.zv-choice-input:hover:not(:disabled) {
-  border-color: var(--zv-border-accent);
-  border-left-color: var(--zv-border-strong);
-}
-
-.zv-choice-input:focus {
-  outline: none;
-  border-color: var(--zv-focus);
-  border-left-color: var(--zv-focus);
-  box-shadow:
-    0 0 0 3px var(--zv-focus-soft);
-  background: var(--zv-input-bg-focus);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .zv-choice-input {
-    transition: none;
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-/* CAST VOTE SUBMISSION + SUCCESS (Part B)                                    */
-/* NOTE: CastVote has no confirmation step — none is invented here.           */
-/* -------------------------------------------------------------------------- */
-
-/* Submit states (hover / active / focus-visible / disabled) come from the
-   shared .zv-btn-primary and .zv-btn rules. */
-
-/* Receipt panel. Sits inside .zv-card, so it is a tinted inset rather than a
-   second card: one success border, no inner ring, no hardcoded green. */
-.zv-vote-success {
-  border: 1px solid var(--zv-success-border);
-  border-radius: 14px;
-  padding: 20px;
-  background: var(--zv-success-bg);
-}
-
-.zv-vote-success .zv-result-details {
-  border-color: var(--zv-success-border);
-}
-
-/* Ballot commitment stays selectable, wraps safely, never overflows */
-.zv-vote-success .zv-merkle-hash {
-  overflow-wrap: anywhere;
-  user-select: text;
-  cursor: text;
-}
-
-/* Download receipt stays dominant; the reset remains secondary. */
-.zv-vote-success .zv-form-actions .zv-btn-primary {
-  flex: 1 1 auto;
-}
-
-.zv-vote-success .zv-form-actions .zv-btn-outline {
-  flex: 0 1 auto;
-}
-
-/* -------------------------------------------------------------------------- */
-/* VERIFICATION INTERFACE (Phase 7)                                           */
-/* -------------------------------------------------------------------------- */
-
-/* Verify form — commitment as hero cryptographic identifier */
-.zv-verify-form .zv-input.zv-mono {
-  font-size: 0.88rem;
-  letter-spacing: 0.04em;
-  padding: 12px 14px;
-  border-left: 3px solid var(--zv-border-strong);
-  background: var(--zv-input-hero-bg);
-  transition: border-color 0.15s ease, box-shadow 0.2s ease, background 0.15s ease;
-}
-
-.zv-verify-form .zv-input.zv-mono:hover:not(:disabled) {
-  border-color: var(--zv-border-accent);
-  border-left-color: var(--zv-border-strong);
-}
-
-.zv-verify-form .zv-input.zv-mono:focus {
-  outline: none;
-  border-color: var(--zv-focus);
-  border-left-color: var(--zv-focus);
-  box-shadow:
-    0 0 0 3px var(--zv-focus-soft);
-  background: var(--zv-input-bg-focus);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .zv-verify-form .zv-input.zv-mono {
-    transition: none;
-  }
-}
-
-/* Verify submit states (hover / active / focus-visible / disabled) come from
-   the shared .zv-btn-primary and .zv-btn rules. */
-
-/* Verification success — tinted inset, matching Registration / Cast Vote.
-   Sits inside .zv-card, so no second card shadow. */
-.zv-verify-success {
-  border: 1px solid var(--zv-success-border);
-  border-radius: 14px;
-  padding: 20px;
-  background: var(--zv-success-bg);
-}
-
-.zv-verify-success .zv-result-details {
-  border-color: var(--zv-success-border);
-}
-
-/* Commitment hash — selectable, wraps safely, never overflows */
-.zv-verify-success .zv-merkle-hash {
-  overflow-wrap: anywhere;
-  user-select: text;
-  cursor: text;
-}
-
-/* Failure panel — tinted inset with danger accent */
-.zv-verify-failure {
-  border: 1px solid var(--zv-danger-border);
-  border-radius: 14px;
-  padding: 20px;
-  background: var(--zv-danger-bg);
-}
-
-/* Reset action — secondary outline */
-.zv-verify-success .zv-form-actions .zv-btn-outline,
-.zv-verify-failure .zv-form-actions .zv-btn-outline {
-  flex: 1 1 auto;
-}
-
-/* -------------------------------------------------------------------------- */
-
-.zv-confirm-box {
-  background: linear-gradient(
-    180deg,
-    var(--zv-danger-bg) 0%,
-    var(--zv-card-bg) 70%
-  );
-  border: 1px solid var(--zv-danger-border);
-  border-radius: 14px;
-  padding: 20px 24px;
-}
-
-.zv-confirm-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.zv-confirm-icon {
-  width: 22px;
-  height: 22px;
-  color: var(--zv-danger);
-  flex-shrink: 0;
-}
-
-.zv-confirm-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--zv-danger);
-}
-
-.zv-confirm-text {
-  font-size: 0.9rem;
-  color: var(--zv-text-secondary);
-  line-height: 1.6;
-  margin: 0 0 16px;
-}
-
-.zv-confirm-text code {
-  font-family: var(--zv-font-mono);
-  background: var(--zv-glass-surface);
-  border: 1px solid var(--zv-glass-border);
-  padding: 2px 8px;
-  border-radius: 5px;
-  font-size: 0.82rem;
-}
-
-.zv-confirm-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-/* -------------------------------------------------------------------------- */
-/* TALLY BREAKDOWN                                                            */
-/* -------------------------------------------------------------------------- */
-
-.zv-tally-breakdown {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.zv-tally-breakdown-title {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--zv-text-secondary);
+.zv-checklist-steps {
   margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.zv-tally-bars {
+  padding-left: var(--zv-space-5);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--zv-space-2);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--zv-ink-muted);
+  max-width: var(--zv-measure);
 }
 
-.zv-tally-row {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.zv-tally-row-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-}
-
-.zv-tally-choice {
-  font-size: 0.95rem;
+.zv-checklist-steps strong {
+  color: var(--zv-ink);
   font-weight: 600;
-  color: var(--zv-text-primary);
 }
 
-.zv-tally-count {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--zv-text-secondary);
-  font-family: var(--zv-font-mono);
-}
+/* --------------------------------------------------------------------------
+   11. Disclosure — the panel that drops into the tray under the row
+   -------------------------------------------------------------------------- */
 
-.zv-tally-bar-track {
-  height: 10px;
-  border-radius: 5px;
-  background: var(--zv-glass-surface);
-  border: 1px solid var(--zv-glass-border);
-  overflow: hidden;
-}
-
-.zv-tally-bar-fill {
-  height: 100%;
-  border-radius: 5px;
-  background: var(--zv-tally-fill);
-  min-width: 2px;
-  transition: width 0.4s ease;
-}
-
-/* -------------------------------------------------------------------------- */
-/* MERKLE ROOT                                                                */
-/* -------------------------------------------------------------------------- */
-
-.zv-merkle-root {
+.zv-disclosure {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 16px 18px;
-  border: 1px solid var(--zv-glass-border);
-  border-radius: 14px;
-  background: var(--zv-surface-2);
+  gap: var(--zv-space-4);
+  padding: var(--zv-space-5);
+  border-radius: var(--zv-radius-md);
+  border: 1px solid var(--zv-line-strong);
+  background: var(--zv-tray);
+  animation: zv-drop var(--zv-dur-panel) var(--zv-ease-out) both;
 }
 
-.zv-merkle-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--zv-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+.zv-disclosure-danger {
+  border-color: var(--zv-seal);
+  background: var(--zv-seal-bg);
 }
 
-.zv-merkle-hash {
-  font-family: var(--zv-font-mono);
-  font-size: 0.8rem;
-  color: var(--zv-success);
-  word-break: break-all;
-  line-height: 1.6;
-  background: var(--zv-bg);
-  border: 1px solid var(--zv-glass-border);
-  padding: 12px;
-  border-radius: 8px;
-  overflow-x: auto;
+.zv-disclosure-danger .zv-disclosure-title {
+  color: var(--zv-seal-ink);
 }
 
-/* -------------------------------------------------------------------------- */
-/* RESPONSIVE MEDIA QUERIES                                                   */
-/* -------------------------------------------------------------------------- */
-
-@media (max-width: 1024px) {
-  .zv-main-content {
-    max-width: 100%;
-    padding: 32px 20px 48px;
-  }
-  .zv-footer-container {
-    max-width: 100%;
-    padding: 0 20px;
-  }
-  .zv-navbar-container {
-    padding: 10px 20px;
-  }
-  .zv-hero {
-    padding: 32px 20px 20px;
-  }
-}
-
-@media (max-width: 880px) {
-  .zv-grid-3.zv-feature-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 768px) {
-  .zv-navbar-container {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    padding: 10px 16px;
-  }
-
-  .zv-brand {
-    justify-content: center;
-  }
-
-  .zv-nav-tabs {
-    justify-content: center;
-    width: 100%;
-  }
-
-  .zv-nav-link {
-    padding: 8px 14px;
-    font-size: 0.7rem;
-  }
-
-  .zv-navbar-status {
-    align-self: center;
-  }
-
-  .zv-navbar-actions {
-    align-self: center;
-  }
-
-  .zv-main-content {
-    padding: 24px 16px 40px;
-  }
-
-  .zv-hero {
-    padding: 28px 16px 20px;
-  }
-
-  .zv-hero-subtitle {
-    font-size: clamp(1.1rem, 3.5vw, 1.375rem);
-  }
-
-  .zv-hero-description {
-    font-size: 1rem;
-  }
-
-  .zv-hero-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .zv-hero-actions .zv-btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .zv-grid-3,
-  .zv-grid-3.zv-feature-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .zv-admin-row {
-    grid-template-columns: 1fr;
-  }
-
-  .zv-form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .zv-page-title {
-    font-size: 1.5rem;
-  }
-
-  .zv-section-title {
-    font-size: 1.25rem;
-  }
-
-  .zv-admin-section-title {
-    font-size: 1rem;
-  }
-
-  .zv-admin-section-desc {
-    font-size: 0.8rem;
-  }
-
-  .zv-result-label {
-    font-size: 0.72rem;
-  }
-
-  .zv-result-value {
-    font-size: 0.85rem;
-  }
-
-  .zv-result-value code {
-    font-size: 0.78rem;
-    padding: 2px 8px;
-  }
-
-  .zv-tally-choice {
-    font-size: 0.9rem;
-  }
-
-  .zv-tally-bar-track {
-    height: 8px;
-  }
-
-  .zv-confirm-box {
-    padding: 16px 18px;
-  }
-
-  .zv-confirm-title {
-    font-size: 0.9rem;
-  }
-
-  .zv-confirm-text {
-    font-size: 0.85rem;
-  }
-
-  .zv-confirm-actions {
-    flex-direction: column;
-  }
-
-  .zv-confirm-actions .zv-btn {
-    width: 100%;
-  }
-
-  .zv-merkle-root {
-    padding: 12px 14px;
-  }
-
-  .zv-merkle-hash {
-    font-size: 0.75rem;
-    padding: 10px;
-  }
-
-  .zv-footer-container {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
-    padding: 0 16px;
-  }
-
-  .zv-footer-meta {
-    width: 100%;
-    justify-content: flex-start;
-  }
-}
-
-@media (max-width: 480px) {
-  .zv-brand-text {
-    display: none;
-  }
-
-  .zv-nav-link {
-    padding: 8px 10px;
-  }
-
-  .zv-status-text {
-    display: none;
-  }
-
-  .zv-footer-badge {
-    font-size: 0.62rem;
-    padding: 3px 8px;
-  }
-
-  .zv-hero {
-    padding: 24px 12px 16px;
-  }
-
-  .zv-hero-badge {
-    font-size: 0.65rem;
-    padding: 6px 12px;
-  }
-
-  .zv-hero-subtitle {
-    font-size: clamp(1rem, 4vw, 1.25rem);
-  }
-
-  .zv-hero-description {
-    font-size: 0.95rem;
-  }
-
-  .zv-hero-actions .zv-btn {
-    padding: 12px 16px;
-    font-size: 0.9rem;
-  }
-
-  .zv-feature-card {
-    padding: 20px;
-  }
-
-  .zv-feature-icon {
-    width: 44px;
-    height: 44px;
-  }
-
-  .zv-feature-icon svg {
-    width: 22px;
-    height: 22px;
-  }
-
-  .zv-feature-title {
-    font-size: 1rem;
-  }
-
-  .zv-feature-desc {
-    font-size: 0.82rem;
-  }
-
-  .zv-disclaimer-box {
-    padding: 16px;
-    border-radius: 10px;
-  }
-
-  .zv-admin-section-header {
-    padding: 2px 0;
-  }
-
-  .zv-admin-section-title {
-    font-size: 0.95rem;
-  }
-
-  .zv-admin-section-desc {
-    font-size: 0.75rem;
-  }
-
-  .zv-input {
-    padding: 10px 12px;
-    font-size: 0.88rem;
-  }
-
-  .zv-label-text {
-    font-size: 0.72rem;
-  }
-
-  .zv-form-hint {
-    font-size: 0.7rem;
-  }
-
-  .zv-result-row {
-    padding: 10px 12px;
-  }
-
-  .zv-result-label {
-    font-size: 0.68rem;
-  }
-
-  .zv-result-value {
-    font-size: 0.8rem;
-  }
-
-  .zv-result-value code {
-    font-size: 0.72rem;
-    padding: 2px 6px;
-  }
-
-  .zv-tally-choice {
-    font-size: 0.85rem;
-  }
-
-  .zv-tally-count {
-    font-size: 0.72rem;
-  }
-
-  .zv-tally-bar-track {
-    height: 7px;
-  }
-
-  .zv-confirm-box {
-    padding: 14px 16px;
-  }
-
-  .zv-confirm-title {
-    font-size: 0.85rem;
-  }
-
-  .zv-confirm-text {
-    font-size: 0.8rem;
-  }
-
-  .zv-merkle-root {
-    padding: 10px 12px;
-  }
-
-  .zv-merkle-hash {
-    font-size: 0.7rem;
-    padding: 8px;
-  }
-
-  .zv-btn-lg {
-    padding: 12px 20px;
-    font-size: 0.9rem;
-  }
-
-  /* Registration receipt: stack label above long values, full-width actions */
-  .zv-register-success {
-    padding: 16px;
-  }
-
-  .zv-register-success .zv-result-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-
-  .zv-register-success .zv-result-value {
-    text-align: left;
-  }
-
-  .zv-register-success .zv-form-actions {
-    flex-direction: column;
-  }
-
-  .zv-register-success .zv-form-actions .zv-btn {
-    width: 100%;
-  }
-
-  /* Cast Vote: keep hero choice field tappable, guard against overflow */
-  .zv-cast-form {
-    gap: 18px;
-  }
-
-  .zv-choice-input {
-    padding: 12px 14px;
-    font-size: 1rem;
-  }
-
-  /* Submit goes full width; success panel stacks label-above-value */
-  .zv-cast-form .zv-form-actions {
-    flex-direction: column;
-  }
-
-  .zv-cast-form .zv-form-actions .zv-btn {
-    width: 100%;
-  }
-
-  .zv-vote-success {
-    padding: 16px;
-  }
-
-  .zv-vote-success .zv-result-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-
-  .zv-vote-success .zv-result-value {
-    text-align: left;
-  }
-
-  .zv-vote-success .zv-form-actions {
-    flex-direction: column;
-  }
-
-  .zv-vote-success .zv-form-actions .zv-btn {
-    width: 100%;
-  }
-
-  /* Verification: commit field tappable, success/failure panels stack cleanly */
-  .zv-verify-form {
-    gap: 16px;
-  }
-
-  .zv-verify-form .zv-input {
-    max-width: 100%;
-  }
-
-  .zv-verify-success,
-  .zv-verify-failure {
-    padding: 16px;
-  }
-
-  .zv-verify-success .zv-result-row,
-  .zv-verify-failure .zv-result-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-
-  .zv-verify-success .zv-result-value,
-  .zv-verify-failure .zv-result-value {
-    text-align: left;
-  }
-
-  .zv-verify-success .zv-form-actions,
-  .zv-verify-failure .zv-form-actions {
-    flex-direction: column;
-  }
-
-  .zv-verify-success .zv-form-actions .zv-btn,
-  .zv-verify-failure .zv-form-actions .zv-btn {
-    width: 100%;
-  }
-}
-
-/* -------------------------------------------------------------------------- */
-/* MOTION                                                                      */
-/*                                                                            */
-/* Entrance keyframes are declarative and one-shot, so they need no JS and   */
-/* no React state: they replay whenever the element mounts. Only opacity and  */
-/* transform are animated, so nothing reflows during playback.               */
-/* -------------------------------------------------------------------------- */
-
-@keyframes zv-rise {
+@keyframes zv-drop {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(-6px);
   }
   to {
     opacity: 1;
@@ -2090,10 +1998,1141 @@
   }
 }
 
+.zv-disclosure-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--zv-space-3);
+  flex-wrap: wrap;
+}
+
+.zv-disclosure-title {
+  margin: 0;
+  font-family: var(--zv-font-mono);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--zv-ink);
+}
+
+.zv-disclosure-note {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--zv-ink-muted);
+  max-width: var(--zv-measure);
+}
+
+/* --------------------------------------------------------------------------
+   12. Confirmations
+   -------------------------------------------------------------------------- */
+
+.zv-confirm-box {
+  padding: var(--zv-space-5);
+  border-radius: var(--zv-radius-sm);
+  border: 1px solid var(--zv-seal);
+  background: var(--zv-seal-bg);
+  animation: zv-drop var(--zv-dur-panel) var(--zv-ease-out) both;
+}
+
+/* The ballot confirmation needs checking but destroys nothing, so it takes a
+   punched rule in the quiet ink and a warning mark — never the exception fill,
+   which belongs to the actions that actually end something. */
+.zv-confirm-box--check {
+  border-color: var(--zv-punch-line);
+  background: var(--zv-punch-bg);
+}
+
+.zv-confirm-header {
+  display: flex;
+  align-items: center;
+  gap: var(--zv-space-2);
+  margin-bottom: var(--zv-space-2);
+}
+
+.zv-confirm-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--zv-seal-ink);
+  flex-shrink: 0;
+}
+
+.zv-confirm-box--check .zv-confirm-icon {
+  color: var(--zv-punch-ink);
+}
+
+.zv-confirm-title {
+  font-family: var(--zv-font-mono);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--zv-seal-ink);
+}
+
+.zv-confirm-box--check .zv-confirm-title {
+  color: var(--zv-punch-ink);
+}
+
+.zv-confirm-text {
+  font-size: 0.875rem;
+  line-height: 1.55;
+  color: var(--zv-ink);
+  margin: 0 0 var(--zv-space-4);
+  max-width: var(--zv-measure);
+}
+
+.zv-confirm-text code {
+  padding: 1px 6px;
+  border-radius: var(--zv-radius-sm);
+  background: var(--zv-sunken);
+  border: 1px solid var(--zv-line);
+  font-size: 0.8125rem;
+}
+
+.zv-confirm-actions {
+  display: flex;
+  gap: var(--zv-space-2);
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+/* --------------------------------------------------------------------------
+   13. The ballot card
+
+   This is the first viewport of the most important screen in the product, so it
+   is the one place the world's material is allowed to be the whole object: a
+   warm card, clipped at the corner, banded across the top, with a punch gutter
+   down its side and the candidate field as the one open slot.
+
+   Selecting a candidate punches that slot. The radio itself is invisible and the
+   hole is the control — which is the point: on this screen the state a person
+   sets IS a hole, and there is nothing decorative anywhere near it.
+   -------------------------------------------------------------------------- */
+
+.zv-choice-set {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zv-space-2);
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.zv-choice-set legend {
+  padding: 0 0 var(--zv-space-3);
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--zv-card-muted);
+}
+
+.zv-choice-option {
+  display: flex;
+  align-items: center;
+  gap: var(--zv-space-4);
+  min-height: 56px;
+  padding: var(--zv-space-3) var(--zv-space-4);
+  border-radius: var(--zv-radius-sm);
+  background: color-mix(in srgb, var(--zv-card) 82%, transparent);
+  border: 1px solid var(--zv-card-line);
+  cursor: pointer;
+  transition:
+    border-color var(--zv-dur-state) var(--zv-ease-out),
+    background-color var(--zv-dur-state) var(--zv-ease-out),
+    transform var(--zv-dur-press) var(--zv-ease-punch);
+}
+
+.zv-choice-option:hover {
+  border-color: var(--zv-punch-mark);
+  background: var(--zv-card);
+}
+
+/* The punch. The slot scales up and comes down into the card in 90ms with no
+   overshoot and no easing curve borrowed from a fade — a keypunch is a hard
+   mechanical event, and this is the world's one authored moment. */
+.zv-choice-option.selected {
+  border-color: var(--zv-punch-mark);
+  background: var(--zv-card);
+  box-shadow: inset 3px 0 0 var(--zv-punch-mark);
+}
+
+.zv-choice-option:focus-within {
+  outline: 2px solid var(--zv-focus);
+  outline-offset: 2px;
+}
+
+/* The hole the key takes out. 14x18 rather than the 9x13 the state marks use,
+   because this is the control a person's thumb goes at. */
+.zv-choice-hole {
+  width: 14px;
+  height: 18px;
+  flex: 0 0 auto;
+  position: relative;
+  border: 1px solid var(--zv-card-line);
+  border-radius: 2px;
+  background: transparent;
+  transition:
+    background-color var(--zv-dur-press) var(--zv-ease-punch),
+    border-color var(--zv-dur-press) var(--zv-ease-punch);
+}
+
+.zv-choice-hole::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  translate: -50% 0;
+  width: 4px;
+  height: 3px;
+  border-radius: 1px;
+  background: var(--zv-card-line);
+}
+
+.zv-choice-option.selected .zv-choice-hole {
+  background: var(--zv-punch-mark);
+  border-color: var(--zv-punch-mark);
+  animation: zv-punch-slot var(--zv-dur-press) var(--zv-ease-punch) both;
+}
+
+.zv-choice-option.selected .zv-choice-hole::before {
+  background: var(--zv-card);
+}
+
+@keyframes zv-punch-slot {
+  from {
+    transform: scale(1.55);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* The native radio stays in the DOM and stays focusable — it is the control, its
+   accessible name and its keyboard behaviour — and it is only made invisible. */
+.zv-choice-option input {
+  position: absolute;
+  opacity: 0;
+  width: 14px;
+  height: 18px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.zv-choice-label {
+  font-family: var(--zv-font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--zv-card-ink);
+  min-width: 0;
+}
+
+/* The ordinal a card would carry beside a punched name. */
+.zv-choice-ordinal {
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--zv-card-muted);
+  margin-left: auto;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Where the SEAL stamp lands when the window has closed: over the candidate
+   field, because a closed ballot stops accepting punches there. */
+.zv-ballot-closed {
+  position: relative;
+}
+
+.zv-ballot-closed .zv-choice-set {
+  opacity: 0.5;
+  filter: grayscale(0.35);
+}
+
+.zv-seal-slot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+}
+
+/* --------------------------------------------------------------------------
+   14. Receipt, hashes, and the one authored moment
+
+   A submitted ballot is the moment this product exists. The form is replaced by
+   the artefact that proves it, printed on card stock, and the two values the
+   voter has to keep wipe in left to right — because that is the only place in
+   the app where something is being revealed rather than confirmed.
+   -------------------------------------------------------------------------- */
+
+.zv-receipt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zv-space-5);
+  animation: zv-drop var(--zv-dur-panel) var(--zv-ease-out) both;
+}
+
+/* ---- hash blocks ---------------------------------------------------------- */
+
+.zv-hash-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zv-space-2);
+  padding: var(--zv-space-4);
+  border: 1px solid var(--zv-line);
+  border-radius: var(--zv-radius-sm);
+  background: var(--zv-sunken);
+}
+
+.zv-hash-block--live {
+  border-color: var(--zv-punch-line);
+  background: var(--zv-punch-bg);
+}
+
+/* The reveal salt. It is a hole in a machine, not a warning colour: the mark
+   beside it is a struck slot, because whoever holds this can read a choice. */
+.zv-hash-block--secret {
+  border-color: var(--zv-seal-line);
+  background: var(--zv-surface);
+}
+
+.zv-hash-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--zv-space-3);
+}
+
+.zv-merkle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--zv-ink);
+}
+
+.zv-label-text .zv-hole,
+.zv-card-field .zv-hole {
+  width: 7px;
+  height: 10px;
+}
+
+/* The punched tape of the value: monospace, on a darker slot, and selectable in
+   one click, because 64 hex characters with no grouping are not something to
+   select by hand. */
+.zv-merkle-hash {
+  display: block;
+  font-family: var(--zv-font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  color: var(--zv-ink);
+  background: var(--zv-bg-base);
+  border: 1px solid var(--zv-line);
+  padding: var(--zv-space-3);
+  border-radius: var(--zv-radius-sm);
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  user-select: text;
+  cursor: text;
+}
+
+.zv-copy-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--zv-radius-sm);
+  border: 1px solid var(--zv-line-input);
+  background: transparent;
+  color: var(--zv-ink-muted);
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color var(--zv-dur-state) var(--zv-ease-out),
+    border-color var(--zv-dur-state) var(--zv-ease-out),
+    background-color var(--zv-dur-state) var(--zv-ease-out);
+}
+
+.zv-copy-btn:hover:not(:disabled) {
+  color: var(--zv-ink);
+  border-color: var(--zv-punch);
+  background: var(--zv-punch-bg);
+}
+
+.zv-copy-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.zv-copy-btn[data-copied="true"] {
+  color: var(--zv-punch-ink);
+  border-color: var(--zv-punch);
+  background: var(--zv-punch-bg);
+}
+
+.zv-copy-btn:focus-visible {
+  outline: 2px solid var(--zv-focus);
+  outline-offset: 2px;
+}
+
+/* The wipe. Bounded to the block it belongs to, one-shot, and it never hides
+   content if the animation is skipped. */
+.zv-receipt .zv-hash-block {
+  animation: zv-wipe var(--zv-dur-scene) var(--zv-ease-out) both;
+}
+
+.zv-receipt .zv-hash-block:nth-of-type(2) {
+  animation-delay: 90ms;
+}
+
+.zv-receipt .zv-hash-block:nth-of-type(3) {
+  animation-delay: 180ms;
+}
+
+@keyframes zv-wipe {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* ---- result rows ---------------------------------------------------------- */
+
+.zv-result-details {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--zv-line);
+  border-radius: var(--zv-radius-sm);
+  overflow: hidden;
+  background: var(--zv-sunken);
+}
+
+.zv-result-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--zv-space-4);
+  padding: 10px var(--zv-space-4);
+  border-bottom: 1px solid var(--zv-line);
+}
+
+.zv-result-row:last-child {
+  border-bottom: 0;
+}
+
+.zv-result-label {
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--zv-ink-faint);
+  flex-shrink: 0;
+}
+
+.zv-result-value {
+  font-family: var(--zv-font-mono);
+  font-size: 0.875rem;
+  color: var(--zv-ink);
+  text-align: right;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+
+.zv-result-valid {
+  color: var(--zv-punch-ink) !important;
+  font-weight: 600;
+}
+
+.zv-result-invalid {
+  color: var(--zv-seal-ink) !important;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   15. The tally — the world's signature move
+
+   A count is a bit pattern before it is a number, and a bit pattern is what this
+   product hashes. So the published count is printed as the pattern: a column of
+   punched holes, most significant bit at the top, the powers of two down the
+   margin, the decimal figure set beside it and the share of the total under it.
+
+   The bar is gone. In a world whose whole argument is that the count is a
+   fingerprint and not a picture of it, a horizontal bar that animates open was
+   the wrong shape for the one number that matters.
+
+   The same block prints twice: on card stock in the results panel, and on a
+   machine panel in the admin's tally. It takes its three inks from whichever it
+   is sitting on rather than hardcoding either.
+   -------------------------------------------------------------------------- */
+
+.zv-tally {
+  --zv-tally-ink: var(--zv-ink);
+  --zv-tally-muted: var(--zv-ink-muted);
+  --zv-tally-line: var(--zv-line);
+}
+
+.zv-card-stock .zv-tally,
+.zv-tally--card {
+  --zv-tally-ink: var(--zv-tally-ink);
+  --zv-tally-muted: var(--zv-tally-muted);
+  --zv-tally-line: var(--zv-card-line);
+}
+
+.zv-tally-total {
+  display: flex;
+  align-items: baseline;
+  gap: var(--zv-space-3);
+}
+
+.zv-tally-total-value {
+  font-family: var(--zv-font-mono);
+  font-size: clamp(2rem, 1.6rem + 2vw, 2.75rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--zv-tally-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.zv-tally-total-label {
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--zv-tally-muted);
+}
+
+.zv-tally-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zv-space-3);
+}
+
+.zv-tally-bars {
+  display: flex;
+  flex-direction: column;
+}
+
+/* One candidate per row: the bit column on the left, the name and figures on the
+   right. The rows are ruled by the card's own field rules. */
+.zv-tally-row {
+  display: flex;
+  align-items: center;
+  gap: var(--zv-space-5);
+  padding: var(--zv-space-4) 0;
+  border-top: 1px solid color-mix(in srgb, var(--zv-tally-line) 60%, transparent);
+}
+
+/* Three figures stacked beside the column, not three figures in a row: the
+   candidate's name is the row's heading and the two numbers under it are its
+   measurements. */
+.zv-tally-row-header {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.zv-tally-choice {
+  font-family: var(--zv-font-mono);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--zv-tally-ink);
+  min-width: 0;
+}
+
+.zv-tally-count {
+  font-family: var(--zv-font-mono);
+  font-size: 0.8125rem;
+  color: var(--zv-tally-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The share, as a measured quantity rather than a bar. */
+.zv-tally-share {
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--zv-tally-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --------------------------------------------------------------------------
+   16. The clause
+
+   Unchanged in purpose from the world it replaces: a guarantee and the value that
+   proves it on one ruled line, never separated by a scroll. What changed is the
+   ruling — on a card, fields are ruled by a printed line in the card's own ink,
+   and the certified figure is punched rather than bracketed.
+   -------------------------------------------------------------------------- */
+
+.zv-clause {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--zv-space-4);
+  padding-top: var(--zv-space-3);
+  border-top: 1px solid var(--zv-tally-line, var(--zv-line-strong));
+}
+
+/* On a card the rule above a clause is a printed field rule in the card's own
+   ink, not the page's armature — which is the difference between a card and a
+   ledger, and the reason this world has both. The whole clause takes the card's
+   three inks: `--zv-tally-*` is scoped to the tally block, so a clause printed
+   on a card outside that block would otherwise fall back to the machine's
+   near-white ink at 1.1:1 on buff. */
+.zv-card-stock .zv-clause {
+  border-top-color: color-mix(in srgb, var(--zv-card-line) 60%, transparent);
+}
+
+.zv-card-stock .zv-clause-words {
+  color: var(--zv-card-ink);
+}
+
+.zv-card-stock .zv-clause-figure,
+.zv-card-stock .zv-clause-caption {
+  color: var(--zv-card-muted);
+}
+
+.zv-clause-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.zv-clause-words {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--zv-tally-ink, var(--zv-ink));
+  max-width: var(--zv-measure);
+}
+
+.zv-clause-aside {
+  /* A record's marginal column carries a figure, and this one carries a
+     64-character hash — so it needs enough room for the whole value, or it wraps
+     to three lines and stops being a margin. */
+  flex: 0 0 46%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  max-width: 46%;
+}
+
+.zv-clause-figure {
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
+  line-height: 1.45;
+  color: var(--zv-tally-muted, var(--zv-ink-muted));
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A card prints its field heads in the same fixed pitch as its data, so the
+   margin figure gets no brackets here: the rule above it and the caption below
+   already tie it to the line it belongs to. */
+.zv-clause-caption {
+  font-family: var(--zv-font-mono);
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--zv-tally-muted, var(--zv-ink-faint));
+}
+
+/* A certified clause carries the punch ink on its figure and its rule, because
+   the certified thing on a tabulator is the total. */
+.zv-clause[data-certified="true"] {
+  border-top-color: var(--zv-punch-line);
+}
+
+.zv-clause[data-certified="true"] .zv-clause-figure {
+  color: var(--zv-punch);
+}
+
+/* On card stock the punch ink has to drop to its card step. `--zv-punch-ink` is
+   the value for punch text sitting on its own dark fill; used on buff it is
+   1.3:1 in the dark theme, which is the kind of thing that only shows up in a
+   capture. */
+.zv-card-stock .zv-clause[data-certified="true"] .zv-clause-figure,
+.zv-tally--card .zv-clause[data-certified="true"] .zv-clause-figure {
+  color: var(--zv-punch-text);
+}
+
+@media (max-width: 640px) {
+  .zv-clause {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--zv-space-2);
+  }
+
+  .zv-clause-aside {
+    align-items: flex-start;
+    max-width: 100%;
+  }
+
+  .zv-clause-figure {
+    text-align: left;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   17. The pipeline — the card being read by the machine
+
+   Six rows, each one a real step, each turning to punched only when that work
+   genuinely completed. A row in flight is keyed but unpunched; a completed row
+   has punched its own hole. Nothing here simulates duration: the pipeline is
+   synchronous between two slow stages, so what this shows is the order things
+   happened in, not a fake stopwatch.
+   -------------------------------------------------------------------------- */
+
+.zv-pipeline {
+  border: 1px solid var(--zv-line);
+  border-radius: var(--zv-radius-sm);
+  background: var(--zv-sunken);
+  overflow: hidden;
+}
+
+.zv-pipeline-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--zv-space-3);
+  padding: var(--zv-space-3) var(--zv-space-4);
+  border-bottom: 1px solid var(--zv-line-strong);
+  background: var(--zv-surface);
+}
+
+.zv-pipeline-title {
+  margin: 0;
+  font-family: var(--zv-font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--zv-ink);
+}
+
+.zv-pipeline-tally {
+  font-family: var(--zv-font-mono);
+  font-size: 0.75rem;
+  color: var(--zv-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Measured time, because "time as measured quantity" is the one thing this app
+   cannot be vague about. It only renders once the work is over. */
+.zv-pipeline-elapsed {
+  font-family: var(--zv-font-mono);
+  font-size: 0.75rem;
+  color: var(--zv-punch-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.zv-pipeline-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.zv-pipeline-row {
+  display: grid;
+  grid-template-columns: 9px 22px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--zv-space-3);
+  padding: var(--zv-space-2) var(--zv-space-4);
+  border-bottom: 1px solid var(--zv-line);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.zv-pipeline-row:last-child {
+  border-bottom: 0;
+}
+
+.zv-pipeline-index {
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
+  color: var(--zv-ink-faint);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.zv-pipeline-label {
+  color: var(--zv-ink-faint);
+  min-width: 0;
+}
+
+.zv-pipeline-row[data-state="done"] .zv-pipeline-label {
+  color: var(--zv-ink);
+}
+
+.zv-pipeline-row[data-state="active"] .zv-pipeline-label {
+  color: var(--zv-ink);
+  font-weight: 600;
+}
+
+.zv-pipeline-row[data-state="failed"] .zv-pipeline-label {
+  color: var(--zv-seal-ink);
+}
+
+/* The one genuinely slow step gets a breathing lamp rather than a fake spinner,
+   because it is the only place in this app where waiting is honest. */
+.zv-pipeline-row[data-state="active"] .zv-hole {
+  animation: zv-lamp 1.4s var(--zv-ease-inout) infinite;
+}
+
+.zv-pipeline-note {
+  margin: 0;
+  padding: var(--zv-space-3) var(--zv-space-4);
+  border-top: 1px solid var(--zv-line-strong);
+  background: var(--zv-surface);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--zv-ink-muted);
+}
+
+/* --------------------------------------------------------------------------
+   18. Audit table
+
+   A tabulator's output is a columnar report, so this is a real <table> with a
+   sticky head, tabular figures in every column, and hashes capped and ellipsised
+   because 64 characters cannot fit a column at any width and a `title`
+   attribute is not a way to read one.
+   -------------------------------------------------------------------------- */
+
+.zv-audit-scope {
+  margin: 0;
+  font-family: var(--zv-font-mono);
+  font-size: 0.75rem;
+  color: var(--zv-ink-muted);
+}
+
+.zv-audit-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--zv-line);
+  border-radius: var(--zv-radius-sm);
+}
+
+.zv-audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--zv-font-mono);
+  font-size: 0.75rem;
+}
+
+.zv-audit-table th,
+.zv-audit-table td {
+  padding: 8px var(--zv-space-3);
+  text-align: left;
+  border-bottom: 1px solid var(--zv-line);
+  white-space: nowrap;
+}
+
+.zv-audit-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--zv-sunken);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--zv-ink-muted);
+}
+
+.zv-audit-table td {
+  color: var(--zv-ink);
+}
+
+.zv-audit-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.zv-audit-table tbody tr:hover td {
+  background: var(--zv-surface-hover);
+}
+
+.zv-hash-truncate {
+  max-width: 15ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--zv-ink-muted);
+}
+
+.zv-audit-when {
+  font-variant-numeric: tabular-nums;
+}
+
+.zv-when-compact {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .zv-when-full {
+    display: none;
+  }
+
+  .zv-when-compact {
+    display: inline;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   19. Blocked accounts, the id callout, footer
+   -------------------------------------------------------------------------- */
+
+.zv-blocked-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zv-space-2);
+}
+
+.zv-blocked-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--zv-space-4);
+  padding: var(--zv-space-3) var(--zv-space-4);
+  border: 1px solid var(--zv-line);
+  border-radius: var(--zv-radius-sm);
+  background: var(--zv-surface);
+}
+
+.zv-blocked-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.zv-blocked-row-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--zv-ink);
+}
+
+.zv-blocked-row-reason {
+  font-size: 0.8125rem;
+  color: var(--zv-ink-muted);
+}
+
+.zv-blocked-row-since {
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
+  color: var(--zv-ink-faint);
+}
+
+/* The one value an admin has to read out loud to a room, so it is the one place
+   a value is set large — punched in the punch ink, on card stock, because an id
+   is printed, not typed. */
+.zv-id-callout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--zv-space-2);
+  padding: var(--zv-space-6) var(--zv-space-5);
+  border-radius: var(--zv-radius-sm);
+  background: var(--zv-card);
+  color: var(--zv-card-ink);
+  border: 1px solid var(--zv-card-line);
+  text-align: center;
+}
+
+.zv-id-callout-label {
+  font-family: var(--zv-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--zv-card-muted);
+}
+
+.zv-id-callout-value {
+  font-family: var(--zv-font-mono);
+  font-size: clamp(1.375rem, 1rem + 2.6vw, 2rem);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--zv-punch-text);
+  user-select: all;
+  overflow-wrap: anywhere;
+}
+
+.zv-id-callout-hint {
+  font-size: 0.8125rem;
+  color: var(--zv-card-muted);
+  max-width: 40ch;
+}
+
+.zv-footer {
+  background: var(--zv-chrome);
+  border-top: 1px solid var(--zv-chrome-line);
+  padding: var(--zv-space-5) 0;
+  margin-top: auto;
+}
+
+.zv-footer-container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 var(--zv-space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--zv-space-5);
+}
+
+.zv-footer-info {
+  min-width: 0;
+}
+
+.zv-footer-title {
+  margin: 0 0 1px;
+  font-family: var(--zv-font-wordmark);
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--zv-ink);
+}
+
+.zv-footer-desc {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--zv-ink-muted);
+  max-width: 46ch;
+}
+
+.zv-footer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--zv-space-2);
+}
+
+/* A footer's facts are machine labels: fixed pitch, uppercase, small, and each
+   one sits in its own keyed slot rather than in a pill. */
+.zv-footer-badge {
+  font-family: var(--zv-font-mono);
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: var(--zv-radius-sm);
+  border: 1px solid var(--zv-line);
+  color: var(--zv-ink-muted);
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   20. Utilities
+   -------------------------------------------------------------------------- */
+
+.zv-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The skip link, hidden with the clip technique rather than by being moved off
+   the top of the page. Both keep it out of the way, but only this one is
+   unambiguously still in the tab order on every engine. */
+.zv-skip-link {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  z-index: 200;
+  background: var(--zv-fill);
+  color: var(--zv-fill-ink);
+  font-family: var(--zv-font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 0 0 var(--zv-radius-sm) var(--zv-radius-sm);
+}
+
+.zv-skip-link:focus {
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip-path: none;
+  top: var(--zv-space-2);
+  left: var(--zv-space-2);
+  padding: 10px var(--zv-space-4);
+}
+
+.zv-loading-block {
+  display: flex;
+  align-items: center;
+  gap: var(--zv-space-2);
+  padding: var(--zv-space-8);
+  justify-content: center;
+  font-family: var(--zv-font-mono);
+  color: var(--zv-ink-muted);
+  font-size: 0.875rem;
+}
+
+/* The lockup, on the sign-in screen, where the navbar drops the wordmark so the
+   form's own heading can name the task instead of the product. */
+.zv-lockup {
+  display: flex;
+  align-items: center;
+  gap: var(--zv-space-3);
+}
+
+.zv-lockup-mark {
+  width: 40px;
+  height: 37px;
+  color: var(--zv-ink);
+  animation: zv-mark-in var(--zv-dur-scene) var(--zv-ease-out) both;
+}
+
+.zv-lockup-name {
+  font-family: var(--zv-font-wordmark);
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--zv-ink);
+  animation: zv-mark-in var(--zv-dur-scene) var(--zv-ease-out) both;
+  animation-delay: 60ms;
+}
+
 @keyframes zv-mark-in {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.98);
+    transform: translateY(8px) scale(0.97);
   }
   to {
     opacity: 1;
@@ -2101,86 +3140,653 @@
   }
 }
 
-/* Hero entrance: one shared keyframe, staggered by delay. */
-.zv-hero-badge,
-.zv-hero-subtitle,
-.zv-hero-description,
-.zv-hero-actions {
-  animation: zv-rise 0.5s ease both;
+/* --------------------------------------------------------------------------
+   21. The signed-out front door
+
+   Two columns: the record explained on the left, the way in on the right. The
+   split is not decoration — the claim and the action have to be read together,
+   and a claim stacked above a form pushes the form past the fold on a laptop.
+   -------------------------------------------------------------------------- */
+
+.zv-entry {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32rem;
+  gap: var(--zv-space-12);
+  align-items: start;
 }
 
-.zv-hero-badge { animation-delay: 0ms; }
-.zv-hero-logo { animation: zv-mark-in 0.6s ease both; animation-delay: 80ms; }
-.zv-hero-subtitle { animation-delay: 160ms; }
-.zv-hero-description { animation-delay: 240ms; }
-.zv-hero-actions { animation-delay: 320ms; }
-
-/* Section entrance on Admin / Voter / Verify navigation. */
-.zv-page-container {
-  animation: zv-rise 0.28s ease both;
+.zv-door {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zv-space-8);
+  min-width: 0;
 }
 
-/* Success / error / info states fade in instead of snapping. */
-.zv-alert {
-  animation: zv-rise 0.28s ease both;
+.zv-entry-lockup {
+  grid-column: 1 / -1;
 }
 
-/* Button hover lift. `transform` is already in the .zv-btn transition. */
-.zv-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
+.zv-entry-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zv-space-5);
+  min-width: 0;
 }
 
-.zv-btn:active:not(:disabled) {
-  transform: translateY(0);
+.zv-door-pledges {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zv-space-4);
 }
 
-/* Theme swap cross-fade. Declared last so it wins over the per-component
-   transitions above; the property list is a superset of theirs, so no
-   existing hover or focus animation is lost. */
-.zv-app-root,
-.zv-app-root .zv-navbar,
-.zv-app-root .zv-footer,
-.zv-app-root .zv-card,
-.zv-app-root .zv-feature-card,
-.zv-app-root .zv-btn,
-.zv-app-root .zv-input,
-.zv-app-root .zv-alert,
-.zv-app-root .zv-hero-badge,
-.zv-app-root .zv-status-indicator,
-.zv-app-root .zv-footer-badge,
-.zv-app-root .zv-page-badge {
-  transition:
-    background 0.25s ease,
-    background-color 0.25s ease,
-    border-color 0.25s ease,
-    color 0.25s ease,
-    box-shadow 0.2s ease,
-    transform 0.18s ease,
-    filter 0.15s ease,
-    opacity 0.2s ease;
+.zv-clause-set {
+  display: flex;
+  flex-direction: column;
 }
 
-/* Reduced motion: kill every entrance and every movement. Browsers that do
-   not support the query simply keep the un-animated base styles, which is
-   the desired behaviour anyway. */
-@media (prefers-reduced-motion: reduce) {
-  .zv-hero-badge,
-  .zv-hero-logo,
-  .zv-hero-subtitle,
-  .zv-hero-description,
-  .zv-hero-actions,
-  .zv-page-container,
-  .zv-alert {
-    animation: none;
+/* A pledge row holds a term or a 16-character fragment in its margin rather than
+   a 64-character hash, so it takes its width from the figure instead of
+   reserving half the row for it. */
+.zv-clause--pledge .zv-clause-aside {
+  flex: 0 0 auto;
+  max-width: 42%;
+}
+
+.zv-clause--pledge .zv-clause-words {
+  max-width: 54ch;
+}
+
+/* --------------------------------------------------------------------------
+   22. Responsive
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1024px) {
+  .zv-main-content {
+    padding: var(--zv-space-8) var(--zv-space-5) var(--zv-space-10);
   }
 
-  .zv-btn:hover:not(:disabled),
+  .zv-navbar-container,
+  .zv-footer-container,
+  .zv-offline-inner {
+    padding-left: var(--zv-space-5);
+    padding-right: var(--zv-space-5);
+  }
+
+  /* Below this the right column can no longer hold its measure beside anything,
+     so the columns become a fixed pair. */
+  .zv-entry {
+    grid-template-columns: minmax(0, 1fr) 26rem;
+    gap: var(--zv-space-8);
+  }
+}
+
+@media (max-width: 820px) {
+  /* The navbar wraps to a second row for the tab bar rather than stacking three
+     bands, which costs about a hundred pixels of an 844px phone instead of two
+     hundred and twenty. */
+  .zv-navbar-container {
+    flex-wrap: wrap;
+    row-gap: var(--zv-space-3);
+    padding: 9px var(--zv-space-4);
+  }
+
+  .zv-brand {
+    margin-right: auto;
+  }
+
+  .zv-nav-tabs,
+  .zv-navbar-entry {
+    order: 3;
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .zv-nav-link {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
+  .zv-main-content {
+    padding: var(--zv-space-6) var(--zv-space-4) var(--zv-space-10);
+  }
+
+  /* One column, and the form comes first: on a phone the action is what the
+     visitor came for, and the explanation is still one scroll away under it. */
+  .zv-entry {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--zv-space-8);
+  }
+
+  .zv-entry-form {
+    order: -1;
+  }
+
+  /* The masthead outranks even the form: it is the one line that says which
+     product this is, and the navbar drops the wordmark on this screen. */
+  .zv-entry-lockup {
+    order: -2;
+  }
+
+  .zv-clause--pledge .zv-clause-aside {
+    max-width: 100%;
+  }
+
+  .zv-footer-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--zv-space-3);
+  }
+
+  .zv-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .zv-card {
+    padding: var(--zv-space-5);
+  }
+
+  .zv-card-face {
+    padding: var(--zv-space-5) var(--zv-space-5) var(--zv-space-5) var(--zv-space-8);
+  }
+
+  /* A label and its value on one baseline wraps into a ragged second line
+     indented under the label. Below this width they stack. */
+  .zv-card-detail {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .zv-card-stock .zv-card-detail {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  .zv-election-card-foot {
+    gap: var(--zv-space-3);
+  }
+
+  .zv-vote-closed-note {
+    max-width: none;
+    text-align: left;
+  }
+
+  .zv-result-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .zv-result-value {
+    text-align: left;
+  }
+
+  .zv-confirm-actions {
+    justify-content: stretch;
+  }
+
+  .zv-confirm-actions .zv-btn {
+    flex: 1 1 auto;
+  }
+
+  .zv-tally-row {
+    gap: var(--zv-space-4);
+  }
+}
+
+@media (max-width: 560px) {
+  .zv-brand-text {
+    display: none;
+  }
+
+  .zv-account-name {
+    display: none;
+  }
+
+  .zv-navbar-actions {
+    gap: 6px;
+  }
+
+  .zv-status-text {
+    font-size: 0.6875rem;
+  }
+
+  .zv-tabs {
+    gap: var(--zv-space-4);
+  }
+
+  /* A ghost button has no fill to read as a target, so on a touch width it needs
+     the height to say it is pressable. 40px is a thumb. */
+  .zv-election-card-actions .zv-btn,
+  .zv-form-actions .zv-btn,
+  .zv-nav-link,
+  .zv-copy-btn,
+  .zv-reveal-btn {
+    min-height: 40px;
+  }
+
+  .zv-copy-btn,
+  .zv-signout-btn {
+    padding-top: 0;
+    padding-bottom: 0;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .zv-election-card-actions .zv-btn,
+  .zv-form-actions .zv-btn {
+    flex: 1 1 auto;
+  }
+
+  .zv-confirm-actions,
+  .zv-cast-form .zv-form-actions {
+    flex-direction: column;
+  }
+
+  .zv-confirm-actions .zv-btn,
+  .zv-cast-form .zv-form-actions .zv-btn {
+    width: 100%;
+  }
+
+  /* The audit table is six columns of hash. Below this width it is a list of
+     records instead, with every value labelled. */
+  .zv-audit-table,
+  .zv-audit-table tbody,
+  .zv-audit-table tr,
+  .zv-audit-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .zv-audit-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  /* Three lines a record, two columns. `minmax(0, 1fr)` rather than `auto` in the
+     middle: an auto track sized itself from the timestamp, took all 324px, and
+     left the actor cell at zero width. */
+  .zv-audit-table tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 3px var(--zv-space-3);
+    border-bottom: 1px solid var(--zv-line);
+    padding: var(--zv-space-3) var(--zv-space-4);
+  }
+
+  .zv-audit-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .zv-audit-table tbody tr:hover td {
+    background: transparent;
+  }
+
+  .zv-audit-table td {
+    display: block;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+    font-size: 0.75rem;
+    color: var(--zv-ink);
+  }
+
+  /* The label leads the cell but stays quieter than the value it names. */
+  .zv-audit-table td::before {
+    content: attr(data-label) " ";
+    font-size: 0.5625rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--zv-ink-faint);
+  }
+
+  .zv-audit-table td:nth-child(3) {
+    grid-column: 1;
+    grid-row: 1;
+    font-weight: 600;
+  }
+
+  .zv-audit-table td:nth-child(1) {
+    grid-column: 2;
+    grid-row: 1;
+    text-align: right;
+    color: var(--zv-ink-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .zv-audit-table td:nth-child(1)::before {
+    display: none;
+  }
+
+  .zv-audit-table td:nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .zv-audit-table td:nth-child(4) {
+    grid-column: 2;
+    grid-row: 2;
+    text-align: right;
+  }
+
+  .zv-audit-table td:nth-child(5) {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  /* The hash wraps rather than truncating. It is the reason this table exists,
+     and a `title` attribute is not reachable on a phone. */
+  .zv-audit-table td:nth-child(6) {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .zv-hash-truncate {
+    max-width: none;
+  }
+
+  .zv-card-band {
+    padding-right: 34px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   23. Motion
+
+   One authored moment exists in this world and it is the punch: selecting a
+   candidate drives a key into the card and takes a hole out of it. Everything
+   else that moves is either explaining a state change or acknowledging an action,
+   and everything that loops is bound to real in-flight work and stops the moment
+   that work ends.
+
+   Reduced motion removes the movement and the loops and keeps the opacity and
+   colour changes, because "your ballot was recorded" still has to be legible when
+   nothing moves. Every state in this system is announced by a word and a hole
+   shape before it is announced by anything that moves.
+   -------------------------------------------------------------------------- */
+
+.zv-certify {
+  animation: zv-punch var(--zv-dur-panel) var(--zv-ease-punch) both;
+}
+
+/* Panel entry via @starting-style, so a panel that appears from `display: none`
+   animates without a keyframe per component. Browsers without it simply get the
+   panel, which is the correct fallback. */
+@starting-style {
+  .zv-disclosure {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Explicitly restored: a state change that only ever announced itself with
+     movement still has to announce itself. */
+  .zv-alert-success,
+  .zv-receipt,
+  .zv-disclosure,
+  .zv-confirm-box,
+  .zv-certify,
+  .zv-lockup-mark,
+  .zv-lockup-name {
+    opacity: 1 !important;
+    transform: none !important;
+    scale: 1 !important;
+  }
+
+  /* The punch keeps its hole and loses only the descent, so a chosen candidate is
+     still obviously punched — the hole is drawn, not animated into existence. */
+  .zv-choice-option.selected .zv-choice-hole,
+  .zv-pipeline-row[data-state="active"] .zv-hole,
+  .zv-choice-option:active,
   .zv-btn:active:not(:disabled) {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .zv-receipt .zv-hash-block {
+    clip-path: none !important;
+  }
+
+  .zv-tab::after {
+    transition: none !important;
+  }
+}
+
+/* ==========================================================================
+   Portal shell. A standard civic site: a navy header with the mark and the
+   section nav on a second row, and a navy band that opens the front door.
+   Component markup is unchanged; only placement and surface changed here.
+   ========================================================================== */
+
+.zv-navbar-container {
+  flex-wrap: wrap;
+  row-gap: var(--zv-space-3);
+  padding: var(--zv-space-3) var(--zv-space-8);
+}
+
+.zv-navbar-entry,
+.zv-nav-tabs {
+  order: 3;
+  flex: 0 0 100%;
+  justify-content: flex-start;
+}
+
+.zv-nav-tabs {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  gap: var(--zv-space-1);
+}
+
+.zv-nav-link {
+  font-family: var(--zv-font-sans);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  padding: var(--zv-space-2) var(--zv-space-4);
+  border-radius: var(--zv-radius-md);
+}
+
+.zv-entry-lockup {
+  display: flex;
+  align-items: center;
+  gap: var(--zv-space-3);
+  padding: var(--zv-space-5) var(--zv-space-6);
+  background: var(--zv-chrome);
+  color: var(--zv-on-chrome);
+  border-radius: var(--zv-radius-lg);
+}
+
+.zv-lockup-name {
+  color: var(--zv-on-chrome);
+}
+.zv-lockup-mark {
+  color: var(--zv-on-chrome);
+  width: 40px;
+  height: auto;
+}
+
+.zv-door-panel {
+  background: var(--zv-surface);
+  border: 1px solid var(--zv-line);
+  border-radius: var(--zv-radius-lg);
+  box-shadow: var(--zv-shadow-card);
+  padding: var(--zv-space-5) var(--zv-space-6);
+  display: grid;
+  gap: var(--zv-space-3);
+}
+
+.zv-door-title {
+  font-family: var(--zv-font-sans);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--zv-ink);
+}
+
+.zv-door-lead {
+  font-size: 0.9375rem;
+  color: var(--zv-ink-muted);
+}
+
+/* ==========================================================================
+   Motion. Every screen change rises into place, every control answers its
+   hover, focus and press, and loading shows the shape of what is coming.
+   All of it is disabled by the prefers-reduced-motion block above.
+   ========================================================================== */
+
+@keyframes zv-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
     transform: none;
   }
+}
 
-  .zv-app-root,
-  .zv-app-root * {
-    transition-duration: 0.01ms;
+@keyframes zv-fade {
+  from {
+    opacity: 0;
   }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zv-shimmer {
+  from {
+    background-position: 120% 0;
+  }
+  to {
+    background-position: -120% 0;
+  }
+}
+
+/* A new screen rises in. Its direct children enter, so a section change reads
+   as movement rather than a swap. */
+.zv-main-content > * {
+  animation: zv-rise var(--zv-dur-scene) var(--zv-ease-out) both;
+}
+
+/* The cards on a screen arrive one after another, so the page builds rather
+   than appearing whole. */
+.zv-main-content .zv-card,
+.zv-main-content .zv-card-stock,
+.zv-main-content .zv-door-panel,
+.zv-main-content .zv-skel-row {
+  animation: zv-rise var(--zv-dur-panel) var(--zv-ease-out) both;
+}
+.zv-main-content > * > :nth-child(2) { animation-delay: 70ms; }
+.zv-main-content > * > :nth-child(3) { animation-delay: 140ms; }
+.zv-main-content > * > :nth-child(4) { animation-delay: 210ms; }
+.zv-main-content > * > :nth-child(5) { animation-delay: 280ms; }
+
+.zv-alert {
+  animation: zv-fade var(--zv-dur-state) var(--zv-ease-out) both;
+}
+
+/* Controls answer the pointer and the keyboard: colour and lift change over a
+   short beat instead of snapping. */
+button,
+a,
+input,
+select,
+textarea {
+  transition:
+    background-color var(--zv-dur-state) var(--zv-ease-out),
+    border-color var(--zv-dur-state) var(--zv-ease-out),
+    color var(--zv-dur-state) var(--zv-ease-out),
+    box-shadow var(--zv-dur-state) var(--zv-ease-out),
+    transform var(--zv-dur-press) var(--zv-ease-out);
+}
+
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.zv-card,
+.zv-card-stock,
+.zv-door-panel {
+  transition:
+    box-shadow var(--zv-dur-state) var(--zv-ease-out),
+    transform var(--zv-dur-state) var(--zv-ease-out);
+}
+
+.zv-card:hover,
+.zv-door-panel:hover {
+  box-shadow: var(--zv-shadow-md);
+}
+
+/* Skeletons: the shape of the content that is loading, shimmering. */
+.zv-skel-set {
+  position: relative;
+  display: grid;
+  gap: var(--zv-space-4);
+  padding: var(--zv-space-4) 0;
+}
+
+.zv-skel-row {
+  display: grid;
+  gap: var(--zv-space-2);
+  padding: var(--zv-space-4);
+  background: var(--zv-surface);
+  border: 1px solid var(--zv-line);
+  border-radius: var(--zv-radius-lg);
+  animation: zv-rise var(--zv-dur-panel) var(--zv-ease-out) both;
+}
+
+.zv-skel {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    var(--zv-surface-hover) 0%,
+    var(--zv-line) 50%,
+    var(--zv-surface-hover) 100%
+  );
+  background-size: 200% 100%;
+  animation: zv-shimmer 1.4s linear infinite;
+  border-radius: var(--zv-radius-sm);
+}
+
+.zv-skel--title {
+  height: 18px;
+  width: 40%;
+}
+
+.zv-skel--line {
+  height: 12px;
+  width: 72%;
+}
+
+.zv-skel-set--page .zv-skel-row {
+  min-height: 120px;
+}
+
+.zv-skel-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
