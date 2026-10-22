@@ -1,11 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Skeleton } from "../../components/common/Skeleton";
 import { api } from "../../services/api";
 import { useSession } from "../../auth/SessionContext";
-import {
-  formatTimestamp,
-  formatTimestampCompact,
-} from "../../services/format";
+import { formatTimestamp } from "../../services/format";
 import type {
   ElectionSummary,
   AuditEntry,
@@ -14,344 +11,381 @@ import type {
 import { Button } from "../../components/common/Button";
 import { Alert } from "../../components/common/Alert";
 import { Field } from "../../components/common/Field";
-import {
-  Tallies,
-  WindowCountdown,
-} from "../../components/common/ElectionFacts";
-import { StateMark } from "../../components/common/Hole";
+import { PageToolbar } from "../../components/common/PageToolbar";
+import { useToast } from "../../components/common/Toast";
+import { StatusPill } from "../../components/common/StatusPill";
+import { matchesShortcut } from "../../hooks/usePlatform";
 import { CreateElection } from "./CreateElection";
-import { CloseElection } from "./CloseElection";
-import { TallyElection } from "./TallyElection";
+import { FinishElection } from "./FinishElection";
+import { ManageMenu } from "./ManageMenu";
 import { BlockList } from "./BlockList";
-
-type Tab = "elections" | "audit" | "create";
 
 /** How many audit entries one page holds. Stated in the UI, never implied. */
 const AUDIT_PAGE = 100;
 
-/** Which panel a row has open. One at a time: two open at once is two forms
- *  asking for the same master passphrase. */
-type Panel = { kind: "close" | "tally" | "blocks"; id: string } | null;
+type Tab = "elections" | "audit";
+type View =
+  | { kind: "list" }
+  | { kind: "create" }
+  | { kind: "finish"; id: string }
+  | { kind: "details"; id: string };
 
-const bySoonestEnd = (a: ElectionSummary, b: ElectionSummary) =>
-  (a.ends_at ?? "9999").localeCompare(b.ends_at ?? "9999");
+type Status = "open" | "ready" | "results";
+const STATUS_LABEL: Record<Status, string> = {
+  open: "Open",
+  ready: "Ready to count",
+  results: "Results out",
+};
 
-/**
- * Admin home. The elections tab is the landing view because "what is running
- * right now, and how long is left" is the question an admin opens this to answer.
- */
+/** What each audit action means, in the words the log is read in. The raw name
+    stays in the log file; the screen says what happened. */
+const ACTION_LABELS: Record<string, string> = {
+  "bootstrap-admin": "Admin account set up",
+  "create-account": "Account created",
+  create: "Election created",
+  enrol: "Joined election",
+  vote: "Ballot accepted",
+  close: "Voting closed",
+  tally: "Votes counted",
+  "rotate-seal": "Sign-in key re-sealed",
+  "block-account": "Account blocked",
+  "unblock-account": "Account unblocked",
+};
+
+const turnoutText = (e: ElectionSummary) =>
+  `${e.ballots} of ${e.registered}` +
+  (e.turnout === null ? "" : ` (${Math.round(e.turnout * 100)}%)`);
+
 export const AdminPage: React.FC = () => {
   const { subject } = useSession();
   const [tab, setTab] = useState<Tab>("elections");
+  const [view, setView] = useState<View>({ kind: "list" });
+  const [elections, setElections] = useState<ElectionSummary[] | null>(null);
+  const [tallied, setTallied] = useState<Set<string>>(new Set());
+  const [error, setError] = useState<string | null>(null);
 
-  const tabs: [Tab, string][] = [
-    ["elections", "Elections"],
-    ["audit", "Audit chain"],
-    ["create", "New election"],
-  ];
+  const load = useCallback(async () => {
+    try {
+      const { elections: rows } = await api.listElections();
+      // Whether results are out is not on the list; a closed election has them
+      // once the published-results call stops answering 404.
+      const done = await Promise.all(
+        rows
+          .filter((r) => !r.active)
+          .map((r) =>
+            api.getResults(r.id).then(
+              () => r.id,
+              () => null,
+            ),
+          ),
+      );
+      setTallied(new Set(done.filter((x): x is string => x !== null)));
+      setElections(rows);
+      setError(null);
+    } catch {
+      setError("Could not load the election list. Your session may have expired.");
+    }
+  }, []);
 
-  return (
-    <div className="zv-page-container">
-      <header className="zv-page-header">
-        <h1 className="zv-page-title">Election administration</h1>
-        <p className="zv-page-subtitle">
-          Signed in as <code className="zv-mono">{subject}</code>
-        </p>
-      </header>
+  useEffect(() => {
+    void load();
+  }, [load]);
 
-      <div className="zv-tabs" role="group" aria-label="Admin view">
-        {tabs.map(([value, label]) => (
+  // New election shortcut (Cmd+N on Mac, Ctrl+N elsewhere).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.repeat || !matchesShortcut(e, { key: "N" })) return;
+      e.preventDefault();
+      setTab("elections");
+      setView({ kind: "create" });
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  const goList = () => {
+    setTab("elections");
+    setView({ kind: "list" });
+    void load();
+  };
+
+  const statusOf = (e: ElectionSummary): Status =>
+    e.active ? "open" : tallied.has(e.id) ? "results" : "ready";
+
+  const current =
+    view.kind === "finish" || view.kind === "details"
+      ? elections?.find((e) => e.id === view.id)
+      : undefined;
+
+  const tabs = (
+      <div className="zv-tabs zv-a-tabs" role="group" aria-label="Admin view">
+        {(
+          [
+            ["elections", "Elections"],
+            ["audit", "Activity record"],
+          ] as [Tab, string][]
+        ).map(([value, label]) => (
           <button
             key={value}
             type="button"
             aria-pressed={tab === value}
             className="zv-tab"
-            onClick={() => setTab(value)}
+            onClick={() => {
+              setTab(value);
+              if (value === "elections") setView({ kind: "list" });
+            }}
           >
             {label}
           </button>
         ))}
+        <span className="zv-a-who">
+          Signed in as <code className="zv-mono">{subject}</code>
+        </span>
       </div>
-
-      {/* Kept mounted and hidden rather than unmounted. Clicking "Audit chain"
-          with half a Create Election form filled used to throw the whole form
-          away, including the master passphrase, with no warning. */}
-      <div hidden={tab !== "elections"}>
-        <ElectionsPanel />
-      </div>
-      <div hidden={tab !== "audit"}>
-        <AuditPanel />
-      </div>
-      <div hidden={tab !== "create"}>
-        <CreateElection />
-      </div>
-    </div>
   );
-};
-
-const ElectionsPanel: React.FC = () => {
-  const [elections, setElections] = useState<ElectionSummary[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [panel, setPanel] = useState<Panel>(null);
-
-  const load = React.useCallback(async () => {
-    try {
-      const { elections: rows } = await api.listElections();
-      setElections(rows);
-      setError(null);
-    } catch {
-      setError(
-        "Could not load the election list. Your session may have expired.",
-      );
-    }
-  }, []);
-
-  React.useEffect(() => {
-    void load();
-  }, [load]);
-
-  // Opening one panel closes any other, and a panel for an election that is no
-  // longer in the list — after a refresh that removed it — closes itself.
-  React.useEffect(() => {
-    if (panel === null || elections === null) return;
-    if (!elections.some((e) => e.id === panel.id)) setPanel(null);
-  }, [panel, elections]);
-
-  const toggle = (kind: NonNullable<Panel>["kind"], id: string) =>
-    setPanel((open) => (open?.kind === kind && open.id === id ? null : { kind, id }));
-
-  const rows = elections ?? [];
-  const open = rows.filter((e) => e.active).sort(bySoonestEnd);
-  const closed = rows.filter((e) => !e.active).sort((a, b) => bySoonestEnd(b, a));
 
   return (
-    <div className="zv-admin-sections">
-      <section className="zv-admin-section">
-        <header className="zv-admin-section-header">
-          <h2 className="zv-admin-section-title">Elections</h2>
-          <p className="zv-admin-section-desc">
-            {elections === null
-              ? "Every election on this machine, with live turnout."
-              : elections.length === 0
-                ? "Every election on this machine, with live turnout."
-                : `${open.length} open · ${closed.length} closed. Open elections are listed by the time left on them.`}
-          </p>
-        </header>
+    <div className="zv-page-container">
+      {tab === "elections" && view.kind === "create" && (
+        <PageToolbar title="Create election" />
+      )}
+      {tab === "elections" && view.kind === "details" && current && (
+        <PageToolbar crumb={crumbTo(current.name, goList)} title={current.name} />
+      )}
+      {tab === "elections" && view.kind === "finish" && current && (
+        <PageToolbar crumb={crumbTo(current.name, goList)} title="Finish the election" />
+      )}
+      {tab === "elections" && view.kind !== "list" && tabs}
 
-        {error && <Alert type="error" title="Could not load" message={error} />}
-        {elections === null && !error && (
-          <Skeleton label="Loading elections" rows={3} />
-        )}
-        {elections !== null && elections.length === 0 && <FirstRunChecklist />}
+      {tab === "elections" && view.kind === "list" && (
+        <ElectionsPanel
+          elections={elections}
+          error={error}
+          statusOf={statusOf}
+          tabs={tabs}
+          onNew={() => setView({ kind: "create" })}
+          onFinish={(id) => setView({ kind: "finish", id })}
+          onDetails={(id) => setView({ kind: "details", id })}
+        />
+      )}
 
-        <div className="zv-election-list">
-          {open.map((election) => (
-            <ElectionGroup
-              key={election.id}
-              election={election}
-              panel={panel}
-              onToggle={toggle}
-              onRefresh={load}
-            />
-          ))}
-        </div>
+      {/* Unmounted when not shown: its Ctrl+Enter submit shortcut must never
+          fire from another tab. */}
+      {tab === "elections" && view.kind === "create" && (
+        <section className="zv-admin-section">
+          <CreateElection onDone={goList} />
+        </section>
+      )}
 
-        {closed.length > 0 && (
-          <>
-            <h3 className="zv-subsection-title">Closed</h3>
-            <div className="zv-election-list">
-              {closed.map((election) => (
-                <ElectionGroup
-                  key={election.id}
-                  election={election}
-                  panel={panel}
-                  onToggle={toggle}
-                  onRefresh={load}
-                />
-              ))}
-            </div>
-          </>
-        )}
+      {tab === "elections" && view.kind === "finish" && current && (
+        <FinishElection
+          key={current.id}
+          election={current}
+          tallied={tallied.has(current.id)}
+          onChanged={load}
+          onExit={goList}
+        />
+      )}
 
-        {elections !== null && elections.length > 0 && (
-          <div className="zv-form-actions">
-            <Button variant="outline" size="sm" onClick={() => void load()}>
-              Refresh
-            </Button>
+      {tab === "elections" && view.kind === "details" && current && (
+        <section className="zv-admin-section">
+          <div className="zv-card">
+            <dl className="zv-a-kv">
+              <dt>Election ID</dt>
+              <dd className="zv-mono">{current.id}</dd>
+              <dt>Status</dt>
+              <dd>{STATUS_LABEL[statusOf(current)]}</dd>
+              <dt>Turnout</dt>
+              <dd>{turnoutText(current)}</dd>
+              {current.description && (
+                <>
+                  <dt>About</dt>
+                  <dd>{current.description}</dd>
+                </>
+              )}
+              <dt>Opens</dt>
+              <dd>{current.starts_at ? formatTimestamp(current.starts_at) : "When created"}</dd>
+              <dt>Closes</dt>
+              <dd>{current.ends_at ? formatTimestamp(current.ends_at) : "By hand"}</dd>
+            </dl>
           </div>
-        )}
-      </section>
+          <h2 className="zv-subsection-title">Blocked accounts</h2>
+          <BlockList electionId={current.id} onDone={() => void load()} />
+        </section>
+      )}
+
+      {tab === "audit" && <AuditPanel tabs={tabs} />}
     </div>
   );
 };
 
-/**
- * One election, and whichever of its panels is open.
- *
- * The panels live here rather than in a strip at the foot of the page because
- * the two used to be separate routes to the same irreversible action: a row's
- * "Close election" button and a "Close an Election" button further down, the
- * second with an empty election field. An admin with four open elections had to
- * work out which of the two they were meant to use, and the wrong one was a
- * free-text field.
- */
-const ElectionGroup: React.FC<{
-  election: ElectionSummary;
-  panel: Panel;
-  onToggle: (kind: NonNullable<Panel>["kind"], id: string) => void;
-  onRefresh: () => void | Promise<void>;
-}> = ({ election, panel, onToggle, onRefresh }) => {
-  const isOpen = panel !== null && panel.id === election.id;
-  const showing = (kind: NonNullable<Panel>["kind"]) =>
-    isOpen && panel!.kind === kind;
-
-  return (
-    <div className="zv-election-group">
-      <article
-        className="zv-election-card zv-card-stock"
-        data-state={election.active ? "ready" : undefined}
-      >
-        <div className="zv-election-card-main">
-          <div className="zv-election-card-head">
-            <h3 className="zv-election-card-title">{election.name}</h3>
-            <code className="zv-election-card-id zv-mono">{election.id}</code>
-          </div>
-          {election.description && (
-            <p className="zv-election-card-desc">{election.description}</p>
-          )}
-          <div className="zv-election-card-meta">
-            <StateMark tone={election.active ? "live" : "muted"}>
-              {election.active ? "Open" : "Closed — sealed"}
-            </StateMark>
-            {election.active && (
-              <WindowCountdown
-                startsAt={election.starts_at}
-                endsAt={election.ends_at}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* The tallies and the actions share a row, so the numbers an action
-            would change and the action itself are read together. */}
-        <div className="zv-election-card-foot">
-          <Tallies
-            ballots={election.ballots}
-            registered={election.registered}
-            turnout={election.turnout}
-          />
-          <div className="zv-election-card-actions">
-            {/* Outline, not the destructive fill. An admin with four open
-                elections used to be looking at four identical red buttons; the
-                red belongs to the submit inside the panel it opens, at the
-                moment the decision is actually made. */}
-            {election.active ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onToggle("close", election.id)}
-                aria-expanded={showing("close")}
-              >
-                Close election
-              </Button>
-            ) : (
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => onToggle("tally", election.id)}
-                aria-expanded={showing("tally")}
-              >
-                Tally and publish
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onToggle("blocks", election.id)}
-              aria-expanded={showing("blocks")}
-            >
-              {showing("blocks") ? "Hide blocked accounts" : "Blocked accounts"}
-            </Button>
-          </div>
-        </div>
-      </article>
-
-      {showing("close") && (
-        <div className="zv-disclosure zv-disclosure-danger">
-          <div className="zv-disclosure-head">
-            <h3 className="zv-disclosure-title">Close {election.name}</h3>
-          </div>
-          <p className="zv-disclosure-note">
-            Permanent. No further ballots are accepted afterwards, and it cannot
-            be undone.
-          </p>
-          <CloseElection election={election} onDone={onRefresh} />
-        </div>
-      )}
-
-      {showing("tally") && (
-        <div className="zv-disclosure">
-          <div className="zv-disclosure-head">
-            <h3 className="zv-disclosure-title">
-              Tally {election.name}
-            </h3>
-          </div>
-          <p className="zv-disclosure-note">
-            Decrypts every ballot and publishes the result. Needs the master
-            passphrase even though you are already signed in.
-          </p>
-          <TallyElection election={election} onDone={onRefresh} />
-        </div>
-      )}
-
-      {showing("blocks") && (
-        <div className="zv-disclosure">
-          <div className="zv-disclosure-head">
-            <h3 className="zv-disclosure-title">
-              Blocked accounts in {election.name}
-            </h3>
-          </div>
-          <BlockList electionId={election.id} onDone={() => void onRefresh()} />
-        </div>
-      )}
-    </div>
-  );
-};
-
-/** The order an admin actually runs an election in, spelled out. */
-const FirstRunChecklist: React.FC = () => (
-  <div className="zv-checklist">
-    <h3 className="zv-checklist-title">No elections yet</h3>
-    <ol className="zv-checklist-steps">
-      <li>
-        Create one in the <strong>New election</strong> tab. The master
-        passphrase it asks for is the only way to close and tally it later —
-        write it down, because it cannot be recovered.
-      </li>
-      <li>Share the election id with the people who should vote.</li>
-      <li>Each voter creates an account, then joins the election.</li>
-      <li>
-        When the window closes, use <strong>Close election</strong> on the row
-        — that is permanent.
-      </li>
-      <li>
-        Then <strong>Tally and publish</strong> on the same row, with the same
-        master passphrase. Results publish at that point.
-      </li>
-    </ol>
-  </div>
+const crumbTo = (name: string, back: () => void) => (
+  <nav aria-label="Breadcrumb">
+    <button type="button" className="zv-a-link" onClick={back}>
+      Elections
+    </button>
+    <span aria-hidden="true"> › </span>
+    <span>{name}</span>
+  </nav>
 );
 
-const AuditPanel: React.FC = () => {
+const ElectionsPanel: React.FC<{
+  elections: ElectionSummary[] | null;
+  error: string | null;
+  statusOf: (e: ElectionSummary) => Status;
+  tabs: React.ReactNode;
+  onNew: () => void;
+  onFinish: (id: string) => void;
+  onDetails: (id: string) => void;
+}> = ({ elections, error, statusOf, tabs, onNew, onFinish, onDetails }) => {
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"all" | Status>("all");
+  const [note, setNote] = useState("");
+  const toast = useToast();
+
+  const needle = search.trim().toLowerCase();
+  const rows = useMemo(
+    () =>
+      (elections ?? []).filter(
+        (e) =>
+          (filter === "all" || statusOf(e) === filter) &&
+          (needle === "" ||
+            e.name.toLowerCase().includes(needle)),
+      ),
+    [elections, filter, needle, statusOf],
+  );
+
+  const copyId = (id: string) => {
+    void navigator.clipboard
+      ?.writeText(id)
+      .then(() => toast.show("Election ID copied", "ok"))
+      .catch(() => setNote("Could not copy. Select the ID in Details instead."));
+  };
+
+  return (
+    <section className="zv-admin-section">
+      <PageToolbar title="Elections">
+        <input
+          className="zv-input zv-a-search"
+          type="search"
+          aria-label="Search elections"
+          placeholder="Search by name"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          autoComplete="off"
+        />
+        <select
+          className="zv-input zv-a-status-filter"
+          aria-label="Status"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value as "all" | Status)}
+        >
+          <option value="all">All statuses</option>
+          <option value="open">Open</option>
+          <option value="ready">Ready to count</option>
+          <option value="results">Results out</option>
+        </select>
+        <Button variant="primary" className="zv-a-new" onClick={onNew} shortcut={{ key: "N" }}>
+          New election
+        </Button>
+      </PageToolbar>
+      {tabs}
+
+      {error && <Alert type="error" title="Could not load" message={error} />}
+      {elections === null && !error && <Skeleton label="Loading elections" rows={3} />}
+      {elections !== null && elections.length === 0 && (
+        <div className="zv-card">
+          <p className="zv-a-lede">
+            No elections yet. Create one, then share its ID with the people who
+            should vote.
+          </p>
+        </div>
+      )}
+
+      {elections !== null && elections.length > 0 && (
+        <div className="zv-card zv-a-table-card">
+          <table className="zv-a-table">
+            <caption className="zv-sr-only">Elections</caption>
+            <thead>
+              <tr>
+                <th scope="col">Election</th>
+                <th scope="col">Status</th>
+                <th scope="col">Turnout</th>
+                <th scope="col">
+                  <span className="zv-sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((e) => {
+                const status = statusOf(e);
+                return (
+                  <tr key={e.id}>
+                    <th scope="row">
+                      <span className="zv-a-name">{e.name}</span>
+                      <code className="zv-mono zv-a-id">{e.id}</code>
+                    </th>
+                    <td>
+                      <StatusPill
+                        tone={status === "open" ? "open" : status === "results" ? "done" : "closed"}
+                      >
+                        {STATUS_LABEL[status]}
+                      </StatusPill>
+                    </td>
+                    <td className="zv-a-num">{turnoutText(e)}</td>
+                    <td className="zv-a-actions">
+                      {status === "ready" && (
+                        <Button variant="primary" size="sm" onClick={() => onFinish(e.id)}>
+                          Count votes
+                        </Button>
+                      )}
+                      <ManageMenu
+                        label={`Manage ${e.name}`}
+                        items={[
+                          { label: "View details", onSelect: () => onDetails(e.id) },
+                          { label: "Copy election ID", onSelect: () => copyId(e.id) },
+                          ...(e.active
+                            ? [
+                                {
+                                  label: "Close voting…",
+                                  danger: true,
+                                  onSelect: () => onFinish(e.id),
+                                },
+                              ]
+                            : []),
+                        ]}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {rows.length === 0 && (
+            <p className="zv-a-lede zv-a-empty">No elections match.</p>
+          )}
+        </div>
+      )}
+      <p className="zv-sr-only" role="status">
+        {note}
+      </p>
+      {note && <p className="zv-form-hint">{note}</p>}
+    </section>
+  );
+};
+
+const AuditPanel: React.FC<{ tabs: React.ReactNode }> = ({ tabs }) => {
   const [entries, setEntries] = useState<AuditEntry[] | null>(null);
   const [chain, setChain] = useState<AuditVerifyResponse | null>(null);
+  const [checkedAt, setCheckedAt] = useState("");
   const [filter, setFilter] = useState("");
   const [electionFilter, setElectionFilter] = useState("");
   const [shown, setShown] = useState(AUDIT_PAGE);
+  const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const load = React.useCallback(async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const [audit, verify] = await Promise.all([
@@ -360,9 +394,12 @@ const AuditPanel: React.FC = () => {
       ]);
       setEntries(audit.entries);
       setChain(verify);
+      setCheckedAt(
+        new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false }),
+      );
       setError(null);
     } catch {
-      setError("Could not read the audit log.");
+      setError("Could not read the activity record.");
     } finally {
       setLoading(false);
     }
@@ -378,56 +415,57 @@ const AuditPanel: React.FC = () => {
     (entry) =>
       needle === "" ||
       entry.election_id.toLowerCase().includes(needle) ||
-      entry.action.toLowerCase().includes(needle) ||
+      (ACTION_LABELS[entry.action] ?? entry.action).toLowerCase().includes(needle) ||
       entry.actor.toLowerCase().includes(needle),
   );
   const rows = visible.slice(0, shown);
-  const elections = [
-    ...new Set((entries ?? []).map((entry) => entry.election_id)),
-  ].sort();
+  const ids = [...new Set((entries ?? []).map((entry) => entry.election_id))].sort();
+  const picked = entries?.find((en) => en.entry_hash === selected);
 
   return (
     <section className="zv-admin-section">
-      <header className="zv-admin-section-header">
-        <h2 className="zv-admin-section-title">Audit chain</h2>
-        <p className="zv-admin-section-desc">
-          Append-only and hash-linked. Editing any line breaks every hash after
-          it, and the log is a plain text file a reviewer can recompute by hand.
-        </p>
-      </header>
+      <PageToolbar title="Activity record">
+        <Button variant="outline" size="sm" onClick={() => void load()} isLoading={loading}>
+          Check again
+        </Button>
+      </PageToolbar>
+      {tabs}
 
       {error && <Alert type="error" title="Could not read" message={error} />}
 
-      {/* The app's central claim, so it is the one alert on the page that is a
-          success and not an aside. */}
-      {chain && (
-        <Alert
-          type={chain.valid ? "success" : "error"}
-          title={
-            chain.valid
-              ? `Chain intact — ${chain.entries} entries`
-              : `Chain broken at entry ${chain.broken_at}`
-          }
-          message={
-            chain.valid
-              ? `Genesis ${chain.genesis.slice(0, 16)}… Every entry hash was recomputed and matches.`
-              : "An entry has been altered or removed. Treat the results as untrustworthy."
-          }
-        />
-      )}
+      <div className="zv-a-toolbar">
+        {chain && (
+          <p
+            className={`zv-a-chain ${chain.valid ? "zv-a-chain-ok" : "zv-a-chain-bad"}`}
+            role="status"
+          >
+            {chain.valid ? (
+              <>
+                <strong>Record intact.</strong> {chain.entries}{" "}
+                {chain.entries === 1 ? "entry" : "entries"}, none changed. Checked {checkedAt}.
+              </>
+            ) : (
+              <>
+                <strong>Record broken at entry {chain.broken_at}.</strong> An entry was
+                changed or removed. Don't trust the results. Checked {checkedAt}.
+              </>
+            )}
+          </p>
+        )}
+      </div>
 
-      <div className="zv-form">
-        <div className="zv-form-row">
+      <div className="zv-a-toolbar">
+        <div className="zv-a-search">
           <Field
             label="Search"
-            placeholder="Election id, action, or actor"
+            placeholder="Election, event, or person"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             autoComplete="off"
-            hint="Case does not matter."
           />
+        </div>
+        <div className="zv-a-search">
           <Field
-            as="input"
             label="Election"
             placeholder="All elections"
             value={electionFilter}
@@ -435,102 +473,82 @@ const AuditPanel: React.FC = () => {
             list="zv-audit-elections"
             autoComplete="off"
           />
-          <datalist id="zv-audit-elections">
-            {elections.map((id) => (
-              <option key={id} value={id} />
-            ))}
-          </datalist>
         </div>
-        <div className="zv-form-actions">
-          <Button variant="outline" size="sm" onClick={() => void load()} isLoading={loading}>
-            Refresh
-          </Button>
-          {needle !== "" && (
-            <Button variant="ghost" size="sm" onClick={() => setFilter("")}>
-              Clear search
-            </Button>
-          )}
-        </div>
+        <datalist id="zv-audit-elections">
+          {ids.map((id) => (
+            <option key={id} value={id} />
+          ))}
+        </datalist>
       </div>
 
-      {/* The scope of the table stated above it. It used to silently show the
-          newest hundred entries with no indication that anything else existed —
-          on a page whose whole claim is that the log is complete. */}
       {entries !== null && (
         <p className="zv-audit-scope">
           Showing {rows.length} of {visible.length} matching
           {visible.length !== entries.length ? ` (from ${entries.length} loaded)` : ""}
-          {shown < visible.length && " — Load more to see the rest"}
         </p>
       )}
 
-      <div className="zv-audit-table-wrap">
-        <table className="zv-audit-table">
-          <caption className="zv-sr-only">
-            Audit log entries, most recent last
-          </caption>
+      <div className="zv-card zv-a-table-card">
+        <table className="zv-a-table">
+          <caption className="zv-sr-only">Activity record, most recent last</caption>
           <thead>
             <tr>
-              <th scope="col">When</th>
+              <th scope="col">Time</th>
+              <th scope="col">Event</th>
               <th scope="col">Election</th>
-              <th scope="col">Action</th>
-              <th scope="col">Actor</th>
-              <th scope="col">Status</th>
-              <th scope="col">Entry hash</th>
+              <th scope="col">By</th>
+              <th scope="col">Result</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((entry) => (
-              <tr key={entry.entry_hash}>
-                {/* Was time-of-day only, so entries from different days were
-                    indistinguishable in a log about sequence. The data-label
-                    attributes are what this becomes below 560px, where the
-                    table is a list of records instead of a grid. */}
-                <td className="zv-audit-when" data-label="When">
-                  <time dateTime={entry.timestamp}>
-                    <span className="zv-when-full">
-                      {formatTimestamp(entry.timestamp)}
-                    </span>
-                    <span className="zv-when-compact">
-                      {formatTimestampCompact(entry.timestamp)}
-                    </span>
-                  </time>
-                </td>
-                <td className="zv-mono" data-label="Election">
-                  {entry.election_id}
-                </td>
-                <td data-label="Action">{entry.action}</td>
-                <td
-                  className="zv-mono zv-hash-truncate"
-                  data-label="Actor"
-                  title={entry.actor}
-                >
-                  {entry.actor}
-                </td>
-                <td data-label="Status">{entry.status}</td>
-                <td
-                  className="zv-mono zv-hash-truncate"
-                  data-label="Entry hash"
-                  title={entry.entry_hash}
-                >
-                  {entry.entry_hash}
-                </td>
-              </tr>
-            ))}
+            {rows.map((entry) => {
+              const on = entry.entry_hash === selected;
+              return (
+                <tr key={entry.entry_hash} className={on ? "zv-a-row-on" : undefined}>
+                  <td className="zv-a-num">
+                    <time dateTime={entry.timestamp}>{formatTimestamp(entry.timestamp)}</time>
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      className="zv-a-link"
+                      aria-pressed={on}
+                      onClick={() => setSelected(on ? null : entry.entry_hash)}
+                    >
+                      {ACTION_LABELS[entry.action] ?? entry.action}
+                    </button>
+                  </td>
+                  <td className="zv-mono">{entry.election_id || "—"}</td>
+                  <td className="zv-mono zv-hash-truncate" title={entry.actor}>
+                    {entry.actor}
+                  </td>
+                  <td>{entry.status}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
         {rows.length === 0 && entries !== null && (
-          <Alert type="info" message="No entries match that search." />
+          <p className="zv-a-lede zv-a-empty">No entries match that search.</p>
         )}
+        <div className="zv-a-detail" aria-live="polite">
+          {picked ? (
+            <>
+              <span className="zv-label-text">Fingerprint</span>
+              <div className="zv-mono zv-hash-full">{picked.entry_hash}</div>
+              <div className="zv-form-hint">
+                Follows <span className="zv-mono">{picked.prev_hash}</span>
+              </div>
+            </>
+          ) : (
+            <p className="zv-form-hint">Select an event to see its fingerprint.</p>
+          )}
+        </div>
       </div>
 
       {shown < visible.length && (
         <div className="zv-form-actions">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShown((n) => n + AUDIT_PAGE)}
-          >
+          <Button variant="outline" size="sm" onClick={() => setShown((n) => n + AUDIT_PAGE)}>
             Load {Math.min(AUDIT_PAGE, visible.length - shown)} more
           </Button>
         </div>

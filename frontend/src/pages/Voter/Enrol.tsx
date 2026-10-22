@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Stepper } from "../../components/common/Stepper";
 import { api } from "../../services/api";
 import { useSession } from "../../auth/SessionContext";
 import { useSubmit } from "../../hooks/useSubmit";
@@ -10,10 +11,10 @@ import {
   signRaw,
 } from "../../services/crypto";
 import { Card } from "../../components/common/Card";
-import { CardStock } from "../../components/common/CardStock";
 import { Button } from "../../components/common/Button";
 import { Alert } from "../../components/common/Alert";
 import { Field } from "../../components/common/Field";
+import { useToast } from "../../components/common/Toast";
 import { downloadJson } from "../../services/download";
 
 /** Mirrors the server's own floor; not enforced here. */
@@ -38,15 +39,20 @@ export const Enrol: React.FC<{
   onDone: () => void | Promise<void>;
 }> = ({ electionId, electionName, onDone }) => {
   const { subject } = useSession();
+  const { show } = useToast();
   const [passphrase, setPassphrase] = useState("");
   const [confirm, setConfirm] = useState("");
   const [missing, setMissing] = useState(false);
+  const [attempted, setAttempted] = useState(false);
 
   const { loading, result, error, run } = useSubmit<{ username: string }>();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
+    // Checked here, not by disabling the button, so the problem is named inline.
+    setAttempted(true);
+    if (passphrase.length < MIN_BALLOT_PASSPHRASE || confirm !== passphrase) return;
     const username = subject ?? "";
 
     await run(async () => {
@@ -86,22 +92,21 @@ export const Enrol: React.FC<{
   };
 
   const mismatch = confirm !== "" && confirm !== passphrase;
-  const ready =
-    passphrase.length >= MIN_BALLOT_PASSPHRASE && confirm === passphrase;
 
   if (result) {
     return (
-      <CardStock title="Enrolment receipt" id={electionId} sealed sealedSub="KEPT BY YOU">
-        <div className="zv-card-print">
+      <Card>
+        <h2 className="zv-stub-title">You joined</h2>
+        <p>
           {electionName
-            ? `You are on ${electionName}'s eligible list. That is one ballot, in this election only.`
-            : "You are on this election's eligible list. That is one ballot, in this election only."}
-        </div>
+            ? `You are on ${electionName}'s eligible list. That is one vote, in this election only.`
+            : "You are on this election's eligible list. That is one vote, in this election only."}
+        </p>
         <div className="zv-form-actions">
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
-            onClick={() =>
+            onClick={() => {
               downloadJson(
                 {
                   election_id: electionId,
@@ -109,112 +114,113 @@ export const Enrol: React.FC<{
                   username: subject,
                 },
                 `enrolment_${electionId}.json`,
-              )
-            }
+              );
+              show("Confirmation downloaded", "ok");
+            }}
           >
-            Download receipt
+            Download confirmation
           </Button>
           <Button variant="primary" size="sm" onClick={() => void onDone()}>
             Back to my ballots
           </Button>
         </div>
-      </CardStock>
+      </Card>
     );
   }
 
   return (
-    <Card>
-      <form className="zv-form" onSubmit={handleSubmit} noValidate>
-        {error && (
-          <Alert type="error" title="Could Not Enrol" message={error} />
-        )}
-        {missing && (
-          <Alert
-            type="info"
-            title="Your account key is locked"
-            message="Nothing is lost — your account is on the server. Sign in again and this page will find the key it just unlocked."
-          />
-        )}
+    <>
+      <Stepper steps={["Account", "Join", "Vote", "Receipt"]} current={1} />
+      <div className="zv-voter-pair">
+        <Card>
+          <form className="zv-form" onSubmit={handleSubmit} noValidate>
+            {error && (
+              <Alert type="error" title="Could not join" message={error} />
+            )}
+            {missing && (
+              <Alert
+                type="info"
+                title="Your account key is locked"
+                message="Nothing is lost. Your account is on the server. Sign in again and this page will find the key it just unlocked."
+              />
+            )}
 
-        {/* The name and the id together. Voters recognise elections by name, and
-            this page used to show only `election_2026`. */}
-        <div className="zv-context-line">
-          Enrolling in{" "}
-          <strong>{electionName ?? electionId}</strong>
-          {electionName && (
-            <>
-              {" "}
-              (<code className="zv-mono">{electionId}</code>)
-            </>
-          )}{" "}
-          as <code className="zv-mono">{subject}</code>
-        </div>
+            <div className="zv-context-line">
+              Joining <strong>{electionName ?? electionId}</strong>
+              {electionName && (
+                <>
+                  {" "}
+                  (<code className="zv-mono">{electionId}</code>)
+                </>
+              )}{" "}
+              as <code className="zv-mono">{subject}</code>
+            </div>
 
-        {/* Losing this one is worse than losing the account passphrase: it strands
-            the enrolment, so the person can never vote in an election they were
-            eligible for, and there is no reset for it either. */}
-        <Alert
-          type="warning"
-          title="Write this passphrase down"
-          message="This seals the ballot key for this one election. It is not stored anywhere the server can read and it cannot be reset — if you lose it you stay enrolled but can never vote here."
-        />
+            <Field
+              label="Passphrase for this election"
+              required
+              type="password"
+              revealable
+              placeholder={`At least ${MIN_BALLOT_PASSPHRASE} characters`}
+              value={passphrase}
+              onChange={(e) => setPassphrase(e.target.value)}
+              autoComplete="new-password"
+              disabled={loading}
+              error={
+                attempted && passphrase.length < MIN_BALLOT_PASSPHRASE
+                  ? `Use at least ${MIN_BALLOT_PASSPHRASE} characters`
+                  : undefined
+              }
+            />
 
-        <Field
-          label="Ballot Passphrase"
-          required
-          type="password"
-          revealable
-          placeholder={`At least ${MIN_BALLOT_PASSPHRASE} characters`}
-          value={passphrase}
-          onChange={(e) => setPassphrase(e.target.value)}
-          autoComplete="new-password"
-          disabled={loading}
-          error={
-            passphrase !== "" && passphrase.length < MIN_BALLOT_PASSPHRASE
-              ? `Must be at least ${MIN_BALLOT_PASSPHRASE} characters`
-              : undefined
-          }
-          hint="Different from your account passphrase on purpose — one unlocks your account everywhere, this one belongs to a single election."
-        />
+            <Field
+              label="Confirm"
+              required
+              type="password"
+              revealable
+              placeholder="Type it again"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              autoComplete="new-password"
+              disabled={loading}
+              error={
+                (attempted || mismatch) && confirm !== passphrase
+                  ? "The two do not match"
+                  : undefined
+              }
+              hint={
+                confirm !== "" && confirm === passphrase ? "✓ Matches" : undefined
+              }
+            />
 
-        <Field
-          label="Confirm Ballot Passphrase"
-          required
-          type="password"
-          revealable
-          placeholder="Type it again"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          autoComplete="new-password"
-          disabled={loading}
-          error={mismatch ? "The two do not match" : undefined}
-        />
+            <div className="zv-form-actions">
+              <Button type="submit" variant="primary" isLoading={loading}>
+                Join election
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => void onDone()}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </Card>
 
-        <span className="zv-form-hint">
-          A new key is created for this election only. It is never reused from
-          your account key, so your activity in one election cannot be linked to
-          another.
-        </span>
-
-        <div className="zv-form-actions">
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={loading}
-            disabled={!ready}
-          >
-            Join this election
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => void onDone()}
-            disabled={loading}
-          >
-            Cancel
-          </Button>
-        </div>
-      </form>
-    </Card>
+        <aside className="zv-why-card">
+          <h3 className="zv-stub-title">Why a second passphrase?</h3>
+          <p>
+            It keeps this vote separate from your account. You will need it
+            once, when you vote. Write it down now.
+          </p>
+          <p>
+            It is not stored anywhere we can read, and it cannot be reset. If
+            you lose it you stay joined but can never vote in this election.
+          </p>
+        </aside>
+      </div>
+    </>
   );
 };

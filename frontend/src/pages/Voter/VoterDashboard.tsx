@@ -1,17 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Skeleton } from "../../components/common/Skeleton";
 import { api } from "../../services/api";
 import { useSession } from "../../auth/SessionContext";
-import { describeCriteria } from "../../services/ageRule";
 import type { MyElection } from "../../types/api";
 import { Button } from "../../components/common/Button";
+import { Card } from "../../components/common/Card";
 import { Alert } from "../../components/common/Alert";
-import { CopyButton } from "../../components/common/CopyButton";
-import {
-  Tallies,
-  WindowCountdown,
-} from "../../components/common/ElectionFacts";
-import { StateMark, type Tone } from "../../components/common/Hole";
+import { StatusPill, type PillTone } from "../../components/common/StatusPill";
+import { Stub } from "../../components/common/Stub";
+import { PageToolbar } from "../../components/common/PageToolbar";
+import { useToast } from "../../components/common/Toast";
+import { loadBallotSeal } from "../../services/crypto";
+import { downloadJson } from "../../services/download";
 import { Enrol } from "./Enrol";
 import { CastVote } from "./CastVote";
 import { ResultsPanel, type ResultsTab } from "./ResultsPanel";
@@ -55,7 +55,12 @@ export const VoterDashboard: React.FC = () => {
     recorded?: boolean;
     /** Which results view is on screen, so the heading names it. */
     tab?: ResultsTab;
+    /** "I saved both codes" ticked on the receipt. Lives here because the
+        Back button is in the toolbar, outside CastVote. */
+    saved?: boolean;
+    saveError?: boolean;
   } | null>(null);
+  const [query, setQuery] = useState("");
 
   const load = React.useCallback(async () => {
     setRefreshing(true);
@@ -81,27 +86,24 @@ export const VoterDashboard: React.FC = () => {
     return (a.ends_at ?? "9999").localeCompare(b.ends_at ?? "9999");
   });
 
+  const q = query.trim().toLowerCase();
+  const shown = q ? ordered.filter((e) => e.name.toLowerCase().includes(q)) : ordered;
+
   // The heading names what is on screen. It used to read "Your ballots" above
   // a ballot form and a receipt, which is the one heading a person cannot act on.
-  const RESULTS_TITLES: Record<ResultsTab, [string, string]> = {
-    summary: ["Published results", "The count, and the proof underneath it."],
-    receipt: ["Your ballot receipt", "What this browser recorded when you voted."],
-    proof: ["Prove your ballot was counted", "Recomputed here, against the published root."],
-    reveal: ["Reveal your vote", "Searched in this browser. The server never learns it."],
-  };
 
   const TITLES: Record<Action | "recorded", [string, string]> = {
-    enrol: ["Join an election", "This adds you to its eligible list. It is one ballot, in this election only."],
+    enrol: ["Join election", "This adds you to its eligible list. It is one ballot, in this election only."],
     vote: [
-      "Cast your ballot",
-      "One ballot per enrolment. The server rejects a second, and your choice is encrypted before it leaves this page.",
+      "Cast vote",
+      "One vote per person. Your choice is encrypted before it leaves this page.",
     ],
     recorded: [
-      "Your ballot is recorded",
+      "Vote recorded",
       "The receipt below is the proof. Download it before you close this page.",
     ],
-    receipt: ["Your ballot receipt", "What this browser recorded when you voted."],
-    results: ["Published results", "The count, and the proof underneath it."],
+    receipt: ["Results", "Counted results, and a way to check your own vote."],
+    results: ["Results", "Counted results, and a way to check your own vote."],
   };
   const heading =
     action?.kind === "vote" && action.recorded ? "recorded" : action?.kind;
@@ -109,15 +111,59 @@ export const VoterDashboard: React.FC = () => {
   // the tab rather than the button that opened it.
   const [title, note] =
     action && (action.kind === "receipt" || action.kind === "results")
-      ? RESULTS_TITLES[action.tab ?? (action.kind === "receipt" ? "receipt" : "summary")]
+      ? [`${action.name}: results`, TITLES.results[1]]
       : heading
         ? TITLES[heading]
         : ["Your ballots", ""];
 
+  const backToBallots = (
+    <Button
+      variant="secondary"
+      size="sm"
+      onClick={() => {
+        // Same gate as before: the receipt is gone once this screen closes.
+        if (heading === "recorded" && !action?.saved) {
+          setAction((a) => (a ? { ...a, saveError: true } : a));
+          return;
+        }
+        setAction(null);
+        void load();
+      }}
+    >
+      Back to my ballots
+    </Button>
+  );
+
   return (
     <div className="zv-page-container">
-      <header className="zv-page-header">
-        <h1 className="zv-page-title">{title}</h1>
+      <PageToolbar
+        title={title}
+        crumb={action ? `Your ballots › ${action.name}` : undefined}
+      >
+        {!action && (
+          <>
+            <input
+              type="search"
+              className="zv-toolbar-search"
+              aria-label="Search elections by name"
+              placeholder="Search elections"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => void load()}
+              isLoading={refreshing}
+            >
+              Refresh
+            </Button>
+          </>
+        )}
+        {(heading === "recorded" || action?.kind === "receipt" || action?.kind === "results") &&
+          backToBallots}
+      </PageToolbar>
+      {!action || note ? (
         <p className="zv-page-subtitle">
           {action ? (
             note
@@ -127,7 +173,7 @@ export const VoterDashboard: React.FC = () => {
             </>
           )}
         </p>
-      </header>
+      ) : null}
 
       {action ? (
         <section className="zv-admin-sections">
@@ -148,6 +194,11 @@ export const VoterDashboard: React.FC = () => {
               onRecorded={() =>
                 setAction((a) => (a === null ? null : { ...a, recorded: true }))
               }
+              saved={!!action.saved}
+              saveError={!!action.saveError}
+              onSavedChange={(saved) =>
+                setAction((a) => (a ? { ...a, saved, saveError: false } : a))
+              }
               onDone={async () => {
                 setAction(null);
                 await load();
@@ -160,7 +211,6 @@ export const VoterDashboard: React.FC = () => {
               electionName={action.name}
               openTab={action.kind === "receipt" ? "receipt" : "summary"}
               onTabChange={(tab) => setAction((a) => (a ? { ...a, tab } : a))}
-              onClose={() => setAction(null)}
             />
           )}
         </section>
@@ -191,28 +241,38 @@ export const VoterDashboard: React.FC = () => {
               />
             )}
 
-            <div className="zv-election-list">
-              {ordered.map((election) => (
-                <ElectionRow
-                  key={election.id}
-                  election={election}
-                  onAct={(kind) =>
-                    setAction({ kind, id: election.id, name: election.name })
-                  }
-                />
-              ))}
-            </div>
+            {ordered.length > 0 && shown.length === 0 && (
+              <p className="zv-hint-text">No elections match “{query}”.</p>
+            )}
 
-            {elections !== null && elections.length > 0 && (
-              <div className="zv-form-actions">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void load()}
-                  isLoading={refreshing}
-                >
-                  Refresh
-                </Button>
+            {shown.length > 0 && (
+              <div className="zv-voter-grid">
+                <Card>
+                  <table className="zv-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Election</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Closes</th>
+                        <th scope="col">
+                          <span className="zv-sr-only">Action</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {shown.map((election) => (
+                        <ElectionRow
+                          key={election.id}
+                          election={election}
+                          onAct={(kind) =>
+                            setAction({ kind, id: election.id, name: election.name })
+                          }
+                        />
+                      ))}
+                    </tbody>
+                  </table>
+                </Card>
+                <SavedReceipts elections={ordered} subject={subject ?? ""} />
               </div>
             )}
           </section>
@@ -237,153 +297,144 @@ function rank(election: MyElection): string {
   return election.accepting_votes ? "none" : "closed";
 }
 
+/** Closes date for the table, or a dash once voting is over. */
+function closes(election: MyElection): string {
+  if (!election.accepting_votes || !election.ends_at) return "—";
+  const d = new Date(election.ends_at);
+  return Number.isNaN(d.getTime())
+    ? "—"
+    : d.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+}
+
 const ElectionRow: React.FC<{
   election: MyElection;
   onAct: (kind: Action) => void;
 }> = ({ election, onAct }) => {
   const state = rank(election);
+  // Counts only exist once the election has closed and been counted.
+  const resultsOut = election.counts !== undefined;
 
-  const labels: Record<string, { text: string; tone: Tone }> = {
-    // A cast ballot is a card already punched, so it takes the struck slot and
-    // not the punched one. It is the only row here whose work is finished and
-    // cannot be resumed, and it must not look like the rows still waiting on
-    // this person.
-    voted: { text: "Ballot cast", tone: "spent" },
-    ready: { text: "Joined — ready to vote", tone: "live" },
-    // Needs a person, and nothing is destroyed: a part-made hole, not the
-    // exception ink. That ink is spent on what is void.
-    missed: { text: "Missed this one", tone: "warn" },
-    none: { text: "Open — you can join", tone: "live" },
-    ineligible: { text: "Not eligible for this one", tone: "muted" },
-    closed: { text: "Closed to new voters", tone: "muted" },
-  };
-  const label = labels[state];
+  const status: { text: string; tone: PillTone } =
+    state === "none"
+      ? { text: "Open", tone: "open" }
+      : state === "ready"
+        ? { text: "Joined", tone: "open" }
+        : state === "voted"
+          ? { text: "Voted", tone: "done" }
+          : state === "ineligible"
+            ? { text: "Not eligible", tone: "closed" }
+            : resultsOut
+              ? { text: "Results out", tone: "done" }
+              : { text: "Counting", tone: "closed" };
 
-  // The candidate list and the age rule decide whether joining is worth anything.
-  // Neither was on the card, so a voter joined before knowing what they were
-  // voting for, or found out they were ineligible only after trying.
-  const [detail, setDetail] = useState<{
-    candidates: string[];
-    criteria: { min_age: number | null; max_age: number | null } | null;
-  } | null>(null);
-
-  useEffect(() => {
-    let current = true;
-    void api
-      .getElection(election.id)
-      .then((full) => {
-        if (!current) return;
-        setDetail({
-          candidates: full.candidates,
-          criteria: full.criteria ?? null,
-        });
-      })
-      .catch(() => undefined);
-    return () => {
-      current = false;
-    };
-  }, [election.id]);
+  let action: React.ReactNode;
+  if (state === "none") {
+    action = (
+      <Button variant="primary" size="sm" onClick={() => onAct("enrol")}>
+        Join
+      </Button>
+    );
+  } else if (state === "ready") {
+    action = (
+      <Button variant="primary" size="sm" onClick={() => onAct("vote")}>
+        Vote
+      </Button>
+    );
+  } else if (state === "voted" && !resultsOut) {
+    action = (
+      <Button variant="secondary" size="sm" onClick={() => onAct("receipt")}>
+        My receipt
+      </Button>
+    );
+  } else if (resultsOut) {
+    action = (
+      <Button variant="secondary" size="sm" onClick={() => onAct("results")}>
+        See results
+      </Button>
+    );
+  } else {
+    action = (
+      <span className="zv-hint-text">
+        {state === "ineligible" ? "Age rule excludes you" : "Results soon"}
+      </span>
+    );
+  }
 
   return (
-    <article
-      // A row is a card in the tray: warm stock, the keying gutter down its
-      // leading edge, the election's own name printed in the card's ink. The two
-      // rows that have something to do about them carry a ringed hole in the
-      // gutter, so a voter scanning the list finds the ones that need a decision
-      // without reading a word of them.
-      className="zv-election-card zv-card-stock"
-      data-state={
-        state === "ready" ? "ready" : state === "missed" ? "urgent" : undefined
-      }
-    >
-      <div className="zv-election-card-main">
-        <div className="zv-election-card-head">
-          <h3 className="zv-election-card-title">{election.name}</h3>
-          <code className="zv-election-card-id zv-mono">{election.id}</code>
-          <CopyButton value={election.id} label="Election id" />
-        </div>
-        {election.description && (
-          <p className="zv-election-card-desc">{election.description}</p>
-        )}
+    <tr>
+      <td>
+        <strong>{election.name}</strong>
+      </td>
+      <td>
+        <StatusPill tone={status.tone}>{status.text}</StatusPill>
+      </td>
+      <td>{closes(election)}</td>
+      <td className="zv-table-action">{action}</td>
+    </tr>
+  );
+};
 
-        {detail && detail.candidates.length > 0 && (
-          <p className="zv-card-detail">
-            <span className="zv-card-detail-label">Candidates</span>
-            <span className="zv-card-detail-value">
-              {detail.candidates.join(" · ")}
-            </span>
-          </p>
-        )}
+/** Receipts kept in this browser. Read-only: nothing here leaves the device. */
+const SavedReceipts: React.FC<{ elections: MyElection[]; subject: string }> = ({
+  elections,
+  subject,
+}) => {
+  const rows = useMemo(
+    () =>
+      elections
+        .filter((e) => e.registered || e.voted)
+        .map((e) => ({ e, seal: loadBallotSeal(e.id, subject) })),
+    [elections, subject],
+  );
+  const saved = rows.filter((r) => r.seal?.commitment);
+  const { show } = useToast();
 
-        {detail?.criteria && (
-          <p className="zv-card-detail">
-            <span className="zv-card-detail-label">Who can vote</span>
-            <span className="zv-card-detail-value">
-              {describeCriteria(detail.criteria)}
-            </span>
-          </p>
-        )}
-
-        <div className="zv-election-card-meta">
-          <StateMark tone={label.tone}>{label.text}</StateMark>
-          {election.accepting_votes && (
-            <WindowCountdown
-              startsAt={election.starts_at}
-              endsAt={election.ends_at}
-            />
-          )}
-        </div>
-
-      </div>
-
-      <div className="zv-election-card-foot">
-        {election.counts ? (
-          <Tallies
-            ballots={election.counts.ballots}
-            registered={election.counts.registered}
-            turnout={election.counts.turnout}
-          />
-        ) : (
-          <span className="zv-counts-note">
-            Counts appear once this election closes.
-          </span>
-        )}
-        <div className="zv-election-card-actions">
-          {state === "none" && (
-            <Button variant="primary" size="sm" onClick={() => onAct("enrol")}>
-              Join
-            </Button>
-          )}
-          {state === "ineligible" && (
-            <span className="zv-vote-closed-note">
-              {detail?.criteria
-                ? `${describeCriteria(detail.criteria)} — this excludes you`
-                : "This election's age rule excludes you"}
-            </span>
-          )}
-          {state === "closed" && (
-            <span className="zv-vote-closed-note">Closed to new voters</span>
-          )}
-          {/* The one action on this page that has a deadline behind it, so it
-              is the one that gets the solid fill. */}
-          {state === "ready" && (
-            <Button variant="primary" size="sm" onClick={() => onAct("vote")}>
-              Cast vote
-            </Button>
-          )}
-          {/* Everything else here is looking back, so it is quiet. */}
-          {state === "voted" && (
-            <Button variant="outline" size="sm" onClick={() => onAct("receipt")}>
-              My receipt
-            </Button>
-          )}
-          {state === "missed" && (
-            <Button variant="outline" size="sm" onClick={() => onAct("results")}>
-              View results
-            </Button>
-          )}
-        </div>
-      </div>
-    </article>
+  return (
+    <Stub id={`${saved.length} ${saved.length === 1 ? "stub" : "stubs"}`}>
+      <h3 className="zv-stub-title">Saved receipts</h3>
+      <p className="zv-hint-text">On this computer</p>
+      {rows.length === 0 ? (
+        <p className="zv-hint-text">Nothing yet. Join an election to start.</p>
+      ) : (
+        <dl className="zv-receipt-list">
+          {rows.map(({ e, seal }) => (
+            <React.Fragment key={e.id}>
+              <dt>{e.name}</dt>
+              <dd>
+                {seal?.commitment ? (
+                  <code className="zv-mono">
+                    {seal.commitment.slice(0, 4)}…{seal.commitment.slice(-4)}
+                  </code>
+                ) : (
+                  <span className="zv-hint-text">
+                    {e.voted ? "Not on this computer" : "Not voted yet"}
+                  </span>
+                )}
+              </dd>
+            </React.Fragment>
+          ))}
+        </dl>
+      )}
+      {saved.length > 0 && (
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            downloadJson(
+              saved.map(({ e, seal }) => ({
+                election_id: e.id,
+                election_name: e.name,
+                receipt_code: seal?.commitment,
+                private_key_for_this_receipt: seal?.revealSalt,
+              })),
+              "zetavote_receipts.json",
+            );
+            show("Receipts downloaded", "ok");
+          }}
+        >
+          Download all
+        </Button>
+      )}
+    </Stub>
   );
 };

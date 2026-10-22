@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { api } from "../../services/api";
 import { useSubmit } from "../../hooks/useSubmit";
+import { useSubmitShortcut } from "../../hooks/useSubmitShortcut";
 import { useSession } from "../../auth/SessionContext";
 import {
   generateKeys,
@@ -55,99 +56,47 @@ export const LoginPage: React.FC<{ role: EntryRole }> = ({ role }) => {
       });
   }, []);
 
-  const headings: Record<EntryMode, { title: string; note: string }> = {
-    signin: {
-      title: role === "admin" ? "Admin sign in" : "Sign in to vote",
-      note: "Secure local voting. Nothing leaves this machine.",
-    },
-    register: {
-      title: "Create your account",
-      note: "One account per person, for life. Each election is joined separately.",
-    },
-  };
-  const heading = headings[mode];
-
   return (
-    // Two columns: the record explained on the left, the way in on the right.
-    // The form keeps its own 42rem measure inside the column — a sign-in form is
-    // two short fields, and stretching it across 1,120px is how a form becomes a
-    // wall — so this is the wide container with a narrow right half, not the
-    // narrow container with a paragraph beside it.
-    <div className="zv-page-container zv-entry">
-      {/* The navbar drops the wordmark on this screen, so the page carries the
-          lockup itself, once. It spans both columns rather than sitting inside
-          the left one: on a phone the columns reorder and put the form first,
-          and a wordmark below the form is a wordmark nobody sees. */}
-      <FrontDoor title={heading.title} note={heading.note} />
+    <div className="zv-page-container zv-acct-page">
+      <Alert
+        type="info"
+        title="Prototype, not for real elections"
+        message="ZetaVote is an academic proof-of-concept for local cryptographic voting. It is not intended for binding, governmental or commercial elections."
+        live={false}
+      />
 
-      <div className="zv-entry-form">
-        {/* Stated before anyone signs in, because it is the one claim about this
-            software a person cannot check for themselves later. */}
+      {/* An expired session used to look exactly like a page that had stopped
+          working: every action failed and nothing said why. */}
+      {expiredNotice && (
         <Alert
-          type="info"
-          title="Prototype — not for real elections"
-          message="ZetaVote is an academic proof-of-concept for local cryptographic voting. It is not intended for binding, governmental or commercial elections."
+          type="warning"
+          title="Signed out"
+          message={expiredNotice}
           live={false}
         />
+      )}
 
-        <section className="zv-admin-section">
-        {/* An expired session used to look exactly like a page that had stopped
-            working: every action failed and nothing said why. */}
-        {expiredNotice && (
-          <Alert
-            type="warning"
-            title="Signed out"
-            message={expiredNotice}
-            live={false}
-          />
-        )}
-
-        {role === "admin" ? (
-          <AdminSignIn onSignIn={signInAsAdmin} minPassphrase={minPassphrase} />
-        ) : (
-          <>
-            {/* A segmented switch, not a tab bar: this changes which form is
-                below it rather than which view of one thing is showing. */}
-            <div
-              className="zv-segment"
-              role="group"
-              aria-label="Sign in or register"
-            >
-              {(
-                [
-                  ["signin", "Sign in"],
-                  ["register", "Create account"],
-                ] as const
-              ).map(([value, label]) => (
-                <button
-                  key={value}
-                  type="button"
-                  aria-pressed={mode === value}
-                  className="zv-segment-option"
-                  onClick={() => setMode(value)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {mode === "signin" ? (
-              <AccountSignIn onSignIn={signInAsAccount} />
-            ) : (
-              <RegisterAccount
-                onSignIn={signInAsAccount}
-                minPassphrase={minPassphrase}
-              />
-            )}
-          </>
-        )}
-      </section>
-      </div>
+      {role === "admin" ? (
+        <AdminSignIn onSignIn={signInAsAdmin} minPassphrase={minPassphrase} />
+      ) : mode === "signin" ? (
+        <AccountSignIn
+          onSignIn={signInAsAccount}
+          onCreate={() => setMode("register")}
+        />
+      ) : (
+        <RegisterAccount
+          onSignIn={signInAsAccount}
+          minPassphrase={minPassphrase}
+          onBack={() => setMode("signin")}
+        />
+      )}
     </div>
   );
 };
 
-/** Admin credentials are a normal login: a name, a verifier and a passphrase. */
+type Errors = Record<string, string | undefined>;
+
+/** Admin credentials are a normal login, or on first run the one-time setup. */
 const AdminSignIn: React.FC<{
   onSignIn: (name: string, passphrase: string) => Promise<void>;
   minPassphrase: number;
@@ -156,6 +105,9 @@ const AdminSignIn: React.FC<{
   const [passphrase, setPassphrase] = useState("");
   const [needsBootstrap, setNeedsBootstrap] = useState(false);
   const [code, setCode] = useState("");
+  const [errors, setErrors] = useState<Errors>({});
+  const formRef = useRef<HTMLFormElement>(null);
+  useSubmitShortcut(formRef);
 
   const { loading, error, run } = useSubmit<{
     status?: string;
@@ -172,6 +124,15 @@ const AdminSignIn: React.FC<{
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
+    const next: Errors = {};
+    if (name.trim() === "") next.name = "Enter the admin name.";
+    if (needsBootstrap && code.trim() === "") next.code = "Enter the setup code.";
+    if (passphrase === "") next.passphrase = "Enter a passphrase.";
+    else if (needsBootstrap && passphrase.length < minPassphrase)
+      next.passphrase = `Use at least ${minPassphrase} characters.`;
+    setErrors(next);
+    if (Object.keys(next).length > 0) return;
+
     if (needsBootstrap) {
       await run(() =>
         api.bootstrap({ name: name.trim(), passphrase, code: code.trim() }),
@@ -188,97 +149,92 @@ const AdminSignIn: React.FC<{
     });
   };
 
-  const ready = needsBootstrap
-    ? name.trim() !== "" &&
-      passphrase.length >= minPassphrase &&
-      code.trim() !== ""
-    : name.trim() !== "" && passphrase !== "";
-
   return (
-    <Card>
-      <form className="zv-form" onSubmit={(e) => void handleSubmit(e)} noValidate>
-        {error && (
-          <Alert
-            type="error"
-            title={needsBootstrap ? "Setup Failed" : "Sign In Failed"}
-            message={error}
-          />
-        )}
+    <div className={needsBootstrap ? "zv-acct zv-acct--setup" : "zv-acct zv-acct--solo"}>
+      <Card>
+        <form
+          ref={formRef}
+          className="zv-form"
+          onSubmit={(e) => void handleSubmit(e)}
+          noValidate
+        >
+          <h1 className="zv-acct-title">
+            {needsBootstrap ? "Set up this computer" : "Admin sign in"}
+          </h1>
 
-        {needsBootstrap && (
-          <Alert
-            type="info"
-            title="First run — set up the admin account"
-            message="There is no admin account on this machine yet. The one-time code was printed in the terminal running the server; copy it in below."
-          />
-        )}
+          {error && (
+            <Alert
+              type="error"
+              title={needsBootstrap ? "Setup failed" : "Sign in failed"}
+              message={error}
+            />
+          )}
 
-        <Field
-          label="Admin Name"
-          required
-          placeholder="Your name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          autoComplete="username"
-          disabled={loading}
-        />
-
-        {needsBootstrap && (
           <Field
-            label="First-Run Code"
+            label="Admin name"
             required
-            placeholder="Printed in the server terminal"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            controlClassName="zv-mono"
-            autoComplete="off"
+            placeholder="Your name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            autoComplete="username"
             disabled={loading}
+            error={errors.name}
           />
-        )}
 
-        <Field
-          label="Passphrase"
-          required
-          type="password"
-          revealable
-          placeholder={
-            needsBootstrap
-              ? `At least ${minPassphrase} characters`
-              : "Your admin passphrase"
-          }
-          value={passphrase}
-          onChange={(e) => setPassphrase(e.target.value)}
-          autoComplete="current-password"
-          disabled={loading}
-          error={
-            passphrase !== "" &&
-            needsBootstrap &&
-            passphrase.length < minPassphrase
-              ? `Must be at least ${minPassphrase} characters`
-              : undefined
-          }
-        />
+          {needsBootstrap && (
+            <Field
+              label="Setup code"
+              required
+              placeholder="7F3K-29QX"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              controlClassName="zv-mono"
+              autoComplete="off"
+              disabled={loading}
+              hint="Shown in the terminal where you started ZetaVote."
+              error={errors.code}
+            />
+          )}
 
-        <div className="zv-form-actions">
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={loading}
-            disabled={!ready}
-          >
-            {needsBootstrap ? "Create Admin Account" : "Sign In"}
-          </Button>
-        </div>
+          <Field
+            label="Passphrase"
+            required
+            type="password"
+            revealable
+            placeholder={
+              needsBootstrap
+                ? `At least ${minPassphrase} characters`
+                : "Your admin passphrase"
+            }
+            value={passphrase}
+            onChange={(e) => setPassphrase(e.target.value)}
+            autoComplete={needsBootstrap ? "new-password" : "current-password"}
+            disabled={loading}
+            error={errors.passphrase}
+          />
 
-        {!needsBootstrap && (
-          <span className="zv-form-hint">
-            Forgotten the passphrase? It cannot be recovered from the server.
-            Reset it from the machine running the server with
-            <code> python run.py --reset-admin</code>.
-          </span>
-        )}
-      </form>
-    </Card>
+          <div className="zv-form-actions">
+            <Button
+              type="submit"
+              variant="primary"
+              shortcut="submit"
+              isLoading={loading}
+            >
+              {needsBootstrap ? "Create admin account" : "Sign in"}
+            </Button>
+          </div>
+
+          {!needsBootstrap && (
+            <span className="zv-form-hint">
+              Forgot the passphrase? The server cannot recover it. On the
+              machine running ZetaVote, run
+              <code> python run.py --reset-admin</code>.
+            </span>
+          )}
+        </form>
+      </Card>
+      {needsBootstrap && <FrontDoor variant="next" />}
+    </div>
   );
 };
 
@@ -286,26 +242,35 @@ const AdminSignIn: React.FC<{
  * A username and a passphrase. There is no faster path.
  *
  * The sealed key comes back from the server and is opened here, so the passphrase
- * is required on every sign-in, on every device — which is the point. A private
- * key cached in localStorage would make this a formality: anything able to read
- * the page's storage could then sign a login challenge without ever knowing the
- * passphrase. The key is held in memory for this tab and dropped on reload.
+ * is required on every sign-in, on every device. A private key cached in
+ * localStorage would make this a formality, so the key is held in memory for this
+ * tab and dropped on reload.
  */
 const AccountSignIn: React.FC<{
   onSignIn: (
     username: string,
     sign: (challenge: string) => string,
   ) => Promise<void>;
-}> = ({ onSignIn }) => {
+  onCreate: () => void;
+}> = ({ onSignIn, onCreate }) => {
   const [username, setUsername] = useState("");
   const [passphrase, setPassphrase] = useState("");
   const [wrongPassphrase, setWrongPassphrase] = useState(false);
+  // Submit is never disabled. An empty field is named on submit, under the field.
+  const [errors, setErrors] = useState<Errors>({});
+  const formRef = useRef<HTMLFormElement>(null);
+  useSubmitShortcut(formRef);
 
   const { loading, error, run } = useSubmit<Record<string, never>>();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading || username.trim() === "" || passphrase === "") return;
+    if (loading) return;
+    const next: Errors = {};
+    if (username.trim() === "") next.username = "Enter your username.";
+    if (passphrase === "") next.passphrase = "Enter your passphrase.";
+    setErrors(next);
+    if (Object.keys(next).length > 0) return;
     const id = username.trim();
     setWrongPassphrase(false);
 
@@ -315,14 +280,12 @@ const AccountSignIn: React.FC<{
       try {
         privateKey = await openPrivateKey(sealed_key, passphrase);
       } catch {
-        // AES-GCM cannot tell a wrong passphrase from a wrong ciphertext, and
-        // the raw message is a bare "Unsupported state or unable to authenticate
-        // data". The account exists — this is the one error in the app that is
-        // worth separating out, because the action is to try again rather than to
-        // go looking for a forgotten username.
+        // AES-GCM cannot tell a wrong passphrase from a wrong ciphertext. The
+        // account exists, so the action is to try again, not to hunt for a
+        // forgotten username.
         setWrongPassphrase(true);
         throw new Error(
-          `That is not the passphrase for ${id}. It is not stored anywhere the server can read, so there is no reset — try again.`,
+          `That is not the passphrase for ${id}. It is not stored anywhere the server can read, so there is no reset. Try again.`,
         );
       }
       holdAccountKey(privateKey);
@@ -332,58 +295,79 @@ const AccountSignIn: React.FC<{
   };
 
   return (
-    <Card>
-      <form className="zv-form" onSubmit={(e) => void handleSubmit(e)} noValidate>
-        {error && (
-          <Alert
-            type="error"
-            title={wrongPassphrase ? "Wrong Passphrase" : "Sign In Failed"}
-            message={error}
+    <div className="zv-acct">
+      <Card>
+        <form
+          ref={formRef}
+          className="zv-form"
+          onSubmit={(e) => void handleSubmit(e)}
+          noValidate
+        >
+          <div>
+            <h1 className="zv-acct-title">Sign in</h1>
+            <p className="zv-acct-sub">Everything stays on this computer.</p>
+          </div>
+
+          {error && (
+            <Alert
+              type="error"
+              title={wrongPassphrase ? "Wrong passphrase" : "Sign in failed"}
+              message={error}
+            />
+          )}
+
+          <Field
+            label="Username"
+            required
+            placeholder="asharao0142"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            controlClassName="zv-mono"
+            autoComplete="username"
+            disabled={loading}
+            hint="Your name plus four digits, for example asharao0142."
+            error={errors.username}
           />
-        )}
 
-        <Field
-          label="Username"
-          required
-          placeholder="asharao0142"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          controlClassName="zv-mono"
-          autoComplete="username"
-          disabled={loading}
-          hint="Your name and four digits. Case matters — Asha0142 is not asha0142. Write it down somewhere: it cannot be recovered."
-        />
+          <Field
+            label="Passphrase"
+            required
+            type="password"
+            revealable
+            placeholder="The one you chose when registering"
+            value={passphrase}
+            onChange={(e) => setPassphrase(e.target.value)}
+            autoComplete="current-password"
+            disabled={loading}
+            error={errors.passphrase}
+          />
 
-        <Field
-          label="Passphrase"
-          required
-          type="password"
-          revealable
-          placeholder="The one you chose when registering"
-          value={passphrase}
-          onChange={(e) => setPassphrase(e.target.value)}
-          autoComplete="current-password"
-          disabled={loading}
-          hint="Required every time, on every device. It opens your sealed key here in this browser and is never sent."
-        />
+          <div className="zv-form-actions">
+            <Button
+              type="submit"
+              variant="primary"
+              shortcut="submit"
+              isLoading={loading}
+            >
+              Sign in
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={onCreate}
+              disabled={loading}
+            >
+              Create account
+            </Button>
+          </div>
 
-        <div className="zv-form-actions">
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={loading}
-            disabled={username.trim() === "" || passphrase === ""}
-          >
-            Sign In
-          </Button>
-        </div>
-
-        <span className="zv-form-hint">
-          One account per person, for life. Each election is joined separately,
-          and the ballot key for one is never used in another.
-        </span>
-      </form>
-    </Card>
+          <span className="zv-form-hint">
+            Your passphrase opens your key in this browser. It is never sent.
+          </span>
+        </form>
+      </Card>
+      <FrontDoor variant="trust" />
+    </div>
   );
 };
 
@@ -392,8 +376,7 @@ const AccountSignIn: React.FC<{
  *
  * The username is derived from the legal name on the server and the four digits
  * are the person's own, because `Asha Rao` and `A Sha Rao` both reduce to
- * `asharao`. A taken username is answered with alternatives, never a refusal:
- * the digits exist precisely because two people can share a name.
+ * `asharao`. A taken username is answered with alternatives, never a refusal.
  */
 const RegisterAccount: React.FC<{
   onSignIn: (
@@ -401,17 +384,21 @@ const RegisterAccount: React.FC<{
     sign: (challenge: string) => string,
   ) => Promise<void>;
   minPassphrase: number;
-}> = ({ onSignIn, minPassphrase }) => {
+  onBack: () => void;
+}> = ({ onSignIn, minPassphrase, onBack }) => {
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
   const [digits, setDigits] = useState("");
   const [passphrase, setPassphrase] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [errors, setErrors] = useState<Errors>({});
   const [check, setCheck] = useState<{
     username: string;
     available: boolean;
     suggestions: string[];
   } | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  useSubmitShortcut(formRef);
 
   const { loading, error, run } = useSubmit<{ username: string }>();
 
@@ -435,9 +422,28 @@ const RegisterAccount: React.FC<{
     };
   }, [name, digits]);
 
+  const digitsOk = /^\d{4}$/.test(digits);
+  const taken = check !== null && !check.available;
+  const mismatch = confirm !== "" && confirm !== passphrase;
+  const matches = confirm !== "" && confirm === passphrase;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading || !check?.available) return;
+    if (loading) return;
+    const next: Errors = {};
+    if (name.trim() === "") next.name = "Enter your legal name.";
+    if (dob === "") next.dob = "Enter your date of birth.";
+    if (!digitsOk) next.digits = "Enter exactly four digits.";
+    else if (taken)
+      next.digits = `${check?.username} is taken. Try ${check?.suggestions.join(", ")}.`;
+    else if (!check?.available)
+      next.digits = "Could not check this username yet. Try again in a moment.";
+    if (passphrase.length < minPassphrase)
+      next.passphrase = `Use at least ${minPassphrase} characters.`;
+    if (confirm === "") next.confirm = "Type the passphrase again.";
+    else if (confirm !== passphrase) next.confirm = "The two do not match.";
+    setErrors(next);
+    if (Object.keys(next).length > 0 || !check?.available) return;
 
     await run(async () => {
       const keys = generateKeys();
@@ -449,8 +455,8 @@ const RegisterAccount: React.FC<{
         public_key: keys.publicKey,
         sealed_key: sealedKey,
       });
-      // Held in memory so this tab can enrol straight away. It is never written
-      // to storage, so the next visit asks for the passphrase again.
+      // Held in memory so this tab can join an election straight away. It is
+      // never written to storage, so the next visit asks for the passphrase.
       holdAccountKey(keys.privateKey);
       await onSignIn(check.username, (challenge) =>
         signRaw(challenge, keys.privateKey),
@@ -459,120 +465,136 @@ const RegisterAccount: React.FC<{
     });
   };
 
-  const digitsOk = /^\d{4}$/.test(digits);
-  const ready =
-    name.trim() !== "" &&
-    dob !== "" &&
-    digitsOk &&
-    passphrase.length >= minPassphrase &&
-    confirm === passphrase;
-  const taken = check !== null && !check.available;
-  const mismatch = confirm !== "" && confirm !== passphrase;
-
   return (
-    <Card>
-      <form className="zv-form" onSubmit={(e) => void handleSubmit(e)} noValidate>
-        {error && (
-          <Alert type="error" title="Registration Failed" message={error} />
-        )}
+    <form
+      ref={formRef}
+      className="zv-acct-register"
+      onSubmit={(e) => void handleSubmit(e)}
+      noValidate
+    >
+      <div className="zv-acct-head">
+        <h1 className="zv-acct-title">Create account</h1>
+        <Button type="button" variant="ghost" size="sm" onClick={onBack}>
+          Back to sign in
+        </Button>
+      </div>
 
-        {/* Said before the field, not after the fact. This is the one account a
-            person gets, and neither the username nor the passphrase can be
-            recovered: the server holds only a one-way name hash and a sealed key
-            it has no key for. */}
-        <Alert
-          type="warning"
-          title="Two things you cannot get back"
-          message="Your username and your passphrase are not stored in a recoverable form — the server keeps a hash of your name and an encrypted key it cannot open. Write both down before you continue."
-        />
+      {error && <Alert type="error" title="Registration failed" message={error} />}
 
-        <Field
-          label="Full Name"
-          required
-          placeholder="Asha Rao"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          autoComplete="name"
-          disabled={loading}
-          hint="Used to build your username and to match the eligible list. Never stored."
-        />
+      <div className="zv-acct-groups">
+        <Card>
+          <div className="zv-form">
+            <h2 className="zv-acct-group">About you</h2>
+            <Field
+              label="Legal name"
+              required
+              placeholder="Asha Rao"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="name"
+              disabled={loading}
+              error={errors.name}
+            />
+            <Field
+              label="Date of birth"
+              required
+              type="date"
+              value={dob}
+              onChange={(e) => setDob(e.target.value)}
+              autoComplete="bday"
+              disabled={loading}
+              hint="Checked for age, then discarded. Never stored."
+              error={errors.dob}
+            />
+            <Field
+              label="Four digits"
+              required
+              inputMode="numeric"
+              maxLength={4}
+              placeholder="0142"
+              value={digits}
+              onChange={(e) =>
+                setDigits(e.target.value.replace(/\D/g, "").slice(0, 4))
+              }
+              controlClassName="zv-mono"
+              autoComplete="off"
+              disabled={loading}
+              hint="Two people can share a name, so you choose the last four."
+              error={
+                errors.digits ??
+                (taken
+                  ? `${check?.username} is taken. Try ${check?.suggestions.join(", ")}.`
+                  : undefined)
+              }
+            />
+            <Field
+              label="Your username"
+              readOnly
+              tabIndex={-1}
+              value={check?.available ? check.username : ""}
+              placeholder="asharao0142"
+              controlClassName="zv-mono"
+              hint="Made from your name. Write it down."
+            />
+          </div>
+        </Card>
 
-        <Field
-          label="Date of Birth"
-          required
-          type="date"
-          value={dob}
-          onChange={(e) => setDob(e.target.value)}
-          autoComplete="bday"
-          disabled={loading}
-          hint="Eligibility only. Hashed, never stored, never a credential."
-        />
-
-        <Field
-          label="Four Digits"
-          required
-          inputMode="numeric"
-          maxLength={4}
-          placeholder="0142"
-          value={digits}
-          onChange={(e) =>
-            setDigits(e.target.value.replace(/\D/g, "").slice(0, 4))
-          }
-          controlClassName="zv-mono"
-          autoComplete="off"
-          disabled={loading}
-          error={digits !== "" && !digitsOk ? "Exactly four digits" : undefined}
-          hint={
-            taken
-              ? `${check?.username} is taken — try ${check?.suggestions.join(", ")}`
-              : check?.username
-                ? `Your username will be ${check.username}`
-                : "Two people can share a name, so you choose the last four."
-          }
-        />
-
-        <Field
-          label="Passphrase"
-          required
-          type="password"
-          revealable
-          placeholder={`At least ${minPassphrase} characters`}
-          value={passphrase}
-          onChange={(e) => setPassphrase(e.target.value)}
-          autoComplete="new-password"
-          disabled={loading}
-          error={
-            passphrase !== "" && passphrase.length < minPassphrase
-              ? `Must be at least ${minPassphrase} characters`
-              : undefined
-          }
-          hint="Seals your key on the server. The server never sees it — signing in opens the key here."
-        />
-
-        <Field
-          label="Confirm Passphrase"
-          required
-          type="password"
-          revealable
-          placeholder="Type it again"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          autoComplete="new-password"
-          disabled={loading}
-          error={mismatch ? "The two do not match" : undefined}
-        />
-
-        <div className="zv-form-actions">
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={loading}
-            disabled={!ready || !check?.available}
-          >
-            Create Account
-          </Button>
-        </div>
-      </form>
-    </Card>
+        <Card>
+          <div className="zv-form">
+            <h2 className="zv-acct-group">Passphrase</h2>
+            <Field
+              label="Passphrase"
+              required
+              type="password"
+              revealable
+              placeholder={`At least ${minPassphrase} characters`}
+              value={passphrase}
+              onChange={(e) => setPassphrase(e.target.value)}
+              autoComplete="new-password"
+              disabled={loading}
+              error={
+                errors.passphrase ??
+                (passphrase !== "" && passphrase.length < minPassphrase
+                  ? `Use at least ${minPassphrase} characters.`
+                  : undefined)
+              }
+            />
+            <div className={matches ? "zv-acct-match" : undefined}>
+              <Field
+                label="Confirm"
+                required
+                type="password"
+                revealable
+                placeholder="Type it again"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                autoComplete="new-password"
+                disabled={loading}
+                hint={matches ? "\u2713 Matches" : undefined}
+                error={
+                  mismatch ? "The two do not match." : errors.confirm
+                }
+              />
+            </div>
+            <Alert
+              type="warning"
+              title="Nobody can reset it"
+              message="If you forget your passphrase, nobody can reset it. Not even the admin. Write it down before you continue."
+              live={false}
+            />
+            <div className="zv-form-actions">
+              <Button
+                type="submit"
+                variant="primary"
+                shortcut="submit"
+                isLoading={loading}
+              >
+                Create account
+              </Button>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </form>
   );
 };

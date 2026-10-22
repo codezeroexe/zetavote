@@ -176,3 +176,20 @@ def test_closed_election_rejects_votes(client):
         choice="Alice",
     )
     assert client.post("/api/elections/e1/vote", json=payload).status_code == 400
+
+
+
+def test_my_ballots_lists_only_the_callers_own_ballots(client):
+    """`v1` casts and sees their own ballot. `v2` enrols afterwards and must see
+    none of `v1`'s commitments, or the endpoint would reveal another person's
+    participation."""
+    make_election(client)
+    cast(client, "e1", "v1", "Alice")
+
+    mine = client.get("/api/me/ballots").json()["ballots"]
+    assert len(mine) == 1
+    assert mine[0]["election_id"] == "e1"
+    assert "reveal_salt" not in mine[0]
+
+    register(client, "e1", "v2")
+    assert client.get("/api/me/ballots").json()["ballots"] == []

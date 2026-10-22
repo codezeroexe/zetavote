@@ -119,39 +119,69 @@ DARK = {
     "seal-bg": "#391917",
     "seal-mark": "#c43f3e",
     "seal-text": "#a92227",
-    "fill": "#5fbcf4",
+    "fill": "#3ba7e0",
     "fill-ink": "#0e1624",
+    "ok": "#6fd09a",
+    "ok-bg": "#12301f",
+    "ok-text": "#1e7a4c",
+    "ok-card-bg": "#e4f4eb",
+    "note-bg": "#2b2412",
+    "note-ink": "#f3e7c4",
 }
 
 LIGHT = {
-    "bg-base": "#f0f4f8",
-    "surface": "#fcfdff",
-    "surface-hover": "#e9edf2",
+    "bg-base": "#eef2f6",
+    "surface": "#ffffff",
+    "surface-hover": "#e6ebf1",
     "sunken": "#ffffff",
-    "tray": "#e3e8ee",
-    "ink": "#172135",
-    "ink-muted": "#4c5666",
-    "ink-faint": "#5a6475",
-    "line": "#d9dfe5",
-    "line-strong": "#78818c",
-    "line-input": "#717a85",
-    "card": "#fcfdff",
-    "card-ink": "#172135",
-    "card-muted": "#434d61",
-    "card-line": "#7e8792",
-    "punch": "#1f6a96",
-    "punch-ink": "#0d5279",
-    "punch-bg": "#daeefe",
-    "punch-mark": "#347ca9",
-    "punch-text": "#1f6a96",
-    "seal": "#ac312c",
-    "seal-ink": "#901e1c",
-    "seal-bg": "#ffe4e0",
-    "seal-mark": "#c0453d",
-    "seal-text": "#ac312c",
-    "fill": "#5fbcf4",
-    "fill-ink": "#0e1624",
+    "tray": "#e6ebf1",
+    "ink": "#1b2a41",
+    "ink-muted": "#55627a",
+    "ink-faint": "#5b6780",
+    "line": "#d5dce5",
+    "line-strong": "#7c879b",
+    "line-input": "#8a95a8",
+    "card": "#ffffff",
+    "card-ink": "#1b2a41",
+    "card-muted": "#55627a",
+    "card-line": "#8a95a8",
+    "punch": "#1f5f86",
+    "punch-ink": "#1f5f86",
+    "punch-bg": "#e3f1fa",
+    "punch-mark": "#2a86bc",
+    "punch-text": "#1f5f86",
+    "seal": "#b4232a",
+    "seal-ink": "#8f1a20",
+    "seal-bg": "#fbe9e9",
+    "seal-mark": "#b4232a",
+    "seal-text": "#b4232a",
+    "fill": "#3ba7e0",
+    "fill-ink": "#1b2a41",
+    "ok": "#1e7a4c",
+    "ok-bg": "#e4f4eb",
+    "ok-text": "#1e7a4c",
+    "ok-card-bg": "#e4f4eb",
+    "note-bg": "#fff6e0",
+    "note-ink": "#1b2a41",
 }
+
+def _over(fg_rgb: tuple[int, int, int], alpha: float, bg: str) -> str:
+    """Composite an rgb fill at `alpha` over a hex backdrop."""
+    b = hex_to_rgb(bg)
+    return "#" + "".join(
+        f"{round(f * alpha + c * 255 * (1 - alpha)):02x}" for f, c in zip(fg_rgb, b)
+    )
+
+
+# Glass fill over the brightest backdrop it can sit on: sky #3BA7E0.
+# Values mirror --zv-glass-* in theme.css.
+_SKY = "#3ba7e0"
+DARK["glass"] = _over((24, 36, 58), 0.80, _SKY)
+DARK["glass-ink"] = "#eef2f6"
+DARK["glass-muted"] = "#c3ccd8"
+LIGHT["glass"] = _over((255, 255, 255), 0.78, _SKY)
+LIGHT["glass-ink"] = "#1b2a41"
+LIGHT["glass-muted"] = "#46536a"
 
 # (foreground role, background role, minimum ratio, what it is)
 CHECKS = [
@@ -187,6 +217,17 @@ CHECKS = [
     ("card-ink", "card", BODY, "printed ink on card stock"),
     ("card-muted", "card", BODY, "printed muted ink on card stock"),
     ("card-line", "card", LARGE, "a field rule on card stock"),
+    ("ok", "ok-bg", BODY, "done pill on its own fill"),
+    ("ok", "surface", BODY, "done signal text on a card"),
+    ("note-ink", "note-bg", BODY, "text on the yellow note card"),
+    ("ok", "bg-base", BODY, "done signal text on the page"),
+    ("ok-text", "ok-card-bg", BODY, "done label on a light card tint"),
+    ("ink", "ok-bg", BODY, "body text on a done tint"),
+    ("ink-muted", "ok-bg", BODY, "muted text on a done tint"),
+    ("punch-ink", "surface", BODY, "sky ink link on a card"),
+    ("fill-ink", "fill", BODY, "primary label on sky fill"),
+    ("glass-ink", "glass", BODY, "glass ink over sky"),
+    ("glass-muted", "glass", BODY, "glass muted over sky"),
 ]
 
 

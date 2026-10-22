@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
-import "./App.css";
 import { SessionProvider, useSession } from "./auth/SessionContext";
-import { Navbar } from "./components/Navigation/Navbar";
+import { Sidebar } from "./components/Navigation/Sidebar";
 import { Footer } from "./components/Layout/Footer";
 import { OfflineBanner } from "./components/Status/BackendStatus";
 import { ErrorBoundary } from "./components/common/ErrorBoundary";
+import { ToastProvider } from "./components/common/Toast";
 import { Skeleton } from "./components/common/Skeleton";
 
 import { LoginPage } from "./pages/Login/LoginPage";
@@ -23,7 +23,7 @@ function homeFor(role: "admin" | "voter" | null): Section {
 
 function Shell() {
   const { role, checking } = useSession();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const [requested, navigate] = useHashSection();
   const main = useRef<HTMLElement>(null);
 
@@ -35,11 +35,11 @@ function Shell() {
     section === "admin" ? "admin" : "voter";
 
   // Focus follows navigation, and nothing else. Without it, switching section or
-  // tab drops focus back to <body> and the next thing read aloud is the navbar,
+  // tab drops focus back to <body> and the next thing read aloud is the sidebar,
   // some distance above whatever the user just asked for.
   //
   // Two things it must not do. On first paint — focusing <main> at mount would
-  // swallow the first Tab and skip the skip link and the navbar entirely. And it
+  // swallow the first Tab and skip the skip link and the sidebar entirely. And it
   // must not key on `checking`, because that flips from true to false as the
   // session resolves, which is not a navigation and would fire the same way.
   const settled = useRef(false);
@@ -105,24 +105,26 @@ function Shell() {
       <a className="zv-skip-link" href="#zv-main">
         Skip to main content
       </a>
-      <Navbar
+      <Sidebar
         activeSection={section}
         onNavigate={navigate}
         theme={theme}
-        onToggleTheme={toggleTheme}
+        onThemeChange={setTheme}
         role={role}
         entryRole={signInAs}
         onEntryRoleChange={(next) => navigate(next === "admin" ? "admin" : "voter")}
       />
-      <OfflineBanner />
-      <main className="zv-main-content" id="zv-main" tabIndex={-1} ref={main}>
-        {checking ? (
-          <Skeleton variant="page" label="Checking session" rows={2} />
-        ) : (
-          content
-        )}
-      </main>
-      <Footer />
+      <div className="zv-app-column">
+        <OfflineBanner />
+        <main className="zv-main-content" id="zv-main" tabIndex={-1} ref={main}>
+          {checking ? (
+            <Skeleton variant="page" label="Checking session" rows={2} />
+          ) : (
+            content
+          )}
+        </main>
+        <Footer />
+      </div>
     </div>
   );
 }
@@ -131,7 +133,9 @@ export function App() {
   return (
     <SessionProvider>
       <ErrorBoundary>
-        <Shell />
+        <ToastProvider>
+          <Shell />
+        </ToastProvider>
       </ErrorBoundary>
     </SessionProvider>
   );

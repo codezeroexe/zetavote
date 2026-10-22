@@ -1,0 +1,21 @@
+/* ZetaVote phase 2: verify screens. Loaded after App.css so these rules win the cascade. */
+
+/* Results: outcome card, bars, stack of cards. */
+.zv-res-stack { display: flex; flex-direction: column; gap: 16px; }
+.zv-res-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.zv-res-outcome { margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--zv-ink); }
+.zv-res-sub { margin: 4px 0 0; font-size: 0.875rem; color: var(--zv-ink-muted); }
+.zv-res-bars { margin-top: 12px; }
+.zv-res-bar { display: grid; grid-template-columns: 160px 1fr 56px; gap: 12px; align-items: center; margin: 8px 0; font-size: 0.875rem; font-variant-numeric: tabular-nums; }
+.zv-res-bar-track { height: 14px; border-radius: 3px; background: var(--zv-sunken); overflow: hidden; }
+.zv-res-bar-fill { display: block; height: 100%; background: var(--zv-fill); }
+.zv-res-bar-count { text-align: right; }
+.zv-res-check { display: flex; gap: 8px; align-items: flex-start; }
+.zv-res-check > :first-child { flex: 1; }
+.zv-res-details { margin-top: 12px; font-size: 0.875rem; }
+.zv-res-details summary { cursor: pointer; color: var(--zv-ink-muted); min-height: 32px; }
+
+/* Verify: key/value rows. */
+.zv-verify-rows { display: grid; grid-template-columns: max-content 1fr; gap: 6px 24px; margin: 12px 0; font-size: 0.875rem; }
+.zv-verify-rows dt { color: var(--zv-ink-muted); }
+.zv-verify-rows dd { margin: 0; color: var(--zv-ink); }

@@ -1180,6 +1180,34 @@ def my_elections(request: Request) -> dict[str, object]:
     return {"elections": elections}
 
 
+@app.get("/api/me/ballots")
+def my_ballots(request: Request) -> dict[str, object]:
+    """Every ballot this account cast, for the verify page to offer as a choice.
+
+    `voter_id = :me` comes from the session, never the request, so a caller sees
+    only their own commitments. A commitment is already published with the
+    results. The reveal salt is never stored on the server and is not returned here.
+    """
+    session = require_session(request)
+    if session["role"] != "voter":
+        raise HTTPException(status_code=403, detail="Voter access required")
+    account = session["subject"]
+
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT b.election_id, e.name AS election_name, b.commitment, b.ballot_timestamp
+            FROM ballots b
+            JOIN elections e ON e.id = b.election_id
+            WHERE b.voter_id = ?
+            ORDER BY b.ballot_timestamp DESC
+            """,
+            (account,),
+        ).fetchall()
+
+    return {"ballots": [dict(r) for r in rows]}
+
+
 # --------------------------------------------------------------------------
 # Vote submission
 # --------------------------------------------------------------------------

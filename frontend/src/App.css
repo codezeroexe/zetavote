@@ -266,7 +266,7 @@
 
 .zv-bit-weight {
   font-family: var(--zv-font-mono);
-  font-size: 0.5625rem;
+  font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
   color: var(--zv-card-muted);
   min-width: 5ch;
@@ -281,10 +281,10 @@
 
 .zv-bits-caption {
   font-family: var(--zv-font-mono);
-  font-size: 0.5625rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--zv-card-muted);
   margin: var(--zv-space-1) 0 0;
 }
@@ -323,10 +323,10 @@
   background: var(--zv-punch-bg);
   color: var(--zv-punch-ink);
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.1em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 /* --------------------------------------------------------------------------
@@ -338,8 +338,6 @@
   top: 0;
   z-index: 100;
   background: var(--zv-chrome);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2);
-  backdrop-filter: blur(16px) saturate(1.2);
   border-bottom: 1px solid var(--zv-chrome-line);
   /* A machine panel has a lip: the top edge catches light, the bottom edge is
      where the panel meets the desk. */
@@ -395,9 +393,9 @@
   width: 32px;
   height: 32px;
   border-radius: var(--zv-radius-sm);
-  border: 1px solid var(--zv-punch-line);
-  background: var(--zv-card);
-  color: #16130d;
+  border: none;
+  background: var(--zv-fill);
+  color: var(--zv-fill-ink);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -411,7 +409,7 @@
 
 .zv-brand-mark {
   width: 20px;
-  height: 18px;
+  height: 20px;
   display: block;
 }
 
@@ -431,11 +429,11 @@
 
 .zv-brand-tag {
   font-family: var(--zv-font-mono);
-  font-size: 0.5625rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.18em;
   color: var(--zv-ink-faint);
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 /* Tabs are slots in the panel, and the current section is the punched one. */
@@ -631,7 +629,7 @@
   padding: 3px 10px;
   border-radius: var(--zv-radius-sm);
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   transition: background-color var(--zv-dur-state) var(--zv-ease-out);
@@ -871,7 +869,7 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   color: var(--zv-ink-faint);
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 /* --------------------------------------------------------------------------
@@ -976,7 +974,7 @@
 
 .zv-card-band-id {
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   color: var(--zv-card-muted);
   white-space: nowrap;
 }
@@ -984,7 +982,7 @@
 /* The 80, printed in the corner a card is sorted by. */
 .zv-card-cols {
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   color: var(--zv-card-muted);
@@ -1370,7 +1368,7 @@
   font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
+  text-transform: none;
   color: inherit;
 }
 
@@ -1462,11 +1460,11 @@
 
 .zv-label-text {
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   color: var(--zv-ink-muted);
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .zv-required {
@@ -1883,10 +1881,10 @@
 
 .zv-count-label {
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.1em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--zv-ink-faint);
 }
 
@@ -1906,10 +1904,10 @@
 .zv-card-detail-label {
   flex: 0 0 auto;
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--zv-ink-faint);
 }
 
@@ -2119,10 +2117,10 @@
 .zv-choice-set legend {
   padding: 0 0 var(--zv-space-3);
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--zv-card-muted);
 }
 
@@ -2230,7 +2228,7 @@
 /* The ordinal a card would carry beside a punched name. */
 .zv-choice-ordinal {
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--zv-card-muted);
   margin-left: auto;
@@ -2311,10 +2309,10 @@
   align-items: center;
   gap: 7px;
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--zv-ink);
 }
 
@@ -2354,7 +2352,7 @@
   background: transparent;
   color: var(--zv-ink-muted);
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   transition:
@@ -2372,12 +2370,6 @@
 .zv-copy-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
-}
-
-.zv-copy-btn[data-copied="true"] {
-  color: var(--zv-punch-ink);
-  border-color: var(--zv-punch);
-  background: var(--zv-punch-bg);
 }
 
 .zv-copy-btn:focus-visible {
@@ -2434,10 +2426,10 @@
 
 .zv-result-label {
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--zv-ink-faint);
   flex-shrink: 0;
 }
@@ -2510,10 +2502,10 @@
 
 .zv-tally-total-label {
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--zv-tally-muted);
 }
 
@@ -2569,7 +2561,7 @@
 /* The share, as a measured quantity rather than a bar. */
 .zv-tally-share {
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.1em;
   color: var(--zv-tally-muted);
@@ -2642,7 +2634,7 @@
 
 .zv-clause-figure {
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   line-height: 1.45;
   color: var(--zv-tally-muted, var(--zv-ink-muted));
   overflow-wrap: anywhere;
@@ -2656,10 +2648,10 @@
    already tie it to the line it belongs to. */
 .zv-clause-caption {
   font-family: var(--zv-font-mono);
-  font-size: 0.5625rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--zv-tally-muted, var(--zv-ink-faint));
 }
 
@@ -2732,7 +2724,7 @@
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--zv-ink);
 }
 
@@ -2774,7 +2766,7 @@
 
 .zv-pipeline-index {
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   color: var(--zv-ink-faint);
   font-variant-numeric: tabular-nums;
   text-align: right;
@@ -2856,10 +2848,10 @@
   top: 0;
   z-index: 1;
   background: var(--zv-sunken);
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--zv-ink-muted);
 }
 
@@ -2941,7 +2933,7 @@
 
 .zv-blocked-row-since {
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   color: var(--zv-ink-faint);
 }
 
@@ -2963,10 +2955,10 @@
 
 .zv-id-callout-label {
   font-family: var(--zv-font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.14em;
-  text-transform: uppercase;
+  text-transform: none;
   color: var(--zv-card-muted);
 }
 
@@ -3033,10 +3025,10 @@
    one sits in its own keyed slot rather than in a pill. */
 .zv-footer-badge {
   font-family: var(--zv-font-mono);
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.1em;
-  text-transform: uppercase;
+  text-transform: none;
   padding: 4px 8px;
   border-radius: var(--zv-radius-sm);
   border: 1px solid var(--zv-line);
@@ -3347,7 +3339,7 @@
   }
 
   .zv-status-text {
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
   }
 
   .zv-tabs {
@@ -3440,10 +3432,10 @@
   /* The label leads the cell but stays quieter than the value it names. */
   .zv-audit-table td::before {
     content: attr(data-label) " ";
-    font-size: 0.5625rem;
+    font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: 0.12em;
-    text-transform: uppercase;
+    text-transform: none;
     color: var(--zv-ink-faint);
   }
 
@@ -3578,16 +3570,13 @@
    ========================================================================== */
 
 .zv-navbar-container {
-  flex-wrap: wrap;
-  row-gap: var(--zv-space-3);
-  padding: var(--zv-space-3) var(--zv-space-8);
+  flex-wrap: nowrap;
+  padding: var(--zv-space-2) var(--zv-space-8);
 }
 
-.zv-navbar-entry,
+/* One header bar: brand left, section tabs centred, account right. */
 .zv-nav-tabs {
-  order: 3;
-  flex: 0 0 100%;
-  justify-content: flex-start;
+  margin: 0 auto;
 }
 
 .zv-nav-tabs {
@@ -3789,4 +3778,810 @@ button:active:not(:disabled) {
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+/* Ballot picker on the verify page. A native select: keyboard and screen readers
+   get the platform control, styled to the same field as text inputs. */
+.zv-select {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 var(--zv-space-3);
+  font: inherit;
+  color: var(--zv-ink);
+  background: var(--zv-sunken);
+  border: 1px solid var(--zv-line-input);
+  border-radius: var(--zv-radius-sm);
+}
+
+.zv-select:focus-visible {
+  outline: 2px solid var(--zv-focus);
+  outline-offset: 2px;
+}
+
+.zv-btn-link {
+  align-self: flex-start;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--zv-punch-text);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* The receipt acknowledgement: a plain checkbox with a label, not a toggle. */
+.zv-ack {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--zv-space-2);
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.zv-ack input {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--zv-punch);
+}
+
+/* ==========================================================================
+   Desktop layout pass, from the audit. Desktop only.
+   ========================================================================== */
+
+/* Sign-in: the form leads, the guarantees sit beside it. */
+.zv-entry-form { order: 1; }
+.zv-door { order: 2; }
+
+/* Desktop control floor: 32px comfortable, 28pt absolute minimum. */
+.zv-btn { min-height: 36px; }
+.zv-btn-sm { min-height: 32px; }
+.zv-segment-option { min-height: 32px; }
+.zv-input { min-height: 36px; }
+
+/* Audit: the fingerprint is one click away, not a column in every row. */
+.zv-audit-detail summary {
+  cursor: pointer;
+  color: var(--zv-punch-text);
+  font-size: 0.8125rem;
+}
+
+.zv-hash-full {
+  margin-top: var(--zv-space-2);
+  word-break: break-all;
+  font-size: 0.75rem;
+  color: var(--zv-ink-muted);
+}
+
+/* Sheet: a native modal dialog for destructive actions. Cancel is the default
+   way out; the destructive button is labelled with its action. */
+.zv-sheet {
+  width: min(32rem, calc(100vw - 2 * var(--zv-space-6)));
+  padding: var(--zv-space-6);
+  border: 1px solid var(--zv-line);
+  border-radius: var(--zv-radius-lg);
+  background: var(--zv-surface);
+  color: var(--zv-ink);
+  box-shadow: var(--zv-shadow-lg);
+}
+
+.zv-sheet::backdrop {
+  background: oklch(0.2 0.03 262 / 0.5);
+}
+
+.zv-sheet-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: var(--zv-space-2);
+}
+
+.zv-sheet-body {
+  font-size: 0.9375rem;
+  color: var(--zv-ink-muted);
+  margin-bottom: var(--zv-space-4);
+}
+
+/* Step indicator: where a person is in a flow. Words and numbers carry the state;
+   colour only reinforces it. */
+.zv-stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--zv-space-3);
+  list-style: none;
+  margin: 0 0 var(--zv-space-5);
+  padding: 0;
+  flex-wrap: wrap;
+}
+
+.zv-stepper-step {
+  display: flex;
+  align-items: center;
+  gap: var(--zv-space-2);
+  font-size: 0.875rem;
+  color: var(--zv-ink-muted);
+}
+
+.zv-stepper-step + .zv-stepper-step::before {
+  content: "";
+  width: 28px;
+  height: 1px;
+  background: var(--zv-line-strong);
+  margin-right: var(--zv-space-1);
+}
+
+.zv-stepper-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid var(--zv-line-strong);
+}
+
+.zv-stepper-done .zv-stepper-dot {
+  background: var(--zv-punch-bg);
+  border-color: var(--zv-punch-line);
+  color: var(--zv-punch-ink);
+}
+
+.zv-stepper-now {
+  color: var(--zv-ink);
+  font-weight: 600;
+}
+
+.zv-stepper-now .zv-stepper-dot {
+  background: var(--zv-fill);
+  border-color: var(--zv-fill);
+  color: var(--zv-fill-ink);
+}
+
+/* ==========================================================================
+   Polling station. Shared rules only: sidebar shell, flat bordered cards, 36px
+   controls, sentence-case labels, status pills, stepper pills and the ballot
+   stub. Colour comes from theme.css; page-specific rules live in styles/*.css.
+   Mono stays for codes (.zv-mono, hashes, kbd); everything else is Public Sans.
+   ========================================================================== */
+
+/* ---- Shell: fixed-height sidebar beside a scrolling column ---------------- */
+
+.zv-app-root {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  align-items: start;
+  background-image: var(--zv-wash);
+  background-repeat: no-repeat;
+}
+
+.zv-app-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+}
+
+.zv-main-content {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 22px 28px 40px;
+  scroll-margin-top: 0;
+}
+
+.zv-sidebar {
+  position: sticky;
+  top: 12px;
+  height: calc(100vh - 24px);
+  margin: 12px 0 12px 12px;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 10px;
+  overflow-y: auto;
+  border-radius: 16px;
+  z-index: 5;
+  /* Glass surface (zv-glass); text re-scoped to glass ink. */
+  --zv-ink: var(--zv-glass-ink);
+  --zv-ink-muted: var(--zv-glass-muted);
+  --zv-ink-faint: var(--zv-glass-muted);
+  --zv-line: var(--zv-glass-rim);
+  --zv-sunken: var(--zv-glass-fill-thin);
+  --zv-surface-hover: var(--zv-glass-sel);
+  --zv-focus: var(--zv-glass-ink);
+  color: var(--zv-glass-ink);
+}
+
+.zv-sidebar .zv-brand {
+  padding: 0 8px 14px;
+  border-bottom: 1px solid var(--zv-glass-rim);
+  border-radius: 0;
+}
+
+.zv-brand-name {
+  font-size: 0.9375rem;
+}
+
+.zv-sidebar-mid {
+  flex: 1;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.zv-sidebar-entry,
+.zv-theme-control {
+  align-self: stretch;
+  width: 100%;
+}
+
+.zv-sidebar-entry .zv-segment-option,
+.zv-theme-control .zv-segment-option {
+  flex: 1 1 0;
+  padding: 0 6px;
+  min-height: 32px;
+  font-size: 0.75rem;
+}
+
+.zv-sidebar .zv-segment-option[aria-pressed="true"] {
+  background: var(--zv-glass-sel);
+  color: var(--zv-glass-ink);
+  box-shadow: 0 1px 2px rgb(27 42 65 / 0.08);
+}
+
+.zv-nav-tabs {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  margin: 0;
+}
+
+.zv-nav-link {
+  position: relative;
+  width: 100%;
+  min-height: 36px;
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 0.8125rem;
+  color: var(--zv-glass-muted);
+  border-radius: var(--zv-radius-sm);
+}
+
+.zv-nav-link:hover {
+  background: var(--zv-glass-sel);
+  color: var(--zv-glass-ink);
+}
+
+.zv-nav-link.active {
+  background: var(--zv-glass-sel);
+  color: var(--zv-glass-ink);
+  box-shadow: 0 1px 2px rgb(27 42 65 / 0.08);
+}
+
+/* The 3px sky bar marks the selected section. Sky is spent here and on the
+   primary button, once each per screen. */
+.zv-nav-link.active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--zv-fill);
+}
+
+.zv-sidebar-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 8px 0;
+  border-top: 1px solid var(--zv-glass-rim);
+}
+
+.zv-account {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--zv-space-2);
+}
+
+.zv-account-name {
+  max-width: 100%;
+  font-size: 0.75rem;
+}
+
+.zv-signout-btn {
+  font-family: var(--zv-font-sans);
+  min-height: 32px;
+  border-radius: var(--zv-radius-md);
+}
+
+.zv-footer {
+  background: transparent;
+  border-top: 1px solid var(--zv-line);
+  margin-top: auto;
+}
+
+.zv-footer-container {
+  padding: 0 28px;
+}
+
+/* ---- Type: Public Sans everywhere except codes; sentence case ------------- */
+
+.zv-btn,
+.zv-segment-option,
+.zv-tab,
+.zv-page-title,
+.zv-card-band-title,
+.zv-state-mark,
+.zv-footer-badge,
+.zv-skip-link,
+.zv-loading-block,
+.zv-brand-tag,
+.zv-certify,
+.zv-bits-caption,
+.zv-clause-caption,
+.zv-status-indicator {
+  font-family: var(--zv-font-sans);
+}
+
+.zv-page-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.zv-bits-caption,
+.zv-certify,
+.zv-brand-tag,
+.zv-subsection-title,
+.zv-alert-title,
+.zv-count-label,
+.zv-card-detail-label,
+.zv-choice-set legend,
+.zv-merkle-label,
+.zv-result-label,
+.zv-tally-total-label,
+.zv-clause-caption,
+.zv-pipeline-title,
+.zv-audit-table th,
+.zv-id-callout-label,
+.zv-footer-badge,
+.zv-label-text {
+  text-transform: none;
+  letter-spacing: 0.01em;
+}
+
+.zv-label-text {
+  font-family: var(--zv-font-sans);
+  font-size: 0.8125rem;
+  letter-spacing: 0;
+  color: var(--zv-ink);
+}
+
+.zv-audit-table th {
+  font-family: var(--zv-font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--zv-ink-muted);
+}
+
+/* ---- Cards: flat, bordered, 10px --------------------------------------- */
+
+.zv-card {
+  border-radius: var(--zv-radius-lg);
+  box-shadow: none;
+  padding: var(--zv-space-5);
+}
+
+.zv-card::before {
+  content: none;
+}
+
+.zv-card-stock {
+  box-shadow: none;
+}
+
+/* ---- Controls: 36px, 8px radius ----------------------------------------- */
+
+.zv-btn {
+  font-family: var(--zv-font-sans);
+  border-radius: var(--zv-radius-md);
+  padding: 0 16px;
+  min-height: 36px;
+  font-size: 0.8125rem;
+}
+
+.zv-btn-sm {
+  padding: 0 12px;
+  min-height: 32px;
+}
+
+.zv-btn-lg {
+  padding: 0 24px;
+  min-height: 44px;
+  font-size: 0.9375rem;
+}
+
+.zv-kbd {
+  font-family: var(--zv-font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  padding: 0 4px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  opacity: 0.75;
+}
+
+.zv-input,
+.zv-select {
+  min-height: 36px;
+  padding: 7px 12px;
+  border-radius: var(--zv-radius-md);
+  font-family: var(--zv-font-sans);
+  font-size: 0.875rem;
+}
+
+.zv-input.zv-mono,
+.zv-input[type="datetime-local"] {
+  font-family: var(--zv-font-mono);
+  font-size: 0.8125rem;
+}
+
+.zv-input[type="password"] {
+  font-family: var(--zv-font-sans);
+}
+
+.zv-input.zv-mono {
+  font-size: 0.8125rem;
+}
+
+.zv-segment {
+  border-radius: var(--zv-radius-md);
+}
+
+.zv-segment-option {
+  font-family: var(--zv-font-sans);
+  border-radius: var(--zv-radius-sm);
+}
+
+/* ---- Status pill: a word plus a shape ----------------------------------- */
+
+.zv-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px 2px 8px;
+  border-radius: var(--zv-radius-pill);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.zv-pill-shape {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+}
+
+.zv-pill-open {
+  background: var(--zv-punch-bg);
+  color: var(--zv-punch-ink);
+}
+
+.zv-pill-open .zv-pill-shape {
+  border-radius: 50%;
+}
+
+.zv-pill-closed {
+  background: var(--zv-tray);
+  color: var(--zv-ink-muted);
+}
+
+.zv-pill-closed .zv-pill-shape {
+  border-radius: 1px;
+}
+
+.zv-pill-done {
+  background: var(--zv-ok-bg);
+  color: var(--zv-ok);
+}
+
+/* A check, drawn with two borders so it needs no glyph font. */
+.zv-pill-done .zv-pill-shape {
+  width: 5px;
+  height: 9px;
+  margin: 0 1.5px;
+  background: none;
+  border: solid currentColor;
+  border-width: 0 2px 2px 0;
+  transform: translateY(-1px) rotate(45deg);
+}
+
+.zv-pill-danger {
+  background: var(--zv-seal-bg);
+  color: var(--zv-seal-ink);
+}
+
+.zv-pill-danger .zv-pill-shape {
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+/* ---- Stepper: rounded pills --------------------------------------------- */
+
+.zv-stepper {
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.zv-stepper-step {
+  flex: 1 1 0;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--zv-radius-pill);
+  background: var(--zv-tray);
+  color: var(--zv-ink-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.zv-stepper-step + .zv-stepper-step::before {
+  content: none;
+}
+
+.zv-stepper-dot,
+.zv-stepper-now .zv-stepper-dot,
+.zv-stepper-done .zv-stepper-dot {
+  width: auto;
+  height: auto;
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: inherit;
+}
+
+.zv-stepper-now {
+  background: var(--zv-punch-bg);
+  color: var(--zv-punch-ink);
+  box-shadow: inset 0 -2px 0 var(--zv-fill);
+}
+
+.zv-stepper-done {
+  background: var(--zv-ok-bg);
+  color: var(--zv-ok);
+}
+
+/* ---- The ballot stub: perforated tear line, side notches ---------------- */
+/* Only for the voter's receipt. Use <Stub> or add `zv-stub` to a Card. */
+
+.zv-card.zv-stub {
+  border-top: none;
+  padding-top: 22px;
+  overflow: visible;
+  animation: zv-stub-in var(--zv-dur-scene) var(--zv-ease-out) both;
+}
+
+.zv-card.zv-stub::before {
+  content: "";
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 0;
+  height: 0;
+  background: none;
+  border-top: 2px dashed var(--zv-line-strong);
+}
+
+.zv-stub::after {
+  content: "";
+  position: absolute;
+  left: -9px;
+  right: -9px;
+  top: -9px;
+  height: 18px;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 0 50%, var(--zv-page) 8px, transparent 8.5px) left / 50% 100% no-repeat,
+    radial-gradient(circle at 100% 50%, var(--zv-page) 8px, transparent 8.5px) right / 50% 100% no-repeat;
+}
+
+.zv-stub-id {
+  position: absolute;
+  right: 14px;
+  top: -10px;
+  z-index: 1;
+  padding: 0 6px;
+  background: var(--zv-page);
+  color: var(--zv-ink-muted);
+  font: 600 0.75rem/20px var(--zv-font-mono);
+}
+
+@keyframes zv-stub-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zv-card.zv-stub,
+  .zv-main-content .zv-card.zv-stub {
+    animation: none !important;
+  }
+}
+
+/* Desktop only: the sidebar never collapses, so the old narrow-width navbar
+   rules (.zv-navbar*, 820px and 560px breakpoints) are inert. */
+
+
+/* ==========================================================================
+   Glass layer. The only place backdrop-filter is used, besides the toolbar's
+   scroll-edge band. Functional layer only: sidebar, toolbar, menus, dialogs,
+   toasts. Never cards, tables, fields, receipts, results or alerts.
+   ========================================================================== */
+
+.zv-glass {
+  background: var(--zv-glass-fill);
+  -webkit-backdrop-filter: var(--zv-glass-blur);
+  backdrop-filter: var(--zv-glass-blur);
+  /* Text inside glass reads in the glass inks. */
+  --zv-ink: var(--zv-glass-ink);
+  --zv-ink-muted: var(--zv-glass-muted);
+  border: 1px solid var(--zv-glass-edge);
+  box-shadow: var(--zv-glass-shadow), 0 0 0 1px var(--zv-glass-rim);
+  color: var(--zv-glass-ink);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .zv-glass {
+    background: var(--zv-card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-color: var(--zv-line);
+    box-shadow: none;
+    color: var(--zv-card-ink);
+    --zv-ink: var(--zv-card-ink);
+    --zv-ink-muted: var(--zv-card-muted);
+  }
+  .zv-app-root { background-image: none; }
+  .zv-edge-band { display: none; }
+}
+
+@media (prefers-contrast: more) {
+  .zv-glass {
+    background: var(--zv-card);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-color: var(--zv-card-ink);
+    box-shadow: none;
+    color: var(--zv-card-ink);
+    --zv-ink: var(--zv-card-ink);
+    --zv-ink-muted: var(--zv-card-muted);
+  }
+  .zv-app-root { background-image: none; }
+  .zv-edge-band { display: none; }
+}
+
+/* Under the fallback the surface is a card, so its scoped text must follow. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .zv-sidebar {
+    --zv-glass-ink: var(--zv-card-ink);
+    --zv-glass-muted: var(--zv-card-muted);
+    --zv-glass-sel: var(--zv-card-well);
+    --zv-glass-rim: var(--zv-line);
+    --zv-glass-fill-thin: var(--zv-card-well);
+  }
+}
+
+/* ---- Page toolbar --------------------------------------------------------- */
+
+.zv-toolbar-wrap {
+  position: sticky;
+  top: 12px;
+  z-index: 4;
+  margin-bottom: var(--zv-space-4);
+}
+
+/* Scroll edge: content blurs as it scrolls under the toolbar. */
+.zv-edge-band {
+  position: absolute;
+  left: -28px;
+  right: -28px;
+  top: -12px;
+  height: 86px;
+  z-index: -1;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  -webkit-mask: linear-gradient(#000 60%, transparent);
+  mask: linear-gradient(#000 60%, transparent);
+}
+
+.zv-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 56px;
+  padding: 0 10px 0 18px;
+  border-radius: 14px;
+  --zv-ink: var(--zv-glass-ink);
+  --zv-ink-muted: var(--zv-glass-muted);
+  --zv-sunken: var(--zv-glass-fill-thin);
+}
+
+.zv-toolbar-title {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-right: auto;
+  min-width: 0;
+}
+
+.zv-toolbar-title h1 {
+  margin: 0;
+  font-size: 1.1875rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--zv-glass-ink);
+}
+
+.zv-toolbar-crumb {
+  font-size: 0.75rem;
+  color: var(--zv-glass-muted);
+  line-height: 1.2;
+}
+
+.zv-toolbar input,
+.zv-toolbar select {
+  background: var(--zv-glass-fill-thin);
+  border-color: var(--zv-glass-rim);
+  color: var(--zv-glass-ink);
+}
+
+/* ---- Toast ----------------------------------------------------------------- */
+
+.zv-toast-host {
+  position: fixed;
+  bottom: 24px;
+  left: 220px;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.zv-toast {
+  padding: 10px 18px;
+  border-radius: var(--zv-radius-pill);
+  font-size: 0.875rem;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity var(--zv-dur-state) var(--zv-ease-out);
+}
+
+.zv-toast[data-open="true"] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zv-toast {
+    transition: none;
+  }
+}
+
+/* The selected theme option must read stronger than hover. */
+.zv-sidebar .zv-segment-option[aria-pressed="true"] {
+  background: var(--zv-card);
+  color: var(--zv-card-ink);
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12), 0 0 0 1px var(--zv-glass-rim);
 }

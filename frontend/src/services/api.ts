@@ -14,6 +14,7 @@ import type {
   HealthResponse,
   InclusionProof,
   MeResponse,
+  MyBallot,
   MyElection,
   PassphraseRequest,
   PublishedResults,
@@ -295,6 +296,11 @@ export const api = {
     return request<ElectionDetail>(
       `/api/elections/${encodeURIComponent(electionId)}`,
     );
+  },
+
+  /** GET /api/me/ballots. Session required; only the caller's own ballots. */
+  async myBallots(): Promise<{ ballots: MyBallot[] }> {
+    return request<{ ballots: MyBallot[] }>("/api/me/ballots");
   },
 
   /** GET /api/me/elections. Session required; scoped to the caller. */

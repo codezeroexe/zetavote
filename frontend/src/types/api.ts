@@ -205,6 +205,14 @@ export interface SealedKeyResponse {
 
 // ---------- the voter's own view ----------
 
+/** One ballot the signed-in account cast. The reveal salt is never here. */
+export interface MyBallot {
+  election_id: string;
+  election_name: string;
+  commitment: string;
+  ballot_timestamp: string;
+}
+
 export interface MyElection {
   id: string;
   name: string;

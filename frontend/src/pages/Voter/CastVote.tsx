@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Stepper } from "../../components/common/Stepper";
 import { api } from "../../services/api";
 import { useSubmit } from "../../hooks/useSubmit";
 import { useSession } from "../../auth/SessionContext";
@@ -8,8 +9,11 @@ import {
   openPrivateKey,
   saveBallotSeal,
 } from "../../services/crypto";
+import { useToast } from "../../components/common/Toast";
 import { downloadJson } from "../../services/download";
-import { CardStock } from "../../components/common/CardStock";
+import { Card } from "../../components/common/Card";
+import { Stub } from "../../components/common/Stub";
+import { useSubmitShortcut } from "../../hooks/useSubmitShortcut";
 import { Field } from "../../components/common/Field";
 import { Button } from "../../components/common/Button";
 import { Alert } from "../../components/common/Alert";
@@ -33,8 +37,6 @@ type VoteResult = {
   revealSalt: string;
 };
 
-const MIN_BALLOT_PASSPHRASE = 8;
-
 /**
  * Cast a ballot.
  *
@@ -52,13 +54,24 @@ export const CastVote: React.FC<{
    * dashboard, and "Cast your ballot" is the wrong heading over a receipt.
    */
   onRecorded?: () => void;
-}> = ({ electionId, electionName, onDone, onRecorded }) => {
+  /**
+   * The "I saved both codes" gate. Owned by the dashboard because the Back
+   * button lives in its toolbar; the codes are not recoverable once this
+   * screen closes.
+   */
+  saved?: boolean;
+  saveError?: boolean;
+  onSavedChange?: (saved: boolean) => void;
+}> = ({ electionId, electionName, onDone, onRecorded, saved = false, saveError = false, onSavedChange }) => {
   const { subject } = useSession();
+  const { show } = useToast();
   const [choice, setChoice] = useState("");
   const [passphrase, setPassphrase] = useState("");
   const [candidates, setCandidates] = useState<string[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [reviewing, setReviewing] = useState(false);
+  const [attempted, setAttempted] = useState(false);
+  const formRef = React.useRef<HTMLFormElement>(null);
+  useSubmitShortcut(formRef);
 
   /**
    * The record being written. `stages` is only populated once a submit starts,
@@ -101,7 +114,10 @@ export const CastVote: React.FC<{
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading || choice === "" || passphrase === "") return;
+    if (loading) return;
+    // Validated here rather than by disabling the button, so each problem is named.
+    setAttempted(true);
+    if (choice === "" || passphrase === "" || loadError !== null) return;
 
     const startedAt = performance.now();
     setStages(initialStages());
@@ -186,282 +202,197 @@ export const CastVote: React.FC<{
   };
 
   if (result) {
+    const when = new Date(result.receipt.timestamp);
+    const stamp = Number.isNaN(when.getTime())
+      ? ""
+      : ` · ${when.toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`;
     return (
       <div className="zv-cast">
-        <Alert
-          type="success"
-          title="Ballot recorded"
-          message="Signed with your ballot key and encrypted to the election's public key. The server stored only ciphertext, and nothing on this card reveals how you voted."
-        />
+        <Stub id={`${result.election_id.slice(0, 8)}${stamp}`.toUpperCase()}>
+          <h2 className="zv-stub-title">Your receipt</h2>
+          <p className="zv-hint-text">
+            Save both codes. You need them to prove your vote was counted.
+            {electionName ? ` Election: ${electionName}.` : ""}
+          </p>
 
-        {/* The card the machine prints back. It is sealed, because the choice has
-            been made and nothing on it can be punched again. */}
-        <CardStock
-          title="Ballot receipt"
-          id={result.election_id}
-          sealed
-          sealedSub={result.election_id}
-        >
-          <div className="zv-card-print">
-            The receipt is proof that a ballot was recorded. It does not record
-            what you chose, and it never will — the reveal salt below is what
-            unlocks that, and it stays on this device.
-          </div>
-
-          <div className="zv-result-details">
-            <div className="zv-result-row">
-              <span className="zv-result-label">Election</span>
-              <span className="zv-result-value">
-                {electionName ?? result.election_id}
-              </span>
-            </div>
-            <div className="zv-result-row">
-              <span className="zv-result-label">You voted for</span>
-              <span className="zv-result-value">{choice}</span>
-            </div>
-            <div className="zv-result-row">
-              <span className="zv-result-label">Signature</span>
-              <span
-                className={`zv-result-value ${
-                  result.signature_valid
-                    ? "zv-result-valid"
-                    : "zv-result-invalid"
-                }`}
-              >
-                {result.signature_valid ? "VERIFIED" : "INVALID"}
-              </span>
-            </div>
-          </div>
-        </CardStock>
-
-        {/* The same ledger that was on screen during the submit, kept. Key
-            derivation is the only step here that takes real time, and the figure
-            beside it is what that actually cost. */}
-        {stages && (
-          <PipelineLedger
-            stages={stages}
-            elapsedMs={elapsedMs}
-            note="How this entry was made, and how long it took. Every step above happened on this device or was checked by the server before it was accepted."
+          <HashBlock
+            label="Receipt code"
+            value={result.ballot_commitment}
+            tone="live"
+            hint="Safe to share. Anyone can check it was counted."
           />
-        )}
+          <HashBlock
+            label="Private key for this receipt"
+            value={result.revealSalt}
+            tone="secret"
+            hint="Keep this to yourself. It shows how you voted."
+          />
 
-        {/* Both values are on screen and one click from the clipboard. */}
-        <HashBlock
-          label="Ballot commitment"
-          value={result.ballot_commitment}
-          tone="live"
-          hint="Proves your ballot was counted. Safe to share."
-        />
-        <HashBlock
-          label="Reveal salt — keep secret"
-          value={result.revealSalt}
-          tone="secret"
-          hint="Reveals which candidate you chose. Whoever holds it can read your vote, so do not share it."
-        />
+          <div className="zv-receipt-actions">
+            <Button
+              variant="primary"
+              onClick={() => {
+                downloadJson(
+                  {
+                    election_id: result.election_id,
+                    election_name: electionName ?? null,
+                    ballot_commitment: result.ballot_commitment,
+                    reveal_salt: result.revealSalt,
+                    signature_valid: result.signature_valid,
+                    timestamp: result.receipt.timestamp,
+                  },
+                  `vote_receipt_${result.ballot_commitment.slice(0, 8)}.json`,
+                );
+                show("Receipt downloaded", "ok");
+              }}
+            >
+              Download receipt
+            </Button>
+            <label className="zv-ack">
+              <input
+                type="checkbox"
+                checked={saved}
+                onChange={(e) => onSavedChange?.(e.target.checked)}
+              />
+              <span>I saved both codes</span>
+            </label>
+          </div>
+          {saveError && !saved && (
+            <span className="zv-form-error-hint" role="alert">
+              Save both codes, then tick the box to continue.
+            </span>
+          )}
 
-        <Alert
-          type="warning"
-          title="Save both values now"
-          message="There is no way to get these back afterwards. The commitment proves your ballot was counted; the reveal salt is what lets you prove which candidate you chose, locally and offline, once results are published."
-        />
-
-        <div className="zv-form-actions">
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() =>
-              downloadJson(
-                {
-                  election_id: result.election_id,
-                  election_name: electionName ?? null,
-                  ballot_commitment: result.ballot_commitment,
-                  reveal_salt: result.revealSalt,
-                  signature_valid: result.signature_valid,
-                  timestamp: result.receipt.timestamp,
-                },
-                `vote_receipt_${result.ballot_commitment.slice(0, 8)}.json`,
-              )
-            }
-          >
-            Download receipt
-          </Button>
-          <Button variant="primary" size="sm" onClick={() => void onDone()}>
-            Back to my ballots
-          </Button>
-        </div>
-        {/* There is deliberately no way back to the form from here. It used to
-            offer "Back", which re-opened a ballot for an election this person
-            had already voted in — a second submit could only come back as "You
-            have already voted in this election". */}
+          <details className="zv-tech">
+            <summary>Technical details</summary>
+            <p>
+              The receipt code is the ballot commitment (SHA-256). The private
+              key is the reveal salt. The signature on this vote is{" "}
+              {result.signature_valid ? "valid" : "not valid"}. Neither code
+              contains your choice.
+            </p>
+            {stages && (
+              <PipelineLedger
+                stages={stages}
+                elapsedMs={elapsedMs}
+                note="How this vote was made, and how long it took."
+              />
+            )}
+          </details>
+        </Stub>
+        {/* No way back to the form from here: a second submit could only fail
+            with "already voted". */}
       </div>
     );
   }
 
-  // Whether this card will take a punch at all. A closed election's card is
-  // stamped and its candidate field is dead, and the stamp says why.
   const accepting = loadError === null && candidates !== null;
 
   return (
-    <form
-      className="zv-form zv-cast-form"
-      onSubmit={(e) => void handleSubmit(e)}
-      noValidate
-    >
-      {error && <Alert type="error" title="Vote Failed" message={error} />}
-      {loadError && (
-        <Alert type="warning" title="Not Available" message={loadError} />
-      )}
-
-      {/* The card. This is the first viewport of the most important screen in
-          the product, so the world's whole argument is spent here: a warm card,
-          a gutter of slots down its edge, and one open slot per candidate. */}
-      <CardStock
-        title={electionName ?? electionId}
-        id={electionName ? electionId : undefined}
-        sealed={!accepting}
-        sealedSub={electionId}
-        bandExtra={
-          electionName ? (
-            <span className="zv-card-band-id">as {subject}</span>
-          ) : null
-        }
+    <>
+      <Stepper steps={["Account", "Join", "Vote", "Receipt"]} current={2} />
+      <form
+        ref={formRef}
+        className="zv-voter-grid zv-cast-form"
+        onSubmit={(e) => void handleSubmit(e)}
+        noValidate
       >
-        {/* Stated on the card, before the field and not after the fact: one
-            ballot per enrolment, and the server rejects the second. */}
-        <p className="zv-card-print">
-          One ballot per enrolment. Once it is punched this card is sealed, and
-          it cannot be changed, withdrawn or voted again.
-        </p>
-
-        <fieldset
-          className="zv-choice-set"
-          disabled={loading || loadError !== null}
-        >
-          <legend className="zv-label-text">
-            Your vote <span className="zv-required">*</span>
-          </legend>
-          {candidates === null && (
-            <div className="zv-loading-block">
-              <span className="zv-spinner" /> Reading the candidate field…
-            </div>
+        <Card>
+          <h2 className="zv-stub-title">{electionName ?? electionId}</h2>
+          <p className="zv-hint-text">Pick one.</p>
+          {loadError && (
+            <Alert type="warning" title="Not available" message={loadError} />
           )}
-          {candidates?.map((candidate, i) => (
-            <label
-              key={candidate}
-              className={`zv-choice-option ${choice === candidate ? "selected" : ""}`}
-            >
-              {/* The native radio stays in the DOM and stays focusable — it is the
-                  control, its accessible name and its keyboard behaviour. It is
-                  only made invisible, because the hole beside it is what a person
-                  reads as the state they have set. */}
-              <input
-                type="radio"
-                name="candidate"
-                value={candidate}
-                checked={choice === candidate}
-                onChange={() => setChoice(candidate)}
-              />
-              <span className="zv-choice-hole" aria-hidden="true" />
-              <span className="zv-choice-label">{candidate}</span>
-              <span className="zv-choice-ordinal" aria-hidden="true">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-            </label>
-          ))}
-        </fieldset>
-      </CardStock>
-
-      {/* The tray: the recess the card sits in, and everything the card does not
-          carry — the key that opens it, and the one action that punches it. */}
-      <div className="zv-tray">
-        {/* The review step. A ballot cannot be changed once punched, and the
-            confirm button used to be one stray click away from a mis-cast vote.
-            Punch ink and a warning mark rather than the exception ink: this needs
-            checking, but nothing is being destroyed.
-
-            Once the submit starts, the confirmation is replaced by the ledger
-            rather than sitting above it. The question has been answered; what is
-            on screen now is the record of the answer being made. */}
-        {loading && stages ? (
-          <PipelineLedger
-            stages={stages}
-            elapsedMs={elapsedMs}
-            note="Key derivation is deliberately slow — it is what makes your ballot key impractical to guess from this device. Everything after it takes milliseconds."
-          />
-        ) : reviewing ? (
-          <div className="zv-confirm-box zv-confirm-box--check" role="alert">
-            <div className="zv-confirm-header">
-              <span className="zv-confirm-title">Punch this card?</span>
-            </div>
-            <p className="zv-confirm-text">
-              You are voting for <strong>{choice}</strong> in{" "}
-              {electionName ?? electionId}. Once submitted it cannot be changed,
-              withdrawn, or voted again.
-            </p>
-            <div className="zv-confirm-actions">
-              <Button
-                type="submit"
-                variant="primary"
-                isLoading={loading}
+          <fieldset
+            className="zv-choice-set"
+            disabled={loading || !accepting}
+          >
+            <legend className="zv-sr-only">Your choice</legend>
+            {candidates === null && !loadError && (
+              <div className="zv-loading-block">
+                <span className="zv-spinner" /> Loading choices…
+              </div>
+            )}
+            {candidates?.map((candidate) => (
+              <label
+                key={candidate}
+                className={`zv-choice-option ${choice === candidate ? "selected" : ""}`}
               >
-                Submit ballot
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setReviewing(false)}
-                disabled={loading}
-              >
-                Go back
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <>
-            <Field
-              label="Ballot Passphrase"
-              required
-              type="password"
-              revealable
-              placeholder="The one you chose when joining"
-              value={passphrase}
-              onChange={(e) => setPassphrase(e.target.value)}
-              autoComplete="current-password"
-              disabled={loading}
-              error={
-                passphrase !== "" && passphrase.length < MIN_BALLOT_PASSPHRASE
-                  ? "This looks too short to be the one you set when joining"
-                  : undefined
-              }
-              hint="Opens this election's ballot key here. The key was never saved to this device, so this is asked for every time you vote."
-            />
-
-            <span className="zv-form-hint">
-              Encrypted to the election key before it leaves this page. Your
-              selection is never sent to the server in the clear.
+                <input
+                  type="radio"
+                  name="candidate"
+                  value={candidate}
+                  checked={choice === candidate}
+                  onChange={() => setChoice(candidate)}
+                />
+                <span className="zv-choice-hole" aria-hidden="true" />
+                <span className="zv-choice-label">{candidate}</span>
+              </label>
+            ))}
+          </fieldset>
+          {attempted && choice === "" && (
+            <span className="zv-form-error-hint" role="alert">
+              Pick one option to continue.
             </span>
+          )}
+        </Card>
 
-            <div className="zv-form-actions">
-              <Button
-                type="button"
-                variant="primary"
-                onClick={() => setReviewing(true)}
-                disabled={choice === "" || passphrase === "" || loadError !== null}
-              >
-                Review ballot
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => void onDone()}
+        <Card>
+          {error && <Alert type="error" title="Vote failed" message={error} />}
+          <div className="zv-confirm-summary">
+            <span className="zv-hint-text">
+              {choice === "" ? "Pick one" : "You are voting for"}
+            </span>
+            {choice !== "" && <strong className="zv-confirm-choice">{choice}</strong>}
+          </div>
+
+          {loading && stages ? (
+            <PipelineLedger
+              stages={stages}
+              elapsedMs={elapsedMs}
+              note="Unlocking your key is deliberately slow. Everything after it takes milliseconds."
+            />
+          ) : (
+            <>
+              <Field
+                label="Passphrase for this election"
+                required
+                type="password"
+                revealable
+                placeholder="The one you chose when joining"
+                value={passphrase}
+                onChange={(e) => setPassphrase(e.target.value)}
+                autoComplete="current-password"
                 disabled={loading}
-              >
-                Cancel
-              </Button>
-            </div>
-          </>
-        )}
-      </div>
-    </form>
+                error={
+                  attempted && passphrase === ""
+                    ? "Enter the passphrase you chose when you joined"
+                    : undefined
+                }
+              />
+              <p className="zv-hint-text">You can't change your vote after this.</p>
+              <div className="zv-form-actions">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  shortcut="submit"
+                  isLoading={loading}
+                >
+                  Cast vote
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => void onDone()}
+                  disabled={loading}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </>
+          )}
+        </Card>
+      </form>
+    </>
   );
-}
+};

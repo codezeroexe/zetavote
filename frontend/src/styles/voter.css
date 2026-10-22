@@ -1,0 +1,118 @@
+/* ZetaVote phase 2: voter screens. Loaded after App.css so these rules win the cascade. */
+
+.zv-voter-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--zv-space-4);
+  align-items: start;
+  max-width: 960px;
+}
+
+.zv-voter-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--zv-space-4);
+  align-items: start;
+  max-width: 900px;
+}
+
+.zv-stub-title {
+  margin: 0 0 var(--zv-space-1);
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.zv-hint-text {
+  margin: 0;
+  color: var(--zv-ink-muted);
+  font-size: 0.8125rem;
+}
+
+.zv-why-card {
+  padding: var(--zv-space-4);
+  border: 1px solid var(--zv-note-line);
+  border-radius: 10px;
+  background: var(--zv-note-bg);
+  color: var(--zv-note-ink);
+}
+.zv-why-card p {
+  margin: var(--zv-space-2) 0 0;
+  font-size: 0.875rem;
+}
+
+.zv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.zv-table th {
+  padding: var(--zv-space-2) var(--zv-space-3);
+  text-align: left;
+  font-weight: 600;
+  color: var(--zv-ink-muted);
+  border-bottom: 1px solid var(--zv-line);
+}
+.zv-table td {
+  padding: var(--zv-space-2) var(--zv-space-3);
+  border-bottom: 1px solid var(--zv-line);
+  vertical-align: middle;
+}
+.zv-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+.zv-table-action {
+  text-align: right;
+}
+
+.zv-receipt-list {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--zv-space-2) var(--zv-space-3);
+  margin: var(--zv-space-3) 0;
+  font-size: 0.875rem;
+}
+.zv-receipt-list dt {
+  font-weight: 600;
+}
+.zv-receipt-list dd {
+  margin: 0;
+  text-align: right;
+}
+
+.zv-confirm-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zv-space-1);
+  margin-bottom: var(--zv-space-3);
+}
+.zv-confirm-choice {
+  font-size: 1.125rem;
+}
+
+.zv-receipt-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--zv-space-4);
+  margin-top: var(--zv-space-4);
+}
+
+.zv-tech {
+  margin-top: var(--zv-space-4);
+  font-size: 0.8125rem;
+  color: var(--zv-ink-muted);
+}
+.zv-tech summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* Search field inside the page toolbar */
+.zv-toolbar-search {
+  width: 220px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--zv-glass-rim);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.875rem;
+}

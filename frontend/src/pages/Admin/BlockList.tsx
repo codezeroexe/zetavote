@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../../services/api";
 import { useSubmit } from "../../hooks/useSubmit";
 import { formatTimestamp } from "../../services/format";
@@ -23,7 +23,11 @@ export const BlockList: React.FC<{
   const [blocks, setBlocks] = useState<BlockedAccount[] | null>(null);
   const [username, setUsername] = useState("");
   const [reason, setReason] = useState("");
+  const [problem, setProblem] = useState<string | undefined>();
   const { loading, error, run } = useSubmit<{ username: string }>();
+  // Blocking is destructive, so it opens as a sheet from the list rather than as
+  // a form beneath it. Cancel is the default way out.
+  const sheetRef = useRef<HTMLDialogElement>(null);
 
   const load = useCallback(async () => {
     try {
@@ -39,7 +43,12 @@ export const BlockList: React.FC<{
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loading || username.trim() === "") return;
+    if (loading) return;
+    if (username.trim() === "") {
+      setProblem("Enter the username to block.");
+      return;
+    }
+    setProblem(undefined);
     await run(async () => {
       const added = await api.addBlock(
         electionId,
@@ -48,6 +57,7 @@ export const BlockList: React.FC<{
       );
       setUsername("");
       setReason("");
+      sheetRef.current?.close();
       await load();
       onDone?.();
       return added;
@@ -71,16 +81,24 @@ export const BlockList: React.FC<{
 
   return (
     <>
-      <form className="zv-form" onSubmit={(e) => void handleAdd(e)} noValidate>
-        {error && (
-          <Alert type="error" title="Could Not Update" message={error} />
-        )}
+      <Button variant="outline" size="sm" onClick={() => sheetRef.current?.showModal()}>
+        Block an account
+      </Button>
 
-        <Alert
-          type="info"
-          title="This stops one account, not one person"
-          message="Use it on a duplicate account you have already identified. It withdraws the ability to join this election; it does not retract a ballot that was already cast, and a second account registered under another name would not be stopped."
-        />
+      <dialog ref={sheetRef} className="zv-sheet zv-glass zv-a-sheet" aria-labelledby="zv-block-title">
+      <form className="zv-form" onSubmit={(e) => void handleAdd(e)} noValidate>
+        <h2 id="zv-block-title" className="zv-sheet-title">
+          Block {username.trim() || "this account"}?
+        </h2>
+        <p className="zv-sheet-body">
+          This stops {username.trim() || "the account"} from joining or voting in this
+          election. It does not affect any other account or election, and it does not
+          retract a ballot already cast.
+        </p>
+
+        {error && (
+          <Alert type="error" title="Could not update" message={error} />
+        )}
 
         <Field
           label="Username"
@@ -91,6 +109,7 @@ export const BlockList: React.FC<{
           controlClassName="zv-mono"
           autoComplete="off"
           disabled={loading}
+          error={problem}
           hint="The account to bar. It does not have to exist yet."
         />
 
@@ -100,20 +119,25 @@ export const BlockList: React.FC<{
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           disabled={loading}
-          hint="Kept for your own record and the audit log."
+          hint="Kept for your own record and the activity record."
         />
 
         <div className="zv-form-actions">
+          {/* autoFocus on Cancel: a quick Return must never block anyone. */}
           <Button
-            type="submit"
-            variant="primary"
-            isLoading={loading}
-            disabled={username.trim() === ""}
+            type="button"
+            variant="outline"
+            autoFocus
+            onClick={() => sheetRef.current?.close()}
           >
-            Block Account
+            Cancel <kbd className="zv-kbd" aria-hidden="true">Esc</kbd>
+          </Button>
+          <Button type="submit" variant="danger" isLoading={loading}>
+            Block account
           </Button>
         </div>
       </form>
+      </dialog>
 
       {blocks !== null && blocks.length === 0 && (
         <p className="zv-form-hint">

@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZetaVote sign-in — before and after</title>
+<style>
+:root{
+  --navy:#1B2A41; --navy-deep:#0F1B2D; --sky:#3BA7E0; --sky-ink:#06203A;
+  --page:#EEF2F6; --card:#FFFFFF; --ink:#1B2A41; --muted:#4A5868; --line:#CDD3DB;
+  --red:#B02E2E; --red-bg:#FBEAEA; --amber-bg:#FFF6DB; --amber:#7A5300;
+  --ok:#4B7A12; --ok-bg:#EEF6E2; --info-bg:#E6F0F8;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:#D5DCE4;color:var(--ink);font-size:16px;line-height:1.5;padding:32px 20px}
+h1{font-size:26px;font-weight:700;margin-bottom:6px}
+.lede{color:var(--muted);max-width:80ch;margin-bottom:24px}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;max-width:1400px;margin:0 auto}
+.col-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.col-h b{font-size:18px}
+.tag{font-size:12px;font-weight:600;padding:3px 10px;border-radius:12px}
+.tag.before{background:#E4E8ED;color:#2B3B44}
+.tag.after{background:var(--sky);color:var(--sky-ink)}
+.shot{background:var(--page);border:1px solid #9AA3AF;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(27,42,65,.12)}
+
+/* ---------- BEFORE (measured from the running app) ---------- */
+.b-head{background:var(--navy);color:#fff;padding:12px 20px 0}
+.b-brand{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.b-logo{width:32px;height:32px;background:#fff;border-radius:6px}
+.b-brand strong{font-size:16px}
+.b-brand small{display:block;font-size:9px;letter-spacing:.14em;color:#BFD3E6;text-transform:uppercase}
+.b-tabs{background:#0F1B2D;border-radius:6px;display:flex;gap:4px;padding:3px;margin-bottom:12px;width:fit-content}
+.b-tabs span{font-size:13px;font-weight:600;padding:6px 14px;border-radius:4px;color:#D5E3F0;height:29px;display:inline-flex;align-items:center}
+.b-tabs .on{background:var(--sky);color:var(--sky-ink)}
+.b-body{padding:20px;display:grid;gap:14px}
+.b-alert{background:var(--info-bg);border-left:4px solid var(--navy);padding:12px 14px;font-size:14px;border-radius:3px}
+.b-panel{background:#fff;border:1px solid var(--line);border-radius:8px;padding:16px;display:grid;gap:10px}
+.b-panel h3{font-size:15px}
+.b-cap{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#5A6674}
+.b-row{display:flex;justify-content:space-between;gap:12px;font-size:14px;border-top:1px solid var(--line);padding-top:8px}
+.b-row .b-cap{font-size:9px;white-space:nowrap}
+.b-field{display:grid;gap:4px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.b-input{border:1px solid #6B7480;border-radius:3px;height:40px;padding:0 10px;font-size:15px;color:#4A5868;display:flex;align-items:center;text-transform:none;letter-spacing:0;font-weight:400;font-family:ui-monospace,monospace;white-space:nowrap;overflow:hidden}
+.b-btn{height:35px;width:93px;background:#B8D9F2;color:var(--sky-ink);border-radius:6px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.b-note{font-size:12px;color:var(--muted)}
+
+/* ---------- AFTER ---------- */
+.a-head{background:var(--navy);color:#fff;padding:0 20px;height:56px;display:flex;align-items:center;gap:12px}
+.a-logo{width:32px;height:32px;background:#fff;border-radius:6px;display:grid;place-items:center;color:var(--navy);font-weight:800;font-size:13px}
+.a-name{font-weight:700;font-size:17px}
+.a-role{margin-left:auto;display:flex;background:var(--navy-deep);border-radius:8px;padding:3px}
+.a-role span{min-height:36px;padding:0 14px;display:inline-flex;align-items:center;font-size:14px;font-weight:600;color:#D5E3F0;border-radius:6px}
+.a-role .on{background:var(--sky);color:var(--sky-ink)}
+.a-body{padding:24px 20px;display:grid;gap:18px}
+.a-notice{background:var(--amber-bg);color:#3B2A00;border-radius:8px;padding:12px 14px;font-size:14px;display:flex;gap:10px;align-items:flex-start}
+.a-notice b{display:block;font-size:14px;margin-bottom:2px}
+.a-layout{display:grid;gap:20px}
+.a-intro h2{font-size:24px;font-weight:700;margin-bottom:4px}
+.a-intro p{color:var(--muted);font-size:15px}
+.a-form{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:16px;box-shadow:0 1px 2px rgba(27,42,65,.06)}
+.a-seg{display:grid;grid-template-columns:1fr 1fr;background:var(--page);border-radius:10px;padding:4px}
+.a-seg span{min-height:40px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;border-radius:8px;color:var(--ink)}
+.a-seg .on{background:#fff;box-shadow:0 1px 2px rgba(27,42,65,.15)}
+.a-field{display:grid;gap:6px}
+.a-field label{font-size:15px;font-weight:600}
+.a-field .hint{font-size:13px;color:var(--muted)}
+.a-input{min-height:48px;border:1px solid #6B7480;border-radius:8px;padding:0 12px;display:flex;align-items:center;font-size:16px;color:var(--ink)}
+.a-input.ph{color:#66707C}
+.a-btn{min-height:50px;border-radius:10px;background:var(--sky);color:var(--sky-ink);font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center}
+.a-guar{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;display:grid;gap:14px}
+.a-guar h3{font-size:16px;font-weight:700}
+.a-item{display:grid;grid-template-columns:28px 1fr;gap:12px;padding-top:12px;border-top:1px solid var(--line)}
+.a-num{width:28px;height:28px;border-radius:50%;background:var(--info-bg);color:var(--navy);font-weight:700;font-size:13px;display:grid;place-items:center}
+.a-item p{font-size:15px}
+.a-item small{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.a-chain{background:var(--ok-bg);border:1px solid #B7D98E;border-radius:10px;padding:12px 14px;font-size:14px;display:flex;gap:10px;align-items:flex-start}
+.a-chain b{display:block;font-size:14px}
+.a-chain span{color:#2E4A0B}
+
+.a-seg span{white-space:nowrap}
+</style>
+</head>
+<body>
+
+<h1>Sign-in screen: before and after</h1>
+<p class="lede">Desktop only. Before is rebuilt from values measured on the running app (localhost:5190), not a pixel copy. Findings cite Apple HIG pages the audit opened.</p>
+
+<div class="compare">
+
+  <!-- BEFORE -->
+  <section>
+    <div class="col-h"><b>Before</b><span class="tag before">Current build</span></div>
+    <div class="shot">
+      <div class="b-head">
+        <div class="b-brand">
+          <div class="b-logo"></div>
+          <div><strong>ZetaVote</strong><small>Local secure voting</small></div>
+        </div>
+        <div class="b-tabs"><span class="on">Voter</span><span>Admin</span></div>
+      </div>
+      <div class="b-body">
+        <div class="b-alert"><b>Prototype — not for real elections.</b> ZetaVote is an academic proof-of-concept…</div>
+        <div class="b-panel">
+          <h3>Sign in to vote</h3>
+          <div class="b-cap">What this machine guarantees</div>
+          <div class="b-row"><span>Your ballot is sealed before it leaves this browser.</span><span class="b-cap">AES-GCM</span></div>
+          <div class="b-row"><span>One account casts one ballot per election.</span><span class="b-cap">Server-side check</span></div>
+          <div class="b-row"><span>Every entry keeps the fingerprint of the entry before it.</span><span class="b-cap">Chain genesis</span></div>
+        </div>
+        <div class="b-field">Username<div class="b-input">asharao0142</div></div>
+        <div class="b-field">Passphrase<div class="b-input">The one you chose when regi</div></div>
+        <div class="b-btn">Sign In</div>
+        <div class="b-note">Tabs: "Sign in" / "Create account" / "Sign In" (label casing differs).</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AFTER -->
+  <section>
+    <div class="col-h"><b>After</b><span class="tag after">Proposed</span></div>
+    <div class="shot">
+      <div class="a-head">
+        <div class="a-logo">ZV</div>
+        <div class="a-name">ZetaVote</div>
+        <div class="a-role"><span class="on">Voter</span><span>Admin</span></div>
+      </div>
+      <div class="a-body">
+        <div class="a-notice"><div><b>Prototype, not for real elections</b>Runs on this machine only.</div></div>
+        <div class="a-layout">
+          <div class="a-form">
+            <div class="a-seg"><span class="on">Sign in</span><span>Create account</span></div>
+            <div class="a-field"><label for="u">Username</label><span class="hint">Your name and four digits. Case matters.</span><div class="a-input" id="u">asharao0142</div></div>
+            <div class="a-field"><label for="p">Passphrase</label><span class="hint">Set when you registered. Needed on every device.</span><div class="a-input ph" id="p">Your passphrase</div></div>
+            <div class="a-btn">Sign in</div>
+          </div>
+          <div class="a-intro">
+            <h2>Sign in to vote</h2>
+            <p>Nothing leaves this machine. Four checks back every claim below.</p>
+            <div class="a-guar" style="margin-top:14px">
+              <h3>What this machine guarantees</h3>
+              <div class="a-item"><div class="a-num">1</div><p>Your ballot is sealed before it leaves this browser.<small>AES-GCM</small></p></div>
+              <div class="a-item"><div class="a-num">2</div><p>One account casts one ballot per election.<small>Checked by the server</small></p></div>
+              <div class="a-item"><div class="a-num">3</div><p>Every entry keeps the fingerprint of the one before it.<small>SHA-256 chain</small></p></div>
+              <div class="a-item"><div class="a-num">4</div><p>The published count carries one fingerprint for every ballot.<small>Merkle root</small></p></div>
+            </div>
+            <div class="a-chain" style="margin-top:14px"><div><b>Chain intact · 66 entries</b><span>Recomputed when this page loaded.</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- AUDIT -->
+<section style="max-width:1400px;margin:32px auto 0;background:#fff;border:1px solid var(--line);border-radius:12px;padding:24px">
+  <h2 style="font-size:20px;margin-bottom:4px">Audit against Apple HIG</h2>
+  <p class="lede" style="margin-bottom:16px">Sources opened: accessibility.md, layout.md, typography.md, color.md, buttons.md, text-fields.md, feedback.md, writing.md. Desktop width only.</p>
+  <table style="width:100%;border-collapse:collapse;font-size:14px">
+    <thead><tr style="text-align:left;border-bottom:2px solid var(--ink)">
+      <th style="padding:8px">Sev.</th><th style="padding:8px">Finding (measured)</th><th style="padding:8px">HIG rule</th><th style="padding:8px">Fix in the after view</th>
+    </tr></thead>
+    <tbody>
+      <tr style="border-bottom:1px solid var(--line)"><td style="padding:8px"><b>Critical</b></td><td style="padding:8px">Guarantee captions 9px, brand tagline 9px. Below the 11 pt minimum.</td><td style="padding:8px">typography.md › Ensuring legibility (iOS 11 pt min)</td><td style="padding:8px">Minimum 12px for all text; captions move under the claim at 13px.</td></tr>
+      <tr style="border-bottom:1px solid var(--line)"><td style="padding:8px"><b>Medium</b></td><td style="padding:8px">Button label "Sign In" vs segment "Sign in"; mixed casing on one screen.</td><td style="padding:8px">writing.md › Capitalization applied consistently</td><td style="padding:8px">Sentence case everywhere: "Sign in", "Create account".</td></tr>
+      <tr style="border-bottom:1px solid var(--line)"><td style="padding:8px"><b>Medium</b></td><td style="padding:8px">Primary action disabled until fields fill, with no reason shown.</td><td style="padding:8px">feedback.md › Feedback in the interface; text-fields.md › Validate fields</td><td style="padding:8px">Enabled. Validate on submit with an inline message beside the field.</td></tr>
+      <tr><td style="padding:8px"><b>Passes</b></td><td style="padding:8px">Contrast 6.7 to 8.6:1 on all body and control text. Chain alert gives status in-line. Theme toggle has a label.</td><td style="padding:8px">color.md; feedback.md</td><td style="padding:8px">Kept.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+</body>
+</html>

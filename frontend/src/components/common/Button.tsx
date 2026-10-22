@@ -1,4 +1,5 @@
 import React, { useSyncExternalStore } from "react";
+import { shortcutAria, shortcutLabel, type Shortcut } from "../../hooks/usePlatform";
 import { isOnline, subscribeOnline } from "../../services/online";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -6,6 +7,8 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   size?: "sm" | "md" | "lg";
   isLoading?: boolean;
   icon?: React.ReactNode;
+  /** Semantic shortcut hint, e.g. "submit". Renders the platform label (⌘↵ or Ctrl+Enter). */
+  shortcut?: Shortcut;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -14,6 +17,7 @@ export const Button: React.FC<ButtonProps> = ({
   size = "md",
   isLoading = false,
   icon,
+  shortcut,
   className = "",
   disabled,
   type,
@@ -30,6 +34,7 @@ export const Button: React.FC<ButtonProps> = ({
       disabled={disabled || isLoading || blocked}
       aria-busy={isLoading || undefined}
       type={type}
+      aria-keyshortcuts={shortcut ? shortcutAria(shortcut) : undefined}
       {...props}
     >
       {/* The label stays put and the spinner sits beside it. Swapping the label
@@ -39,6 +44,11 @@ export const Button: React.FC<ButtonProps> = ({
       {isLoading && <span className="zv-spinner" aria-hidden="true" />}
       {!isLoading && icon && <span className="zv-btn-icon">{icon}</span>}
       <span>{children}</span>
+      {shortcut && (
+        <kbd className="zv-kbd" aria-hidden="true">
+          {shortcutLabel(shortcut)}
+        </kbd>
+      )}
     </button>
   );
 };

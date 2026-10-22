@@ -39,6 +39,8 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Counts and figures line up in columns. */
+  font-variant-numeric: tabular-nums;
   color-scheme: dark;
 }
 

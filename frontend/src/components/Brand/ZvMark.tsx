@@ -6,13 +6,13 @@
  *
  * Geometry is the source file verbatim: every <g transform> and <path d> is
  * byte-identical to versions/hero.svg. The only change is the viewBox, which
- * the Affinity export set to 0 0 1712 1712 and so clipped the artwork by 83px
- * on the left and 343px on the right. These are the true ink bounds.
+ * is a square around the measured ink bounds (getBBox: x -204.8, y 0,
+ * 2123.41 by 1712), so the mark sits optically centred in a square chip.
  */
 export const ZvMark: React.FC<{ className?: string }> = ({ className }) => (
   <svg
     className={className}
-    viewBox="-87.04 -32.4 2146.19 1979.86"
+    viewBox="-204.8 -205.71 2123.41 2123.41"
     fill="currentColor"
     style={{ fillRule: "evenodd", clipRule: "evenodd", strokeLinejoin: "round", strokeMiterlimit: 2 }}
     aria-hidden="true"

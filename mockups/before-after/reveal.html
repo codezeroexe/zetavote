@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZetaVote HIG Reveal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#EEF2F6; --card:#fff; --ink:#1B2A41; --muted:#55627A; --line:#D5DCE5;
+  --sky:#3BA7E0; --sky-ink:#1F5F86; --sky-bg:#E3F1FA; --red:#B4232A; --red-bg:#FBE9E9;
+  --ok:#1E7A4C; --ok-bg:#E4F4EB; --chrome:#1B2A41;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#E2E8EF;color:var(--ink);font:14px/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+header.top{max-width:1180px;margin:0 auto;padding:32px 24px 8px}
+header.top h1{margin:0 0 6px;font-size:26px}
+header.top p{margin:0;color:var(--muted);max-width:70ch}
+nav.jump{max-width:1180px;margin:16px auto 0;padding:0 24px;display:flex;gap:8px;flex-wrap:wrap}
+nav.jump a{font-size:13px;color:var(--sky-ink);background:#fff;border:1px solid var(--line);padding:4px 10px;border-radius:999px;text-decoration:none}
+section.cmp{max-width:1180px;margin:32px auto;padding:0 24px}
+.cmp-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-bottom:10px}
+.cmp-head h2{margin:0;font-size:18px}
+.sev{font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--sky-bg);color:var(--sky-ink)}
+.sev.high{background:var(--red-bg);color:var(--red)}
+.cite{font-size:13px;color:var(--muted);margin:0 0 12px}
+.cite code{background:#fff;border:1px solid var(--line);padding:0 4px;border-radius:4px;font-size:12px}
+
+/* slider */
+.reveal{--pos:50%;position:relative;height:var(--h,460px);border-radius:10px;overflow:hidden;border:1px solid var(--line);box-shadow:0 8px 24px rgb(27 42 65/.12);user-select:none}
+.layer{position:absolute;inset:0;background:var(--page)}
+.layer.after{clip-path:inset(0 0 0 var(--pos,50%))}
+.tag{position:absolute;bottom:10px;z-index:3;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;pointer-events:none}
+.tag.b{left:10px;background:#fff;color:var(--muted);border:1px solid var(--line)}
+.tag.a{right:10px;background:var(--ink);color:#fff}
+.handle{position:absolute;top:0;bottom:0;left:var(--pos,50%);width:2px;margin-left:-1px;background:var(--sky);z-index:4;pointer-events:none}
+.handle::after{content:"⟷";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:var(--sky);color:#fff;display:grid;place-items:center;font-size:16px;box-shadow:0 2px 8px rgb(0 0 0/.25)}
+.reveal input[type=range]{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize;z-index:5}
+.reveal:focus-within .handle::after{outline:3px solid var(--ink);outline-offset:2px}
+.notes{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px}
+.notes div{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 14px;font-size:13px}
+.notes b{display:block;font-size:12px;color:var(--muted);margin-bottom:2px}
+
+/* mock app chrome */
+.app{display:flex;flex-direction:column;height:100%}
+.bar{background:var(--chrome);color:#fff;height:48px;display:flex;align-items:center;padding:0 20px;gap:24px;flex:none}
+.bar .brand{font-weight:700;display:flex;gap:8px;align-items:center}
+.bar .brand i{width:18px;height:18px;border-radius:4px;background:var(--sky);display:inline-block}
+.bar .tabs{margin:0 auto;display:flex;gap:4px}
+.bar .tabs span{padding:6px 12px;border-radius:6px;font-size:13px;color:#C9D3E0}
+.bar .tabs span.on{background:rgb(255 255 255/.12);color:#fff}
+.bar .who{font-size:13px;color:#C9D3E0}
+.main{padding:20px 28px;flex:1;overflow:hidden}
+.crumb{font-size:12px;color:var(--muted);margin-bottom:6px}
+.h{font-size:20px;font-weight:700;margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px}
+.card h3{margin:0 0 4px;font-size:15px}
+.card .sub{color:var(--muted);font-size:13px;margin:0 0 12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid32{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+label.f{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
+.in{height:36px;border:1px solid #9AA6B6;border-radius:6px;background:#fff;padding:0 10px;display:flex;align-items:center;font-size:13px;color:var(--muted)}
+.in.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:12px;color:var(--ink)}
+.in.err{border-color:var(--red);box-shadow:0 0 0 2px var(--red-bg)}
+.hint{font-size:12px;color:var(--muted);margin-top:3px}
+.errtxt{font-size:12px;color:var(--red);margin-top:3px}
+.btn{height:36px;padding:0 16px;border-radius:6px;border:1px solid transparent;font-weight:600;font-size:13px;display:inline-flex;align-items:center;gap:6px}
+.btn.p{background:var(--sky);color:var(--ink)}
+.btn.s{background:#fff;border-color:#9AA6B6;color:var(--ink)}
+.btn.d{background:var(--red);color:#fff}
+.btn.off{background:#D9DFE7;color:#8C97A6}
+.btn.sm{height:32px;padding:0 12px}
+.row{display:flex;gap:8px;align-items:center}
+.kbd{font-size:11px;border:1px solid rgb(0 0 0/.2);border-radius:4px;padding:0 4px;opacity:.8}
+.pill{font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;display:inline-block}
+.pill.open{background:var(--sky-bg);color:var(--sky-ink)}
+.pill.done{background:var(--ok-bg);color:var(--ok)}
+.pill.closed{background:#E9EDF2;color:var(--muted)}
+.upper{text-transform:uppercase;letter-spacing:.08em;font-size:11px;font-weight:700;color:var(--muted)}
+.bars .b{display:grid;grid-template-columns:120px 1fr 48px;gap:10px;align-items:center;margin:8px 0;font-size:13px}
+.bars .t{height:10px;border-radius:5px;background:#E6EBF1;overflow:hidden}
+.bars .t i{display:block;height:100%;background:var(--sky)}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:6px 12px;font-size:13px}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0}
+.alert{border-radius:8px;padding:10px 14px;font-size:13px}
+.alert.ok{background:var(--ok-bg);color:var(--ok);border:1px solid #BFE3CF}
+.alert.ok b{display:block}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);padding:6px 8px}
+table.t td{border-bottom:1px solid #EDF1F5;padding:9px 8px}
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.stepper{display:flex;gap:6px;margin-bottom:14px;font-size:12px}
+.stepper span{flex:1;padding:6px 10px;border-radius:6px;background:#E6EBF1;color:var(--muted);font-weight:600}
+.stepper span.now{background:var(--sky-bg);color:var(--sky-ink);box-shadow:inset 0 -2px 0 var(--sky)}
+.stepper span.done{background:var(--ok-bg);color:var(--ok)}
+details.tech{font-size:12px;color:var(--muted);margin-top:10px}
+.sheetwrap{position:absolute;inset:48px 0 0;background:rgb(27 42 65/.35);display:grid;place-items:center}
+.sheet{width:420px;background:#fff;border-radius:10px;padding:20px;box-shadow:0 20px 48px rgb(0 0 0/.25)}
+.focus{outline:3px solid var(--sky);outline-offset:2px}
+.toggle{display:flex;border:1px solid rgb(255 255 255/.3);border-radius:6px;overflow:hidden;font-size:12px}
+.toggle span{padding:3px 8px;color:#C9D3E0}
+.toggle span.on{background:rgb(255 255 255/.15);color:#fff}
+.dim{opacity:.55}
+footer{max-width:1180px;margin:40px auto;padding:0 24px;color:var(--muted);font-size:13px}
+
+
+
+.group{max-width:1180px;margin:48px auto 0;padding:0 24px;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.door{background:#fff;border:1px solid var(--line);border-radius:8px;padding:18px}
+.door li{margin:6px 0;font-size:13px;color:var(--muted)}
+.choice{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:8px 0;background:#fff;font-size:14px}
+.choice.sel{border-color:var(--sky);box-shadow:0 0 0 2px var(--sky-bg)}
+.choice i{width:16px;height:16px;border-radius:50%;border:2px solid #9AA6B6;flex:none}
+.choice.sel i{border:5px solid var(--sky)}
+.banner{background:#FFF6E0;border:1px solid #F0DCA8;color:#6B4E00;border-radius:8px;padding:8px 12px;font-size:13px;margin-bottom:12px}
+.toolbar{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.menu{position:absolute;right:30px;top:178px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgb(27 42 65/.18);padding:4px;width:180px;font-size:13px}
+.menu div{padding:6px 10px;border-radius:5px}
+.menu div.hl{background:var(--sky-bg)}
+.menu div.dz{color:var(--red)}
+.hash{font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11px;color:var(--muted)}
+
+/* ===== Proposed style: "Polling station" (after layers only) ===== */
+.layer.after{font-family:"Public Sans",Inter,system-ui,sans-serif;font-feature-settings:"tnum" 1}
+.layer.after .app{flex-direction:row}
+.layer.after .bar{flex-direction:column;align-items:stretch;width:196px;height:auto;padding:16px 10px;gap:0}
+.layer.after .bar .brand{padding:0 8px 14px;border-bottom:1px solid rgb(255 255 255/.12);font-size:15px}
+.layer.after .bar .tabs{flex-direction:column;margin:12px 0 0;gap:2px}
+.layer.after .bar .tabs span{padding:8px 10px;font-size:13px;border-radius:6px;position:relative}
+.layer.after .bar .tabs span.on{background:rgb(255 255 255/.1)}
+.layer.after .bar .tabs span.on::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:2px;background:var(--sky)}
+.layer.after .bar .who{margin-top:auto;padding:12px 8px 0;border-top:1px solid rgb(255 255 255/.12);font-size:12px}
+.layer.after .bar .toggle{margin-top:12px;align-self:flex-start}
+.layer.after .main{padding:22px 28px}
+.layer.after .h{font-size:22px;font-weight:700;letter-spacing:-.01em}
+.layer.after .card{border-radius:10px;box-shadow:none;border-color:#D5DCE5}
+.layer.after .card h3{font-weight:700}
+.layer.after .btn{border-radius:8px}
+.layer.after .btn.p{background:var(--sky);color:var(--ink);box-shadow:inset 0 -2px 0 rgb(27 42 65/.18)}
+.layer.after .in{border-radius:8px;border-color:#8A95A8}
+.layer.after .pill{border-radius:6px;padding:2px 8px 2px 18px;position:relative}
+.layer.after .pill::before{content:"";position:absolute;left:7px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:currentColor}
+.layer.after .pill.closed::before{border-radius:1px}
+.layer.after .upper{letter-spacing:.04em;text-transform:none;font-size:12px;font-weight:700}
+.layer.after .stepper span{border-radius:999px;text-align:center}
+.layer.after table.t th{font-size:12px;text-transform:none}
+.layer.after .bars .t{height:14px;border-radius:3px}
+/* signature: the ballot stub — perforated tear line, used only where a receipt lives */
+.stub{position:relative;border-top:none !important;padding-top:22px !important}
+.stub::before{content:"";position:absolute;left:14px;right:14px;top:0;border-top:2px dashed #AEB8C6}
+.stub::after{content:"";position:absolute;left:-9px;right:-9px;top:-9px;height:18px;background:radial-gradient(circle at 0 50%,var(--page) 8px,transparent 8.5px) left/50% 100% no-repeat,radial-gradient(circle at 100% 50%,var(--page) 8px,transparent 8.5px) right/50% 100% no-repeat}
+.stub .stub-id{position:absolute;right:14px;top:-10px;background:var(--page);padding:0 6px;font:600 11px/20px "IBM Plex Mono",monospace;color:var(--muted)}
+/* style board */
+.board{max-width:1180px;margin:24px auto;padding:0 24px}
+.board .wrap{background:#fff;border:1px solid var(--line);border-radius:12px;padding:22px;display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:24px}
+.board h3{margin:0 0 10px;font-size:14px}
+.sw{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13px}
+.sw i{width:34px;height:34px;border-radius:8px;border:1px solid rgb(0 0 0/.08);flex:none}
+.sw small{display:block;color:var(--muted);font-size:12px}
+.typescale div{margin:4px 0;font-family:"Public Sans",sans-serif}
+.board p.why{font-size:13px;color:var(--muted);margin:6px 0 0}
+.decisions{max-width:1180px;margin:0 auto;padding:0 24px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.decisions div{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px;font-size:13px}
+.decisions b{display:block;margin-bottom:4px;font-size:14px}
+.decisions code{font-size:12px}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>ZetaVote: every screen, before and after, with a new style</h1>
+  <p>Second <code>/apple-design</code> audit, 22 Oct 2026. Drag the handle, or focus it and use the arrow keys. Left is the current build. Right is the proposed fix in the proposed style below. Desktop only, light theme. Each panel lists the guideline it comes from.</p>
+</header>
+
+<section class="board"><div class="wrap">
+  <div>
+    <h3>Proposed style: "Polling station"</h3>
+    <p class="why" style="margin-top:0">Grounded in the real artifacts of a vote: the booth, the ballot, the counterfoil stub you keep. Calm civic surfaces everywhere, and one memorable object: the perforated stub that marks anything that is your receipt.</p>
+    <div class="sw"><i style="background:#1B2A41"></i><div>Slate #1B2A41 · sidebar, ink<small>14.4:1 on white</small></div></div>
+    <div class="sw"><i style="background:#3BA7E0"></i><div>Sky #3BA7E0 · primary action only<small>slate label on sky 5.4:1</small></div></div>
+    <div class="sw"><i style="background:#1F5F86"></i><div>Sky ink #1F5F86 · links, open status<small>6.9:1 on white</small></div></div>
+    <div class="sw"><i style="background:#B4232A"></i><div>Red #B4232A · can't be undone, nothing else<small>6.5:1 on white</small></div></div>
+    <div class="sw"><i style="background:#EEF2F6"></i><div>Page #EEF2F6 · cards #FFFFFF<small>muted text #55627A 6.2:1</small></div></div>
+  </div>
+  <div class="typescale">
+    <h3>Type</h3>
+    <div style="font-size:26px;font-weight:700;letter-spacing:-.01em">Public Sans 26 / 700</div>
+    <div style="font-size:22px;font-weight:700">Page title 22 / 700</div>
+    <div style="font-size:15px;font-weight:700">Card title 15 / 700</div>
+    <div style="font-size:14px">Body 14 / 400, tabular numbers 62 · 31 · 7</div>
+    <div style="font-size:12px;color:#55627A">Hint 12 / 400</div>
+    <div style="font:12px 'IBM Plex Mono',monospace">9f2c4e1a… Plex Mono 12, codes only</div>
+    <p class="why">Public Sans was drawn for government services. It reads civic without being a serif-and-cream template. Mono is kept only for codes people copy.</p>
+  </div>
+  <div>
+    <h3>Signature: the ballot stub</h3>
+    <div class="card stub" style="background:#fff;border:1px solid #D5DCE5;border-radius:10px;padding:16px;margin-top:16px"><span class="stub-id">LIB-0039 · 21 OCT</span><b style="font-family:'Public Sans'">Your receipt</b><div class="hint">Receipt code</div><div style="font:12px 'IBM Plex Mono',monospace">9f2c4e1a7b0d…e83a51c6</div></div>
+    <p class="why">Only on receipt surfaces: the receipt, saved receipts, results check, and verify match. Nowhere else, so it always means "this is yours, keep it". On Vote recorded it slides in once; with reduced motion it simply appears.</p>
+  </div>
+</div></section>
+<div class="decisions">
+  <div><b>Sidebar replaces the top bar</b>Desktop has width to spare. Sections sit on the left with the account at the bottom, so there is one navigation surface. <code>sidebars.md › Best practices</code>: no more than two levels.</div>
+  <div><b>Sky is spent once per screen</b>The primary button and the selected section only. Status uses shape plus word: a dot means open, a square means closed. <code>branding.md</code>: "Apply your app's accent color judiciously."</div>
+  <div><b>Flat, bordered cards</b>No drop shadows, 10px corners, 1px #D5DCE5 borders, 8px controls at 36px tall. The logo appears once, in the sidebar. <code>branding.md</code>: "Ensure branding always defers to content."</div>
+</div>
+
+<nav class="jump"><a href="#signin">1 Sign in</a><a href="#register">2 Create account</a><a href="#setup">3 First run</a><a href="#theme">4 App shell</a><a href="#ballots">5 Your ballots</a><a href="#enrol">6 Join an election</a><a href="#vote">7 Cast vote</a><a href="#receipt">8 Receipt</a><a href="#results">9 Results</a><a href="#verify">10 Verify</a><a href="#admin">11 Elections</a><a href="#create">12 Create election</a><a href="#close">13 Close voting</a><a href="#tally">14 Count votes</a><a href="#block">15 Accounts</a><a href="#audit">16 Audit log</a></nav>
+<div class="group">Sign-in and account</div>
+<section class="cmp" id="signin">
+  <div class="cmp-head"><h2>1. Sign in</h2><span class="sev">Medium</span></div>
+  <p class="cite"><code>writing.md › Best practices</code>: no jargon, one job per element. <code>entering-data.md › Best practices</code>: validate dynamically.</p>
+  <div class="reveal" style="--h:470px">
+    <div class="layer before"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"></div></div><div class="main">
+      <div class="grid2"><div class="card"><h3>Sign in to vote</h3><p class="sub">Secure local voting. Nothing leaves this machine.</p>
+        <label class="f">Username</label><div class="in">asharao0142</div>
+        <div class="hint">Your name and four digits. Case matters — Asha0142 is not asha0142. Write it down somewhere: it cannot be recovered.</div>
+        <label class="f">Passphrase</label><div class="in">The one you chose when registering</div>
+        <div class="hint">Required every time, on every device. It opens your sealed key here in this browser and is never sent.</div>
+        <div class="row" style="margin-top:14px"><span class="btn p">Sign in</span><span class="btn s">Create account</span></div></div>
+      <div class="door"><h3>Sign in to vote</h3><ul><li>Your ballot is sealed before it leaves this browser.</li><li>One account casts one ballot per election.</li><li>Every entry keeps the fingerprint of the entry before it.</li><li>The published count carries one fingerprint (Merkle root).</li></ul></div></div></div></div></div>
+    <div class="layer after"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"></div></div><div class="main">
+      <div class="grid2"><div class="card"><h3>Sign in</h3><p class="sub">Everything stays on this computer.</p>
+        <label class="f">Username</label><div class="in">asharao0142</div>
+        <div class="hint">Your name plus four digits, for example asharao0142.</div>
+        <label class="f">Passphrase</label><div class="in">••••••••</div>
+        <div class="row" style="margin-top:14px"><span class="btn p">Sign in <span class="kbd">↵</span></span><span class="btn s">Create account</span></div></div>
+      <div class="door"><h3>Why you can trust the result</h3><ul><li>Your vote is locked in this browser before it is sent.</li><li>One person, one vote per election.</li><li>The record can't be edited without it showing.</li><li>You can check your own vote was counted.</li></ul></div></div></div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal the proposed design for Sign in">
+  </div>
+  <div class="notes"><div><b>Before</b>Two headings both say "Sign in to vote". Long hints explain the crypto. "Merkle root" on the welcome screen.</div><div><b>After</b>One title. One-line hint. The side panel explains the guarantees in plain words.</div></div>
+</section>
+<section class="cmp" id="register">
+  <div class="cmp-head"><h2>2. Create account</h2><span class="sev high">High</span></div>
+  <p class="cite"><code>layout.md › Visual hierarchy</code>: "Group related items." <code>entering-data.md › Best practices</code>: validate as people type.</p>
+  <div class="reveal" style="--h:500px">
+    <div class="layer before"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"></div></div><div class="main">
+      <div class="card" style="max-width:560px"><h3>Create your account</h3><p class="sub">One account per person, for life. Each election is joined separately.</p>
+        <label class="f">Legal name</label><div class="in">Asha Rao</div>
+        <label class="f">Date of birth</label><div class="in">2004-03-11</div>
+        <label class="f">Username</label><div class="in">asharao0142</div>
+        <label class="f">Passphrase</label><div class="in">••••••••••</div>
+        <label class="f">Confirm passphrase</label><div class="in">••••••••••</div>
+        <div style="margin-top:14px"><span class="btn off">Create account</span></div></div></div></div></div>
+    <div class="layer after"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"></div></div><div class="main">
+      <div class="h">Create account</div>
+      <div class="grid2" style="max-width:900px">
+        <div class="card"><div class="upper" style="margin-bottom:4px">About you</div>
+          <label class="f">Legal name</label><div class="in">Asha Rao</div>
+          <label class="f">Date of birth</label><div class="in">11 Mar 2004</div><div class="hint">Checked for age, then discarded. Never stored.</div>
+          <label class="f">Your username</label><div class="in mono">asharao0142</div><div class="hint">Made from your name. Write it down.</div></div>
+        <div class="card"><div class="upper" style="margin-bottom:4px">Passphrase</div>
+          <label class="f">Passphrase</label><div class="in">••••••••••</div>
+          <label class="f">Confirm</label><div class="in">••••••••••</div><div class="hint" style="color:var(--ok)">✓ Matches</div>
+          <div class="banner" style="margin-top:12px">If you forget it, nobody can reset it. Not even the admin.</div>
+          <span class="btn p">Create account</span></div></div></div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal the proposed design for Create account">
+  </div>
+  <div class="notes"><div><b>Before</b>One long column. Submit disabled with no reason. The unrecoverable-passphrase warning is not near the field.</div><div><b>After</b>Two groups: about you, passphrase. Live match check. Warning beside the passphrase.</div></div>
+</section>
+<section class="cmp" id="setup">
+  <div class="cmp-head"><h2>3. First run: set up admin</h2><span class="sev">Medium</span></div>
+  <p class="cite"><code>writing.md › Best practices</code>: apply one capitalization style consistently.</p>
+  <div class="reveal" style="--h:420px">
+    <div class="layer before"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"></div></div><div class="main">
+      <div class="card" style="max-width:560px"><div class="alert" style="background:#FFF6E0;border:1px solid #F0DCA8">First run — set up the admin account</div>
+        <label class="f">Admin Name</label><div class="in">Your name</div>
+        <label class="f">First-Run Code</label><div class="in">Printed in the server terminal</div>
+        <label class="f">Passphrase</label><div class="in">Your admin passphrase</div>
+        <div style="margin-top:14px"><span class="btn off">Create admin account</span></div></div></div></div></div>
+    <div class="layer after"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"></div></div><div class="main">
+      <div class="h">Set up this computer</div>
+      <div class="grid2" style="max-width:900px"><div class="card">
+        <label class="f" style="margin-top:0">Admin name</label><div class="in">Your name</div>
+        <label class="f">Setup code</label><div class="in mono">7F3K-29QX</div><div class="hint">Shown in the terminal where you started ZetaVote.</div>
+        <label class="f">Passphrase</label><div class="in">••••••••••</div>
+        <div style="margin-top:14px"><span class="btn p">Create admin account</span></div></div>
+        <div class="door"><h3>What happens next</h3><ul><li>You become the only admin.</li><li>You create elections and voters register themselves.</li><li>The setup code works once.</li></ul></div></div></div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal the proposed design for First run: set up admin">
+  </div>
+  <div class="notes"><div><b>Before</b>Title Case labels. Dash-joined title in a warning box. Submit disabled.</div><div><b>After</b>Sentence case. "Setup code" says where to find it. A side panel explains what happens next.</div></div>
+</section>
+<section class="cmp" id="theme">
+  <div class="cmp-head"><h2>4. App shell: follow the system appearance</h2><span class="sev">Medium</span></div>
+  <p class="cite"><code>accessibility.md › Vision</code>: "check the minimum contrast in both light and dark appearances."</p>
+  <div class="reveal" style="--h:200px">
+    <div class="layer before"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Your ballots</span><span class="">Verify</span></div><div class="toggle"><span class="on">Light</span><span>Dark</span></div><span class="who">ada.l.4821</span></div><div class="main"><p style="margin:0">OS set to dark. App opens <b>light</b> because <code>useTheme</code> hard-codes the default.</p></div></div></div>
+    <div class="layer after"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Your ballots</span><span class="">Verify</span></div><div class="toggle"><span class="on">Auto</span><span>Light</span><span>Dark</span></div><span class="who">ada.l.4821</span></div><div class="main" style="background:#1E2A3D"><p style="margin:0;color:#EEF2F6">OS set to dark. App opens <b>dark</b> via <code>prefers-color-scheme</code>. A stored choice still wins.</p></div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal the proposed design for App shell: follow the system appearance">
+  </div>
+  <div class="notes"><div><b>Before</b>Two-way toggle, ignores the OS.</div><div><b>After</b>Auto by default. Light and Dark become overrides.</div></div>
+</section><div class="group">Voter</div>
+<section class="cmp" id="ballots">
+  <div class="cmp-head"><h2>5. Your ballots</h2><span class="sev high">High</span></div>
+  <p class="cite"><code>lists-and-tables.md › Best practices</code>: "Prefer displaying text in a list or table."</p>
+  <div class="reveal" style="--h:420px">
+    <div class="layer before"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Your ballots</span><span class="">Verify</span></div><span class="who">ada.l.4821</span></div><div class="main"><div class="h">Your ballots</div><div class="cards3">
+      <div class="card"><div class="upper">EL-0042</div><h3>Student council 2026</h3><p class="sub">Open · closes 24 Oct</p><div class="row"><span class="btn p sm">Enrol</span><span class="btn s sm">Vote</span><span class="btn s sm">Results</span></div></div>
+      <div class="card"><div class="upper">EL-0039</div><h3>Library hours</h3><p class="sub">Open · enrolled</p><div class="row"><span class="btn s sm">Enrol</span><span class="btn p sm">Vote</span><span class="btn s sm">Results</span></div></div>
+      <div class="card"><div class="upper">EL-0031</div><h3>Club budget</h3><p class="sub">Tallied</p><div class="row"><span class="btn s sm">Enrol</span><span class="btn s sm">Vote</span><span class="btn p sm">Results</span></div></div>
+      <div class="card"><div class="upper">EL-0027</div><h3>Sports day date</h3><p class="sub">Closed</p><div class="row"><span class="btn s sm">Enrol</span><span class="btn s sm">Vote</span><span class="btn s sm">Results</span></div></div></div></div></div></div>
+    <div class="layer after"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Your ballots</span><span class="">Verify</span></div><span class="who">ada.l.4821</span></div><div class="main"><div class="h">Your ballots</div><div class="grid32">
+      <div class="card" style="padding:6px 8px"><table class="t"><thead><tr><th>Election</th><th>Status</th><th>Closes</th><th></th></tr></thead><tbody>
+        <tr><td><b>Student council 2026</b></td><td><span class="pill open">Open</span></td><td>24 Oct</td><td style="text-align:right"><span class="btn p sm">Join</span></td></tr>
+        <tr><td><b>Library hours</b></td><td><span class="pill open">Joined</span></td><td>30 Oct</td><td style="text-align:right"><span class="btn p sm">Vote</span></td></tr>
+        <tr><td><b>Club budget</b></td><td><span class="pill done">Results out</span></td><td>—</td><td style="text-align:right"><span class="btn s sm">See results</span></td></tr>
+        <tr><td><b>Sports day date</b></td><td><span class="pill closed">Counting</span></td><td>—</td><td style="text-align:right" class="hint">Results soon</td></tr></tbody></table></div>
+      <div class="card stub"><span class="stub-id">2 STUBS</span><h3>Saved receipts</h3><p class="sub">On this computer</p><dl class="kv"><dt>Club budget</dt><dd class="in mono" style="height:28px">3c9a…71ee</dd><dt>Library hours</dt><dd class="hint">Not voted yet</dd></dl>
+        <div style="margin-top:12px"><span class="btn s sm">Download all</span></div></div></div></div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal the proposed design for Your ballots">
+  </div>
+  <div class="notes"><div><b>Before</b>Three buttons per card regardless of state. System ID as eyebrow.</div><div><b>After</b>One action per row, chosen by state. Receipts in a side panel. "Join" replaces "Enrol".</div></div>
+</section>
+<section class="cmp" id="enrol">
+  <div class="cmp-head"><h2>6. Join an election (enrol)</h2><span class="sev">Medium</span></div>
+  <p class="cite"><code>writing.md › Best practices</code>: plain names. <code>entering-data.md › Best practices</code>: validate dynamically.</p>
+  <div class="reveal" style="--h:470px">
+    <div class="layer before"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Your ballots</span><span class="">Verify</span></div><span class="who">ada.l.4821</span></div><div class="main"><div class="crumb">Your ballots › Student council 2026</div>
+      <div class="card" style="max-width:640px"><div class="stepper"><span class="done">Account</span><span class="now">Enrol</span><span>Vote</span><span>Receipt</span></div>
+        <div class="banner">Write this passphrase down</div>
+        <label class="f">Ballot Passphrase</label><div class="in">••••••••</div>
+        <div class="hint">Different from your account passphrase on purpose — one unlocks your account everywhere, this one belongs to a single election.</div>
+        <label class="f">Confirm Ballot Passphrase</label><div class="in">Type it again</div>
+        <div style="margin-top:14px"><span class="btn off">Enrol</span></div></div></div></div></div>
+    <div class="layer after"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Your ballots</span><span class="">Verify</span></div><span class="who">ada.l.4821</span></div><div class="main"><div class="crumb">Your ballots › Student council 2026</div>
+      <div class="stepper" style="max-width:900px"><span class="done">Account</span><span class="now">Join</span><span>Vote</span><span>Receipt</span></div>
+      <div class="grid2" style="max-width:900px"><div class="card">
+        <label class="f" style="margin-top:0">Passphrase for this election</label><div class="in">••••••••</div>
+        <label class="f">Confirm</label><div class="in">••••••••</div><div class="hint" style="color:var(--ok)">✓ Matches</div>
+        <div style="margin-top:14px"><span class="btn p">Join election</span></div></div>
+        <div class="card" style="background:#FFF6E0;border-color:#F0DCA8"><h3>Why a second passphrase?</h3><p class="sub" style="color:var(--ink)">It keeps this vote separate from your account. You'll need it once, when you vote. Write it down now.</p></div></div></div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal the proposed design for Join an election (enrol)">
+  </div>
+  <div class="notes"><div><b>Before</b>Title Case labels. Long hint. Warning above the field. Disabled button.</div><div><b>After</b>"Join" in the stepper and button. Live match check. The reason sits beside the form.</div></div>
+</section>
+<section class="cmp" id="vote">
+  <div class="cmp-head"><h2>7. Cast vote</h2><span class="sev high">High</span></div>
+  <p class="cite"><code>writing.md › Best practices</code>: no metaphor-only labels. <code>alerts.md › Best practices</code>: confirm uncommon actions that can't be undone.</p>
+  <div class="reveal" style="--h:550px">
+    <div class="layer before"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Your ballots</span><span class="">Verify</span></div><span class="who">ada.l.4821</span></div><div class="main"><div class="crumb">Your ballots › Library hours</div><div class="h">Cast your ballot</div>
+      <div class="card" style="max-width:640px"><div class="stepper"><span class="done">Account</span><span class="done">Enrol</span><span class="now">Vote</span><span>Receipt</span></div>
+        <div class="choice sel"><i></i>Open until 22:00</div><div class="choice"><i></i>Open until 20:00</div><div class="choice"><i></i>Keep as is</div>
+        <h3 style="margin-top:12px">Punch this card?</h3>
+        <label class="f">Ballot Passphrase</label><div class="in">The one you chose when joining</div>
+        <div style="margin-top:12px"><span class="btn off">Punch</span></div></div></div></div></div>
+    <div class="layer after"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Your ballots</span><span class="">Verify</span></div><span class="who">ada.l.4821</span></div><div class="main"><div class="crumb">Your ballots › Library hours</div>
+      <div class="stepper" style="max-width:960px"><span class="done">Account</span><span class="done">Join</span><span class="now">Vote</span><span>Receipt</span></div>
+      <div class="grid32" style="max-width:960px"><div class="card"><h3>Library hours</h3><p class="sub">Pick one.</p>
+        <div class="choice sel"><i></i>Open until 22:00</div><div class="choice"><i></i>Open until 20:00</div><div class="choice"><i></i>Keep as is</div></div>
+        <div class="card"><div class="upper">You are voting for</div><h3 style="font-size:18px;margin:4px 0 10px">Open until 22:00</h3>
+          <label class="f">Passphrase for this election</label><div class="in">••••••••</div>
+          <p class="hint" style="margin:10px 0">You can't change your vote after this.</p>
+          <span class="btn p">Cast vote <span class="kbd">⌘↵</span></span></div></div></div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal the proposed design for Cast vote">
+  </div>
+  <div class="notes"><div><b>Before</b>"Punch this card?" is a metaphor. No summary of the choice before casting.</div><div><b>After</b>Confirm panel beside the choices names the pick and the consequence.</div></div>
+</section>
+<section class="cmp" id="receipt">
+  <div class="cmp-head"><h2>8. Receipt</h2><span class="sev high">High</span></div>
+  <p class="cite"><code>writing.md › Best practices</code>: names come from what people recognize, not from how the system is built.</p>
+  <div class="reveal" style="--h:440px">
+    <div class="layer before"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Your ballots</span><span class="">Verify</span></div><span class="who">ada.l.4821</span></div><div class="main"><div class="crumb">Your ballots › Library hours</div><div class="h">Ballot recorded</div>
+      <div class="card" style="max-width:720px"><h3>Ballot receipt</h3><p class="sub">Save both values now.</p>
+        <label class="f">Ballot commitment</label><div class="in mono">9f2c4e1a7b0d…e83a51c6</div><div class="hint">Proves your ballot was counted. Safe to share.</div>
+        <label class="f">Reveal salt — keep secret</label><div class="in mono">b71d03ae…4f0c92</div><div class="hint">Reveals which candidate you chose.</div>
+        <p style="margin:14px 0 0;font-size:13px"><input type="checkbox"> I have saved the ballot commitment and the reveal salt</p></div></div></div></div>
+    <div class="layer after"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Your ballots</span><span class="">Verify</span></div><span class="who">ada.l.4821</span></div><div class="main"><div class="crumb">Your ballots › Library hours</div><div class="h">Vote recorded</div>
+      <div class="card stub" style="max-width:720px"><span class="stub-id">LIB-0039 · 21 OCT 14:02</span><h3>Your receipt</h3><p class="sub">Save both codes. You need them to prove your vote was counted.</p>
+        <label class="f">Receipt code</label><div class="row"><div class="in mono" style="flex:1">9f2c4e1a7b0d…e83a51c6</div><span class="btn s sm">Copy</span></div><div class="hint">Safe to share. Anyone can check it was counted.</div>
+        <label class="f">Private key for this receipt</label><div class="row"><div class="in mono" style="flex:1">b71d03ae…4f0c92</div><span class="btn s sm">Copy</span></div><div class="hint">Keep this to yourself. It shows how you voted.</div>
+        <div class="row" style="margin-top:14px"><span class="btn p">Download receipt</span><label style="font-size:13px"><input type="checkbox" checked> I saved both codes</label></div>
+        <details class="tech"><summary>Technical details</summary>Receipt code = ballot commitment (SHA-256). Private key = reveal salt.</details></div></div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal the proposed design for Receipt">
+  </div>
+  <div class="notes"><div><b>Before</b>"Commitment" and "reveal salt" are system terms.</div><div><b>After</b>Receipt code and private key. Download is the main action. Tech names in a disclosure.</div></div>
+</section>
+<section class="cmp" id="results">
+  <div class="cmp-head"><h2>9. Results</h2><span class="sev high">High</span></div>
+  <p class="cite"><code>layout.md › Visual hierarchy</code>: "Order content by relative importance."</p>
+  <div class="reveal" style="--h:500px">
+    <div class="layer before"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Your ballots</span><span class="">Verify</span></div><span class="who">ada.l.4821</span></div><div class="main"><div class="h">Published results</div>
+      <div class="row" style="margin-bottom:12px"><span class="btn s sm">Results</span><span class="btn s sm">Prove my ballot</span><span class="btn s sm">Receipt</span></div>
+      <div class="grid2"><div class="card"><h3>Prove your ballot was counted</h3><p class="sub">Recomputed here, against the published root.</p>
+        <label class="f">Ballot Commitment</label><div class="in mono">paste 64-char hash</div><label class="f">Merkle root</label><div class="in mono">a41f…0c9e</div>
+        <div style="margin-top:12px"><span class="btn off">Check inclusion</span></div></div>
+      <div class="card"><h3>Totals</h3><p class="sub">The count, and the proof underneath it.</p>
+        <div class="bars"><div class="b">Priya N.<div class="t"><i style="width:62%"></i></div>62</div><div class="b">Tom R.<div class="t"><i style="width:31%"></i></div>31</div><div class="b">Abstain<div class="t"><i style="width:7%"></i></div>7</div></div></div></div></div></div></div>
+    <div class="layer after"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Your ballots</span><span class="">Verify</span></div><span class="who">ada.l.4821</span></div><div class="main"><div class="h">Student council 2026: results</div>
+      <div class="card" style="margin-bottom:14px"><div class="row" style="justify-content:space-between"><div><h3>Priya N. won with 62 of 100 votes</h3><p class="sub" style="margin:0">Counted 21 Oct 2026, 18:04.</p></div><span class="pill done">Final</span></div>
+        <div class="bars"><div class="b"><b>Priya N.</b><div class="t"><i style="width:62%"></i></div>62</div><div class="b">Tom R.<div class="t"><i style="width:31%"></i></div>31</div><div class="b">Abstain<div class="t"><i style="width:7%"></i></div>7</div></div></div>
+      <div class="card stub"><span class="stub-id">YOUR STUB</span><h3>Check your vote was counted</h3><p class="sub">Uses your saved receipt. Your choice is never shown.</p>
+        <div class="row"><div class="in mono" style="flex:1">9f2c4e1a7b0d…e83a51c6 (from this computer)</div><span class="btn p">Check my receipt</span></div>
+        <details class="tech"><summary>Technical details</summary>Results fingerprint (Merkle root): a41f…0c9e</details></div></div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal the proposed design for Results">
+  </div>
+  <div class="notes"><div><b>Before</b>Proof tool level with totals. Three equal tabs. Jargon.</div><div><b>After</b>Outcome sentence first. Receipt check prefilled. Fingerprint hidden.</div></div>
+</section>
+<section class="cmp" id="verify">
+  <div class="cmp-head"><h2>10. Verify</h2><span class="sev high">High</span></div>
+  <p class="cite"><code>entering-data.md › Best practices</code>: "provide feedback as soon as you detect a problem." <code>writing.md › Best practices</code>: one capitalization style.</p>
+  <div class="reveal" style="--h:470px">
+    <div class="layer before"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="">Your ballots</span><span class="on">Verify</span></div><span class="who">ada.l.4821</span></div><div class="main"><div class="h">Verify a ballot</div>
+      <div class="grid2"><div class="card"><label class="f" style="margin-top:0">Election</label><div class="in">Student council 2026 ▾</div>
+        <label class="f">Ballot commitment</label><div class="in mono err">9f2c4e1a7b0d</div><div class="errtxt">That is not a 64-character SHA-256 hash</div>
+        <div style="margin-top:14px"><span class="btn off">Verify ballot</span></div></div>
+      <div class="card"><div class="alert ok"><b>Ballot valid</b>This ballot commitment is authentic and recorded.</div>
+        <dl class="kv" style="margin-top:10px"><dt>In Audit Chain</dt><dd>Yes</dd><dt>Audit Chain</dt><dd>Intact</dd><dt>Recorded At</dt><dd>21 Oct, 14:02</dd></dl></div></div></div></div></div>
+    <div class="layer after"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="">Your ballots</span><span class="on">Verify</span></div><span class="who">ada.l.4821</span></div><div class="main"><div class="h">Verify a ballot</div>
+      <div class="grid2"><div class="card"><label class="f" style="margin-top:0">Election</label><div class="in">Student council 2026 ▾</div>
+        <label class="f">Receipt code</label><div class="in mono err">9f2c4e1a7b0d</div><div class="errtxt">Receipt codes are 64 letters and numbers. This one has 12. Paste it again.</div>
+        <div style="margin-top:14px"><span class="btn p">Verify ballot <span class="kbd">⌘↵</span></span></div></div>
+      <div class="card stub"><span class="stub-id">MATCHED</span><div class="alert ok"><b>Your ballot is recorded</b>The receipt matches the record, and the record has not been changed.</div>
+        <dl class="kv" style="margin-top:10px"><dt>In the record</dt><dd>Yes</dd><dt>Record intact</dt><dd>Yes</dd><dt>Recorded at</dt><dd>21 Oct, 14:02</dd></dl></div></div></div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal the proposed design for Verify">
+  </div>
+  <div class="notes"><div><b>Before</b>Grey button, hash jargon in the error, Title Case labels.</div><div><b>After</b>Enabled button. Error says how to fix it. Sentence case, plain names.</div></div>
+</section><div class="group">Admin</div>
+<section class="cmp" id="admin">
+  <div class="cmp-head"><h2>11. Elections (admin)</h2><span class="sev high">High</span></div>
+  <p class="cite"><code>toolbars.md › Actions</code>: "Only specify one primary action, and put it on the trailing side." <code>layout.md › Visual hierarchy</code>: progressive disclosure.</p>
+  <div class="reveal" style="--h:470px">
+    <div class="layer before"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Elections</span><span class="">Accounts</span><span class="">Audit</span></div><span class="who">admin</span></div><div class="main"><div class="h">Election administration</div>
+      <div class="card"><h3>Elections</h3><p class="sub">Every election on this machine, with live turnout.</p>
+      <table class="t"><thead><tr><th>Election</th><th>Status</th><th>Turnout</th><th></th></tr></thead><tbody>
+        <tr><td>Student council 2026</td><td><span class="pill open">Open</span></td><td>48 / 120</td><td><span class="btn d sm">Close election</span> <span class="btn s sm">Tally</span></td></tr>
+        <tr><td>Library hours</td><td><span class="pill open">Open</span></td><td>12 / 40</td><td><span class="btn d sm">Close election</span> <span class="btn s sm">Tally</span></td></tr>
+        <tr><td>Club budget</td><td><span class="pill closed">Closed — sealed</span></td><td>30 / 30</td><td><span class="btn s sm">Tally</span></td></tr></tbody></table>
+      <div style="margin-top:12px"><span class="btn p sm">New election</span></div></div></div></div></div>
+    <div class="layer after"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Elections</span><span class="">Accounts</span><span class="">Audit</span></div><span class="who">admin</span></div><div class="main"><div class="h">Elections</div>
+      <div class="toolbar"><div class="in" style="width:280px">Search elections</div><span class="btn s sm">All ▾</span><span style="margin-left:auto" class="btn p">New election <span class="kbd">⌘N</span></span></div>
+      <div class="card" style="padding:6px 8px"><table class="t"><thead><tr><th>Election</th><th>Status</th><th>Turnout</th><th></th></tr></thead><tbody>
+        <tr><td><b>Student council 2026</b></td><td><span class="pill open">Open</span></td><td>48 of 120 (40%)</td><td style="text-align:right"><span class="btn s sm">Manage ▾</span></td></tr>
+        <tr><td><b>Library hours</b></td><td><span class="pill open">Open</span></td><td>12 of 40 (30%)</td><td style="text-align:right"><span class="btn s sm">Manage ▾</span></td></tr>
+        <tr><td><b>Club budget</b></td><td><span class="pill closed">Ready to count</span></td><td>30 of 30</td><td style="text-align:right"><span class="btn p sm">Count votes</span></td></tr></tbody></table></div></div></div><div class="menu" style="top:196px"><div class="hl">View details</div><div>Copy election ID</div><div class="dz">Close voting…</div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal the proposed design for Elections (admin)">
+  </div>
+  <div class="notes"><div><b>Before</b>Red Close button on every open row. New election at the bottom. "Closed — sealed".</div><div><b>After</b>Search and New election in a toolbar. Rare actions in a Manage menu. One clear next step per row.</div></div>
+</section>
+<section class="cmp" id="create">
+  <div class="cmp-head"><h2>12. Create election</h2><span class="sev high">High</span></div>
+  <p class="cite"><code>layout.md › Visual hierarchy</code>: "Use progressive disclosure to make layouts cleaner."</p>
+  <div class="reveal" style="--h:500px">
+    <div class="layer before"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Elections</span><span class="">Accounts</span><span class="">Audit</span></div><span class="who">admin</span></div><div class="main"><div class="h">Create election</div><div class="card" style="max-width:600px">
+      <label class="f">Election name</label><div class="in">Student council 2026</div>
+      <label class="f">Choices (one per line)</label><div class="in" style="height:60px;align-items:flex-start;padding-top:8px">Priya N.<br>Tom R.</div>
+      <label class="f">Minimum age</label><div class="in">16</div>
+      <label class="f">Master passphrase</label><div class="in">••••••••••••</div><label class="f">Confirm master passphrase</label><div class="in">••••••••••••</div>
+      <div style="margin-top:14px"><span class="btn off">Create election</span></div></div></div></div></div>
+    <div class="layer after"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Elections</span><span class="">Accounts</span><span class="">Audit</span></div><span class="who">admin</span></div><div class="main"><div class="h">Create election</div>
+      <div class="stepper" style="max-width:860px"><span class="done">1 Rules</span><span class="now">2 Master passphrase</span></div>
+      <div class="grid2" style="max-width:860px"><div class="card"><label class="f" style="margin-top:0">Master passphrase</label><div class="in">••••••••••••</div>
+        <label class="f">Confirm</label><div class="in">••••••••••••</div>
+        <div class="row" style="margin-top:14px"><span class="btn s">Back</span><span class="btn p">Create election <span class="kbd">⌘↵</span></span></div></div>
+      <div class="card" style="background:var(--red-bg);border-color:#F0C9C9"><h3 style="color:var(--red)">This passphrase is never stored</h3><p class="sub" style="color:var(--ink)">You need it to close and count this election. Lose it and the votes can never be counted.</p>
+        <dl class="kv"><dt>Election</dt><dd>Student council 2026</dd><dt>Choices</dt><dd>2</dd><dt>Minimum age</dt><dd>16</dd></dl></div></div></div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal the proposed design for Create election">
+  </div>
+  <div class="notes"><div><b>Before</b>One long form. The passphrase warning is buried.</div><div><b>After</b>Two steps. The consequence sits beside the field, with a recap of step 1.</div></div>
+</section>
+<section class="cmp" id="close">
+  <div class="cmp-head"><h2>13. Close voting</h2><span class="sev high">High</span></div>
+  <p class="cite"><code>alerts.md › Best practices</code>: confirm uncommon, irreversible actions. <code>buttons.md › Role</code>: destructive actions use red, never the primary style.</p>
+  <div class="reveal" style="--h:460px">
+    <div class="layer before"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Elections</span><span class="">Accounts</span><span class="">Audit</span></div><span class="who">admin</span></div><div class="main"><div class="crumb">Elections › Student council 2026</div><div class="h">Close an Election</div>
+      <div class="card" style="max-width:600px"><label class="f">Master passphrase</label><div class="in">The passphrase set when this election was created</div>
+        <div class="hint">Required even though you are signed in. A stolen session should not be enough to end an election.</div>
+        <div style="margin-top:14px"><span class="btn d">Close election</span></div></div></div></div></div>
+    <div class="layer after"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Elections</span><span class="">Accounts</span><span class="">Audit</span></div><span class="who">admin</span></div><div class="main"><div class="crumb">Elections › Student council 2026</div><div class="h">Finish the election</div>
+      <div class="stepper" style="max-width:900px"><span class="now">1 Close voting</span><span>2 Count votes</span><span>3 Publish</span></div>
+      <div class="grid2" style="max-width:900px"><div class="card"><label class="f" style="margin-top:0">Master passphrase</label><div class="in">••••••••••••</div>
+        <div class="hint">Asked again so a stolen session can't end an election.</div>
+        <div class="row" style="margin-top:14px"><span class="btn s">Cancel</span><span class="btn d">Close voting</span></div></div>
+      <div class="card"><h3>What closing does</h3><dl class="kv"><dt>Turnout now</dt><dd>48 of 120</dd><dt>After closing</dt><dd>No one can vote. This can't be undone.</dd><dt>Next</dt><dd>Count votes</dd></dl></div></div></div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal the proposed design for Close voting">
+  </div>
+  <div class="notes"><div><b>Before</b>Title Case title. No turnout or consequence beside the red button. Close and tally live on separate pages.</div><div><b>After</b>One three-step flow. Consequence and turnout beside the button. Cancel offered.</div></div>
+</section>
+<section class="cmp" id="tally">
+  <div class="cmp-head"><h2>14. Count votes (tally)</h2><span class="sev">Medium</span></div>
+  <p class="cite"><code>feedback.md › Best practices</code>: "confirm that a significant action or task has completed." <code>writing.md</code>: plain names.</p>
+  <div class="reveal" style="--h:460px">
+    <div class="layer before"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Elections</span><span class="">Accounts</span><span class="">Audit</span></div><span class="who">admin</span></div><div class="main"><div class="crumb">Elections › Student council 2026</div>
+      <div class="card" style="max-width:640px"><div class="alert ok"><b>Tally complete</b></div>
+        <label class="f">Merkle root</label><div class="in mono">a41f2b…0c9e</div>
+        <label class="f">Master passphrase</label><div class="in">The passphrase set when this election was created</div>
+        <div class="hint">Required even though you are signed in. Tallying decrypts every ballot in this election.</div></div></div></div></div>
+    <div class="layer after"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="on">Elections</span><span class="">Accounts</span><span class="">Audit</span></div><span class="who">admin</span></div><div class="main"><div class="crumb">Elections › Student council 2026</div><div class="h">Finish the election</div>
+      <div class="stepper" style="max-width:900px"><span class="done">1 Close voting</span><span class="done">2 Count votes</span><span class="now">3 Publish</span></div>
+      <div class="grid2" style="max-width:900px"><div class="card"><div class="alert ok"><b>48 votes counted</b>Priya N. won with 29 votes. Results are now visible to voters.</div>
+        <div class="row" style="margin-top:14px"><span class="btn p">View results</span><span class="btn s">Back to elections</span></div></div>
+      <div class="card"><h3>Proof for observers</h3><p class="sub">Share this so anyone can check the count.</p><div class="in mono">a41f2b…0c9e</div>
+        <details class="tech"><summary>Technical details</summary>Results fingerprint = Merkle root over all receipt codes.</details></div></div></div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal the proposed design for Count votes (tally)">
+  </div>
+  <div class="notes"><div><b>Before</b>"Tally complete" with no numbers. Merkle root is the main content.</div><div><b>After</b>Says what was counted and who won. Next actions offered. Fingerprint is secondary.</div></div>
+</section>
+<section class="cmp" id="block">
+  <div class="cmp-head"><h2>15. Accounts: block sheet</h2><span class="sev">Low</span></div>
+  <p class="cite"><code>alerts.md › Buttons</code>: don't make the destructive button the default. <code>designing-for-macos.md › Best practices</code>: "Handle keyboard shortcuts."</p>
+  <div class="reveal" style="--h:380px">
+    <div class="layer before"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="">Elections</span><span class="on">Accounts</span><span class="">Audit</span></div><span class="who">admin</span></div><div class="main"><div class="h dim">Accounts</div></div></div><div class="sheetwrap"><div class="sheet"><h3 style="margin:0 0 6px">Block ada.l.4821?</h3><p class="sub">They will not be able to sign in or vote until unblocked.</p><label class="f">Reason</label><div class="in"></div><div class="row" style="justify-content:flex-end;margin-top:16px"><span class="btn s">Cancel</span><span class="btn d focus">Block account</span></div></div></div></div>
+    <div class="layer after"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="">Elections</span><span class="on">Accounts</span><span class="">Audit</span></div><span class="who">admin</span></div><div class="main"><div class="h dim">Accounts</div></div></div><div class="sheetwrap"><div class="sheet"><h3 style="margin:0 0 6px">Block ada.l.4821?</h3><p class="sub">They will not be able to sign in or vote until unblocked.</p><label class="f">Reason</label><div class="in"></div><div class="row" style="justify-content:flex-end;margin-top:16px"><span class="btn s focus">Cancel <span class="kbd">esc</span></span><span class="btn d">Block account</span></div></div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal the proposed design for Accounts: block sheet">
+  </div>
+  <div class="notes"><div><b>Before</b>Focus can land on Block account; a quick Return blocks the account.</div><div><b>After</b><code>autoFocus</code> on Cancel. Esc shown. Blocking needs a deliberate click.</div></div>
+</section>
+<section class="cmp" id="audit">
+  <div class="cmp-head"><h2>16. Audit log</h2><span class="sev">Medium</span></div>
+  <p class="cite"><code>layout.md › Visual hierarchy</code>: progressive disclosure. <code>lists-and-tables.md › Content</code>: descriptive column headings.</p>
+  <div class="reveal" style="--h:460px">
+    <div class="layer before"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="">Elections</span><span class="">Accounts</span><span class="on">Audit</span></div><span class="who">admin</span></div><div class="main"><div class="h">Audit chain</div><div class="card" style="padding:6px 8px">
+      <table class="t"><thead><tr><th>Time</th><th>Event</th><th>Election</th><th>Check</th></tr></thead><tbody>
+        <tr><td>14:02</td><td>Ballot accepted</td><td>Student council 2026</td><td>▸ Fingerprint</td></tr>
+        <tr><td>13:58</td><td>Ballot accepted</td><td>Student council 2026</td><td>▸ Fingerprint</td></tr>
+        <tr><td>13:40</td><td>Joined election</td><td>Library hours</td><td>▸ Fingerprint</td></tr>
+        <tr><td>12:11</td><td>Account blocked</td><td>—</td><td>▸ Fingerprint</td></tr>
+        <tr><td>09:00</td><td>Election created</td><td>Student council 2026</td><td>▸ Fingerprint</td></tr></tbody></table></div></div></div></div>
+    <div class="layer after"><div class="app"><div class="bar"><span class="brand"><i></i>ZetaVote</span><div class="tabs"><span class="">Elections</span><span class="">Accounts</span><span class="on">Audit</span></div><span class="who">admin</span></div><div class="main"><div class="h">Activity record</div>
+      <div class="toolbar"><div class="alert ok" style="padding:6px 12px"><b style="display:inline">✓ Record intact.</b> 214 entries, none changed. Checked 14:05.</div><span style="margin-left:auto" class="btn s sm">Check again</span><span class="btn s sm">Export</span></div>
+      <div class="card" style="padding:6px 8px"><table class="t"><thead><tr><th>Time</th><th>Event</th><th>Election</th></tr></thead><tbody>
+        <tr><td>14:02</td><td>Ballot accepted</td><td>Student council 2026</td></tr>
+        <tr><td>13:58</td><td>Ballot accepted</td><td>Student council 2026</td></tr>
+        <tr><td>13:40</td><td>Joined election</td><td>Library hours</td></tr>
+        <tr><td>12:11</td><td>Account blocked</td><td>—</td></tr>
+        <tr><td>09:00</td><td>Election created</td><td>Student council 2026</td></tr></tbody></table><p class="hash" style="margin:6px 8px">Select a row to see its fingerprint.</p></div></div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal the proposed design for Audit log">
+  </div>
+  <div class="notes"><div><b>Before</b>A fingerprint disclosure on every row. Chain status not shown up front.</div><div><b>After</b>One status line answers "was anything changed?". Fingerprints move to row detail.</div></div>
+</section>
+<footer>Contrast gate passes, 11px is the smallest text (desktop floor 10pt), and reduced motion is handled. Those need no change and are not shown.</footer>
+<script>
+document.querySelectorAll('.reveal').forEach(r=>{
+  const i=r.querySelector('input');
+  const set=v=>r.style.setProperty('--pos',v+'%');
+  i.addEventListener('input',()=>set(i.value)); set(i.value);
+});
+</script>
+</body>
+</html>

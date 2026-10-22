@@ -31,54 +31,66 @@
 
   /* ---- Surfaces ----------------------------------------------------------
      Deep slate page, a lifted slate for panels, and a recessed well for inputs. */
-  --zv-bg-base: oklch(0.2 0.03 262);
-  --zv-page: oklch(0.2 0.03 262);
-  --zv-surface: oklch(0.245 0.032 262);
-  --zv-surface-hover: oklch(0.29 0.034 262);
-  --zv-sunken: oklch(0.185 0.03 262);
+  --zv-bg-base: #0e1624;
+  --zv-page: #0e1624;
+  --zv-surface: #182030;
+  --zv-surface-hover: #222b3c;
+  --zv-sunken: #0b1320;
   --zv-sunken-focus: oklch(0.215 0.032 262);
   --zv-sunken-disabled: oklch(0.225 0.03 262);
-  --zv-tray: oklch(0.16 0.03 262);
+  --zv-tray: #060d1a;
 
   /* ---- Ink ---------------------------------------------------------------- */
-  --zv-ink: oklch(0.965 0.008 240);
-  --zv-ink-muted: oklch(0.8 0.02 240);
-  --zv-ink-faint: oklch(0.7 0.02 240);
+  --zv-ink: #eff4f8;
+  --zv-ink-muted: #b3c0ca;
+  --zv-ink-faint: #94a0aa;
   --zv-ink-invert: oklch(0.2 0.03 262);
 
   /* ---- Rules -------------------------------------------------------------- */
-  --zv-line: oklch(0.33 0.03 262);
-  --zv-line-strong: oklch(0.56 0.03 255);
-  --zv-line-input: oklch(0.6 0.03 255);
+  --zv-line: #2d3645;
+  --zv-line-strong: #697686;
+  --zv-line-input: #748192;
 
   /* ---- Cards -------------------------------------------------------------
      White cards with navy print. The card is a sheet on the page, not a tint. */
-  --zv-card: oklch(0.955 0.012 240);
-  --zv-card-ink: oklch(0.25 0.04 262);
-  --zv-card-muted: oklch(0.42 0.035 262);
-  --zv-card-line: oklch(0.6 0.03 255);
+  --zv-card: #e9f1f8;
+  --zv-card-ink: #172135;
+  --zv-card-muted: #434d61;
+  --zv-card-line: #748192;
   --zv-card-well: oklch(0.9 0.014 240);
 
   /* ---- Sky (accent) ------------------------------------------------------- */
-  --zv-punch: oklch(0.76 0.12 238);
-  --zv-punch-ink: oklch(0.86 0.07 238);
-  --zv-punch-bg: oklch(0.27 0.05 238);
+  --zv-punch: #5fbcf4;
+  --zv-punch-ink: #a6d8fa;
+  --zv-punch-bg: #092a3c;
   --zv-punch-line: oklch(0.4 0.07 238);
   /* On a card. Non-text marks clear 3:1; sky labels clear 4.5:1. */
-  --zv-punch-mark: oklch(0.52 0.1 238);
-  --zv-punch-text: oklch(0.45 0.08 238);
+  --zv-punch-mark: #23709b;
+  --zv-punch-text: #225b7c;
 
   /* ---- Red (exception) ---------------------------------------------------- */
-  --zv-seal: oklch(0.7 0.16 25);
-  --zv-seal-ink: oklch(0.8 0.11 25);
-  --zv-seal-bg: oklch(0.26 0.05 25);
+  --zv-seal: #f2716a;
+  --zv-seal-ink: #fda19a;
+  --zv-seal-bg: #391917;
   --zv-seal-line: oklch(0.4 0.08 25);
-  --zv-seal-mark: oklch(0.56 0.17 25);
-  --zv-seal-text: oklch(0.48 0.17 25);
+  --zv-seal-mark: #c43f3e;
+  --zv-seal-text: #a92227;
+
+  /* ---- Done (check) ------------------------------------------------------- */
+  --zv-ok: #6fd09a;
+  --zv-ok-bg: #12301f;
+  --zv-ok-text: #1e7a4c;
+  --zv-ok-card-bg: #e4f4eb;
+  --zv-note-bg: #fff6e0;
+  --zv-note-ink: #1b2a41;
+  --zv-note-line: #f0dca8;
+  --zv-note-bg: #2b2412;
+  --zv-note-ink: #f3e7c4;
+  --zv-note-line: #5a4a1c;
 
   /* ---- Primary action ----------------------------------------------------- */
-  --zv-fill: oklch(0.76 0.12 238);
-  --zv-fill-ink: oklch(0.2 0.03 262);
+  --zv-fill: #3ba7e0;
+  --zv-fill-ink: #0e1624;
   --zv-fill-line: transparent;
   --zv-fill-line-hover: oklch(0.7 0.12 238);
 
@@ -88,13 +100,13 @@
 
   /* ---- Chrome: the navy header band ---------------------------------------- */
   --zv-on-chrome: oklch(0.965 0.008 240);
-  --zv-chrome: oklch(0.2 0.03 262 / 0.96);
+  --zv-chrome: #1b2a41;
   --zv-chrome-line: oklch(0.33 0.03 262);
 
   /* ---- Type --------------------------------------------------------------- */
   --zv-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
     Consolas, monospace;
-  --zv-font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+  --zv-font-sans: "Public Sans Variable", "Public Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, sans-serif;
   --zv-font-wordmark: "ZetaVote Wordmark", var(--zv-font-sans);
   --zv-line-height: 1.6;
@@ -118,17 +130,17 @@
   --zv-hole-pitch: 18px;
 
   /* ---- Radius ------------------------------------------------------------- */
-  --zv-radius-sm: 4px;
-  --zv-radius-md: 6px;
-  --zv-radius-lg: 8px;
+  --zv-radius-sm: 6px;
+  --zv-radius-md: 8px;
+  --zv-radius-lg: 10px;
   --zv-radius-pill: 999px;
 
   /* ---- Depth -------------------------------------------------------------- */
-  --zv-shadow-sm: 0 1px 2px oklch(0 0 0 / 0.4);
-  --zv-shadow-md: 0 8px 22px oklch(0 0 0 / 0.45);
+  --zv-shadow-sm: none;
+  --zv-shadow-md: none;
   --zv-shadow-lg: 0 20px 48px oklch(0 0 0 / 0.55);
-  --zv-shadow-action: 0 2px 0 oklch(0 0 0 / 0.3);
-  --zv-shadow-card: 0 1px 2px oklch(0 0 0 / 0.2), 0 6px 18px oklch(0 0 0 / 0.25);
+  --zv-shadow-action: inset 0 -2px 0 rgb(27 42 65 / 0.18);
+  --zv-shadow-card: none;
 
   /* ---- Motion ------------------------------------------------------------- */
   --zv-dur-press: 90ms;
@@ -138,64 +150,97 @@
   --zv-ease-punch: cubic-bezier(0.2, 0.9, 0.1, 1);
   --zv-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --zv-ease-inout: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ---- Glass (functional layer only: sidebar, toolbar, menus, dialogs, toasts) */
+  --zv-glass-fill: rgb(24 36 58 / 0.8);
+  --zv-glass-fill-thin: rgb(24 36 58 / 0.68);
+  --zv-glass-edge: rgb(255 255 255 / 0.1);
+  --zv-glass-rim: rgb(0 0 0 / 0.35);
+  --zv-glass-ink: #eef2f6;
+  --zv-glass-muted: #c3ccd8;
+  --zv-glass-sel: rgb(255 255 255 / 0.12);
+  --zv-glass-shadow: 0 1px 0 rgb(255 255 255 / 0.06) inset, 0 12px 32px rgb(0 0 0 / 0.45);
+  --zv-glass-blur: blur(28px) saturate(1.45);
+  --zv-wash:
+    radial-gradient(60% 55% at 12% 0%, rgb(59 167 224 / 0.28), transparent 70%),
+    radial-gradient(45% 50% at 85% 8%, rgb(120 140 200 / 0.14), transparent 70%),
+    radial-gradient(40% 45% at 60% 100%, rgb(59 167 224 / 0.1), transparent 70%);
 }
 
 [data-theme="light"] {
   color-scheme: light;
 
-  --zv-bg-base: oklch(0.965 0.007 250);
-  --zv-page: oklch(0.965 0.007 250);
-  --zv-surface: oklch(0.995 0.002 250);
-  --zv-surface-hover: oklch(0.945 0.008 250);
-  --zv-sunken: oklch(1 0 0);
-  --zv-sunken-focus: oklch(1 0 0);
+  --zv-bg-base: #eef2f6;
+  --zv-page: #eef2f6;
+  --zv-surface: #ffffff;
+  --zv-surface-hover: #e6ebf1;
+  --zv-sunken: #ffffff;
+  --zv-sunken-focus: #ffffff;
   --zv-sunken-disabled: oklch(0.94 0.008 250);
-  --zv-tray: oklch(0.93 0.01 250);
+  --zv-tray: #e6ebf1;
 
-  --zv-ink: oklch(0.25 0.04 262);
-  --zv-ink-muted: oklch(0.45 0.03 262);
-  --zv-ink-faint: oklch(0.5 0.03 262);
-  --zv-ink-invert: oklch(0.995 0.002 250);
+  --zv-ink: #1b2a41;
+  --zv-ink-muted: #55627a;
+  --zv-ink-faint: #5b6780;
+  --zv-ink-invert: #ffffff;
 
-  --zv-line: oklch(0.9 0.01 250);
-  --zv-line-strong: oklch(0.6 0.02 255);
-  --zv-line-input: oklch(0.575 0.02 255);
+  --zv-line: #d5dce5;
+  --zv-line-strong: #7c879b;
+  --zv-line-input: #8a95a8;
 
-  --zv-card: oklch(0.995 0.002 250);
-  --zv-card-ink: oklch(0.25 0.04 262);
-  --zv-card-muted: oklch(0.42 0.035 262);
-  --zv-card-line: oklch(0.62 0.02 255);
-  --zv-card-well: oklch(0.96 0.006 250);
+  --zv-card: #ffffff;
+  --zv-card-ink: #1b2a41;
+  --zv-card-muted: #55627a;
+  --zv-card-line: #8a95a8;
+  --zv-card-well: #f3f6f9;
 
-  --zv-punch: oklch(0.5 0.1 240);
-  --zv-punch-ink: oklch(0.42 0.09 240);
-  --zv-punch-bg: oklch(0.94 0.03 240);
-  --zv-punch-line: oklch(0.84 0.05 240);
-  --zv-punch-mark: oklch(0.56 0.1 240);
-  --zv-punch-text: oklch(0.5 0.1 240);
+  --zv-punch: #1f5f86;
+  --zv-punch-ink: #1f5f86;
+  --zv-punch-bg: #e3f1fa;
+  --zv-punch-line: #b9d9ee;
+  --zv-punch-mark: #2a86bc;
+  --zv-punch-text: #1f5f86;
 
-  --zv-seal: oklch(0.5 0.16 27);
-  --zv-seal-ink: oklch(0.43 0.15 27);
-  --zv-seal-bg: oklch(0.94 0.03 27);
-  --zv-seal-line: oklch(0.84 0.05 27);
-  --zv-seal-mark: oklch(0.56 0.16 27);
-  --zv-seal-text: oklch(0.5 0.16 27);
+  --zv-seal: #b4232a;
+  --zv-seal-ink: #8f1a20;
+  --zv-seal-bg: #fbe9e9;
+  --zv-seal-line: #efc2c4;
+  --zv-seal-mark: #b4232a;
+  --zv-seal-text: #b4232a;
 
-  --zv-fill: oklch(0.76 0.12 238);
-  --zv-fill-ink: oklch(0.2 0.03 262);
+  --zv-ok: #1e7a4c;
+  --zv-ok-bg: #e4f4eb;
+  --zv-ok-text: #1e7a4c;
+  --zv-ok-card-bg: #e4f4eb;
+
+  --zv-fill: #3ba7e0;
+  --zv-fill-ink: #1b2a41;
   --zv-fill-line: transparent;
   --zv-fill-line-hover: oklch(0.7 0.12 238);
 
-  --zv-focus: oklch(0.25 0.04 262);
+  --zv-focus: #1b2a41;
   --zv-focus-halo: oklch(0.5 0.1 240 / 0.42);
 
-  --zv-chrome: oklch(0.2 0.03 262 / 0.97);
+  --zv-chrome: #1b2a41;
   --zv-chrome-line: oklch(0.33 0.03 262);
 
-  --zv-shadow-sm: 0 1px 2px oklch(0.2 0.03 262 / 0.08);
-  --zv-shadow-md: 0 8px 20px oklch(0.2 0.03 262 / 0.1);
+  --zv-shadow-sm: none;
+  --zv-shadow-md: none;
   --zv-shadow-lg: 0 20px 48px oklch(0.2 0.03 262 / 0.14);
-  --zv-shadow-action: 0 2px 0 oklch(0.2 0.03 262 / 0.25);
-  --zv-shadow-card: 0 1px 2px oklch(0.2 0.03 262 / 0.06),
-    0 6px 18px oklch(0.2 0.03 262 / 0.08);
+  --zv-shadow-action: inset 0 -2px 0 rgb(27 42 65 / 0.18);
+  --zv-shadow-card: none;
+
+  --zv-glass-fill: rgb(255 255 255 / 0.78);
+  --zv-glass-fill-thin: rgb(255 255 255 / 0.66);
+  --zv-glass-edge: rgb(255 255 255 / 0.75);
+  --zv-glass-rim: rgb(27 42 65 / 0.1);
+  --zv-glass-ink: #1b2a41;
+  --zv-glass-muted: #46536a;
+  --zv-glass-sel: rgb(255 255 255 / 0.9);
+  --zv-glass-shadow: 0 1px 0 rgb(255 255 255 / 0.7) inset, 0 10px 30px rgb(27 42 65 / 0.14),
+    0 2px 6px rgb(27 42 65 / 0.06);
+  --zv-wash:
+    radial-gradient(60% 55% at 12% 0%, rgb(59 167 224 / 0.55), transparent 72%),
+    radial-gradient(45% 50% at 85% 8%, rgb(27 42 65 / 0.22), transparent 70%),
+    radial-gradient(40% 45% at 60% 100%, rgb(59 167 224 / 0.14), transparent 70%);
 }

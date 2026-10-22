@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback } from "react";
 import { Hole } from "./Hole";
+import { useToast } from "./Toast";
 
 /**
  * Copy a hash, id or salt to the clipboard.
@@ -12,50 +13,34 @@ import { Hole } from "./Hole";
  */
 export const CopyButton: React.FC<{
   value: string;
-  /** What was copied, for the live region and the tooltip. */
+  /** What was copied, for the accessible name and the tooltip. */
   label?: string;
 }> = ({ value, label = "Value" }) => {
-  const [copied, setCopied] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(
-    () => () => {
-      if (timer.current) clearTimeout(timer.current);
-    },
-    [],
-  );
+  const { show } = useToast();
 
   const copy = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(value);
     } catch {
       // A clipboard the page is not allowed to write to, or an insecure origin.
-      // Selecting the text is still the fallback, so say what happened rather
-      // than reporting a copy that did not happen.
+      // Selecting the text is still the fallback, so say nothing rather than
+      // reporting a copy that did not happen.
       return;
     }
-    setCopied(true);
-    if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => setCopied(false), 2000);
-  }, [value]);
+    show("Copied", "ok");
+  }, [value, show]);
 
   return (
-    <>
-      <button
-        type="button"
-        className="zv-copy-btn"
-        data-copied={copied || undefined}
-        onClick={() => void copy()}
-        disabled={value === ""}
-        aria-label={copied ? `${label} copied` : `Copy ${label}`}
-        title={copied ? "Copied" : `Copy ${label}`}
-      >
-        {copied ? "Copied" : "Copy"}
-      </button>
-      <span className="zv-sr-only" role="status" aria-live="polite">
-        {copied ? `${label} copied to clipboard` : ""}
-      </span>
-    </>
+    <button
+      type="button"
+      className="zv-copy-btn"
+      onClick={() => void copy()}
+      disabled={value === ""}
+      aria-label={`Copy ${label}`}
+      title={`Copy ${label}`}
+    >
+      Copy
+    </button>
   );
 };
 
