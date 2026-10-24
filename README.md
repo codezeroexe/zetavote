@@ -1,731 +1,197 @@
-# ZetaVote
+<p align="center">
+  <img src="docs/assets/banner.svg" alt="ZetaVote: secure on-device cryptographic voting" width="100%">
+</p>
 
-**Secure Online Voting System built for local, on-device elections.**
+<p align="center">
+  <img alt="Python 3.11+" src="https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white">
+  <img alt="FastAPI" src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white">
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black">
+  <img alt="SQLite" src="https://img.shields.io/badge/SQLite-local-003B57?logo=sqlite&logoColor=white">
+  <img alt="Tests" src="https://img.shields.io/badge/tests-273%20passing-34C27A">
+  <img alt="Runs offline" src="https://img.shields.io/badge/runs-100%25%20offline-1F6FA8">
+</p>
 
-ZetaVote is a privacy-focused voting system designed to provide cryptographic voter authentication, encrypted ballot submission, tamper-evident auditing, receipt-based verification, and verifiable election results.
-
-The system runs entirely on-device using a local SQLite database and a localhost FastAPI server. After setup, it requires no cloud services or external infrastructure.
-
-> **Status:** In development  
-> **Deployment:** Local / On-device  
-> **License:** MIT
-
----
-
-## Project Overview
-
-ZetaVote is designed around five core goals:
-
-- **Voter authentication** using Ed25519 digital signatures
-- **Ballot confidentiality** using AES-GCM encryption
-- **Vote integrity** through cryptographic commitments and signatures
-- **Tamper-evident auditing** through a hash-linked audit log
-- **Verifiable results** using accepted-ballot counts and a published Merkle root
-
-### Design Principles
-
-- Local-first architecture
-- No cloud dependency
-- No internet requirement after setup
-- Cryptographic verification instead of trusting the application alone
-- No individual vote choices exposed during receipt verification
-- Independent audit-log verification
-
-### Non-Goals
-
-ZetaVote is not designed for:
-
-- Cloud hosting
-- Internet-facing public endpoints
-- Global multi-user deployment
-- Automatic scaling
-- Blockchain-based voting
-- SMS authentication or MFA
-
-### Target Deployment
-
-```text
-python run.py
-        ↓
-http://localhost:8080
-```
-
-The application may optionally be packaged as a standalone `.app` or `.exe` using PyInstaller.
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#cryptography">Cryptography</a> ·
+  <a href="#screenshots">Screenshots</a> ·
+  <a href="#api">API</a> ·
+  <a href="#limitations">Limitations</a>
+</p>
 
 ---
 
-## Frontend handoff plan
+ZetaVote is a voting system that runs entirely on one computer. It uses applied cryptography so that ballots stay secret until the count, nobody can vote twice or forge a ballot, every action leaves a tamper-evident trail, and every voter can check that their own ballot was counted without revealing what they chose.
 
-The frontend is intentionally kept separate from the secure backend logic. The React app should act as a local client for the existing FastAPI endpoints and should not reimplement cryptographic validation on the browser.
+It is a FastAPI + SQLite backend with a React web client. There are no cloud services and no internet connection is needed.
 
-### Frontend goals
+> [!IMPORTANT]
+> ZetaVote is an academic prototype built for a cryptography course. It is not intended for binding, governmental or commercial elections. See [Limitations](#limitations).
 
-- Admin panel: create election, close election, tally results
-- Voter panel: register voter, submit vote, view receipt
-- Verification panel: confirm ballot integrity and read final results
-- Local-only workflow: backend on `http://localhost:8080`, frontend dev server on `http://localhost:5173`
+## Highlights
 
-### Local run flow
+| | |
+| --- | --- |
+| 🔑 **Passphrases never leave the device** | Voters sign in by signing a one-time challenge with an Ed25519 key that is unlocked inside the browser. |
+| ✉️ **Ballots sealed in the browser** | Each ballot is encrypted to the election key with X25519 + HKDF + AES-256-GCM before it is sent. The server stores ciphertext only. |
+| 🧾 **Receipts that hide the choice** | A salted SHA-256 commitment gives the voter a receipt code that can be checked by anyone but reveals nothing about the vote. |
+| ⛓️ **Tamper-evident activity record** | Every ballot, close and count is appended to a SHA-256 hash chain. Editing any line breaks every hash after it. |
+| 🌳 **Provable count** | Results are published with a Merkle root over all counted ballots. Voters can request an inclusion proof for their receipt. |
+| 🗳️ **Unlinkable across elections** | Each election a voter joins gets a fresh ballot key, so activity in one election cannot be linked to another. |
+
+## Quick start
+
+You need **Python 3.11+** and **Node.js 18+**.
 
 ```bash
-# backend
-cd /Users/hari/projects/01-code-projects/crypto\ project
-python run.py
-
-# frontend
-cd /Users/hari/projects/01-code-projects/crypto\ project/frontend
-npm install
-npm run dev -- --host 0.0.0.0
-```
-
-### Backend-to-frontend connection
-
-Use a Vite proxy so the browser uses relative paths instead of hard-coded backend URLs:
-
-```ts
-server: {
-  proxy: {
-    '/api': {
-      target: 'http://localhost:8080',
-      changeOrigin: true,
-    },
-  },
-}
-```
-
-Then call the backend with fetches like:
-
-```ts
-const response = await fetch("/api/elections", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ ...payload }),
-});
-```
-
-This avoids browser CORS errors while keeping the frontend decoupled from the backend port.
-
-### Integration checklist
-
-- [ ] configure Vite proxy to `localhost:8080`
-- [ ] map each screen to a backend route
-- [ ] handle loading, success, and error states
-- [ ] keep UI state local; backend remains source of truth
-- [ ] show API responses clearly in forms and receipts
-- [ ] validate required fields before submit
-
----
-
-## Tech Stack
-
-| Layer               | Technology               |
-| ------------------- | ------------------------ |
-| Backend             | Python, FastAPI, Uvicorn |
-| Frontend            | React, Vite              |
-| Database            | SQLite                   |
-| Digital Signatures  | Ed25519                  |
-| Encryption          | AES-GCM                  |
-| Key Derivation      | scrypt                   |
-| Audit Integrity     | SHA-256 hash chain       |
-| Result Verification | Merkle tree              |
-| Packaging           | PyInstaller              |
-
-### Project Architecture
-
-```text
-┌─────────────────────────────┐
-│        React + Vite         │
-│       Local Frontend        │
-└──────────────┬──────────────┘
-               │
-               │ HTTP
-               ▼
-┌─────────────────────────────┐
-│       FastAPI + Uvicorn     │
-│        Local Backend        │
-└───────┬───────────┬─────────┘
-        │           │
-        ▼           ▼
-┌─────────────┐  ┌──────────────┐
-│   SQLite    │  │ Crypto Layer │
-│ elections   │  │ Ed25519      │
-│ voters      │  │ AES-GCM      │
-│ ballots     │  │ scrypt       │
-└─────────────┘  └──────────────┘
-        │
-        ▼
-┌─────────────────────────────┐
-│   Hash-Linked Audit Log     │
-│      votes_audit.log        │
-└─────────────────────────────┘
-```
-
----
-
-# Features
-
-## Voter Registration
-
-- Browser-generated Ed25519 keypair
-- Private-key protection using a user passphrase
-- scrypt-based key derivation
-- Public key associated with the voter and election
-- Private key stored locally in encrypted form
-- Registration receipt generated as JSON
-- Receipt contains a voter identifier hash and registration commitment
-- Private key is never included in the receipt
-
----
-
-## Secure Vote Submission
-
-Each vote goes through a cryptographic validation pipeline:
-
-```text
-Select Candidate
-      ↓
-Create Ballot Payload
-      ↓
-Generate Commitment
-      ↓
-Sign with Ed25519
-      ↓
-Encrypt with AES-GCM
-      ↓
-Submit to FastAPI
-      ↓
-Validate
-      ↓
-Store Encrypted Ballot
-      ↓
-Append Audit Entry
-      ↓
-Generate Vote Receipt
-```
-
-The server validates:
-
-- Election status and voting window
-- Voter eligibility
-- Duplicate voting
-- Request schema
-- Ed25519 signature
-- Ballot commitment
-- Replay protection
-
----
-
-## Vote Verification
-
-Voters can verify their receipt using their ballot commitment.
-
-Verification checks:
-
-- Ed25519 signature validity
-- Ballot commitment integrity
-- Duplicate submission status
-- Election timing
-- Presence of the ballot in the audit system
-
-Verification does **not** reveal the voter's selected choice.
-
-Example response:
-
-```json
-{
-  "valid": true,
-  "election_id": "election_123",
-  "timestamp": "2024-01-15T10:30:00Z"
-}
-```
-
----
-
-## Election Management
-
-Administrators can:
-
-- Create elections
-- Configure voting windows
-- Close elections
-- Unlock the election decryption key
-- Decrypt accepted ballots locally
-- Tally votes
-- Publish final results
-
-The election must be closed before tallying.
-
----
-
-## Auditing
-
-ZetaVote maintains an append-only audit log:
-
-```text
-data/votes_audit.log
-```
-
-Each entry is linked to the previous entry using SHA-256:
-
-```text
-entry_hash =
-    SHA256(previous_hash + entry_data)
-```
-
-Any modification to an existing entry breaks the chain from that point onward.
-
-The audit chain can be independently recomputed and verified.
-
----
-
-## Result Verification
-
-After tallying:
-
-- Choice totals are calculated
-- Total accepted ballots are recorded
-- A Merkle root is generated
-- Results are published for verification
-
-The published result contains:
-
-```json
-{
-  "choice_breakdown": {},
-  "total_votes": 0,
-  "merkle_root": "..."
-}
-```
-
----
-
-# Implementation Plan
-
-The project is divided into five implementation phases.
-
-## Phase 1 — Foundation
-
-**Estimated duration:** 2 days
-
-- [ ] Project scaffold
-- [ ] `run.py`
-- [ ] `requirements.txt`
-- [ ] Backend structure
-- [ ] Frontend structure
-- [ ] SQLite schema
-- [ ] Core cryptographic functions
-- [ ] FastAPI server
-- [ ] Health endpoint
-- [ ] Local application startup
-
----
-
-## Phase 2 — Voter Flow
-
-**Estimated duration:** 2 days
-
-- [ ] React registration interface
-- [ ] Browser Ed25519 keypair generation
-- [ ] Encrypted private-key storage
-- [ ] Voter registration API
-- [ ] Receipt-token generation
-- [ ] JSON receipt download
-- [ ] Registration validation tests
-
----
-
-## Phase 3 — Vote Submission
-
-**Estimated duration:** 2 days
-
-- [ ] Candidate selection interface
-- [ ] Passphrase-based key unlocking
-- [ ] Vote signing
-- [ ] AES-GCM encryption
-- [ ] Vote submission API
-- [ ] Input validation
-- [ ] Duplicate-vote prevention
-- [ ] Replay protection
-- [ ] Audit-log append
-- [ ] Vote receipt generation
-
----
-
-## Phase 4 — Verification & Tally
-
-**Estimated duration:** 2 days
-
-- [ ] Receipt verification interface
-- [ ] Commitment verification API
-- [ ] Election closing
-- [ ] Master passphrase flow
-- [ ] Local ballot decryption
-- [ ] Vote tallying
-- [ ] Merkle-root generation
-- [ ] Public result publication
-- [ ] End-to-end testing
-
----
-
-## Phase 5 — Hardening & Packaging
-
-**Estimated duration:** 2 days
-
-- [ ] Rate limiting
-- [ ] Input validation hardening
-- [ ] Error handling
-- [ ] Security headers
-- [ ] PyInstaller packaging
-- [ ] `.app` build
-- [ ] `.exe` build
-- [ ] LAN networking documentation
-- [ ] Data export/import documentation
-- [ ] Final test suite
-
----
-
-# API Reference
-
-Base URL:
-
-```text
-http://localhost:8080
-```
-
-## Elections
-
-| Method | Endpoint                       | Description                |
-| ------ | ------------------------------ | -------------------------- |
-| `POST` | `/api/elections`               | Create an election         |
-| `GET`  | `/api/elections`               | List elections             |
-| `POST` | `/api/elections/{id}/register` | Register a voter           |
-| `POST` | `/api/elections/{id}/close`    | Close an election          |
-| `POST` | `/api/elections/{id}/tally`    | Decrypt and tally results  |
-| `GET`  | `/api/elections/{id}/results`  | Retrieve published results |
-
-## Voting
-
-| Method | Endpoint                                 | Description              |
-| ------ | ---------------------------------------- | ------------------------ |
-| `POST` | `/api/elections/{id}/vote`               | Submit an encrypted vote |
-| `GET`  | `/api/elections/{id}/verify/:commitment` | Verify ballot integrity  |
-
-## Auditing & Health
-
-| Method | Endpoint         | Description            |
-| ------ | ---------------- | ---------------------- |
-| `GET`  | `/api/audit/log` | Retrieve the audit log |
-| `GET`  | `/health`        | API health check       |
-
-### Vote Validation
-
-`POST /api/elections/{id}/vote` performs:
-
-1. Election timing validation
-2. Voter eligibility validation
-3. Duplicate-vote detection
-4. Schema validation
-5. Ed25519 signature verification
-6. Commitment validation
-7. Replay protection
-
-Replay protection uses a timestamp window of approximately ±5 minutes or a used-before nonce check.
-
----
-
-# Cryptography
-
-ZetaVote uses multiple cryptographic mechanisms, each serving a different purpose.
-
-## Ed25519
-
-Ed25519 provides voter authentication and digital signatures.
-
-```text
-Voter
-  │
-  ├── Private Key → Sign
-  │
-  └── Public Key  → Verify
-```
-
-The public key is associated with the voter and election in SQLite.
-
-The private key is encrypted using scrypt-derived protection and remains available only after the voter unlocks it with their passphrase.
-
----
-
-## AES-GCM
-
-AES-GCM protects ballot confidentiality.
-
-Each vote uses:
-
-- An election-level encryption key
-- A unique 12-byte random nonce
-- Authenticated encryption
-
-Conceptually:
-
-```text
-Plaintext Vote
-      │
-      ▼
-   AES-GCM
-      │
-      ▼
-Encrypted Ballot
-```
-
-The ciphertext representation is:
-
-```json
-{
-  "nonce": "base64",
-  "tag": "base64",
-  "ciphertext": "base64"
-}
-```
-
-A decryption failure is treated as an integrity failure rather than exposing ballot information.
-
----
-
-## scrypt
-
-scrypt is used for passphrase-based key protection.
-
-The election-level key is derived from:
-
-```text
-master_passphrase + election_salt
-```
-
-Private voter keys are similarly protected using scrypt-derived encryption.
-
----
-
-## Ballot Commitment
-
-A ballot commitment is calculated as:
-
-```text
-SHA256(choice + vote_nonce)
-```
-
-The commitment provides a way to reference and verify a ballot without directly exposing the selected choice.
-
----
-
-## Hash-Linked Audit Log
-
-The audit log uses SHA-256 to create a chain of entries.
-
-```text
-Genesis
-   ↓
-Entry 1
-   ↓
-Entry 2
-   ↓
-Entry 3
-   ↓
-...
-   ↓
-Tip
-```
-
-The genesis hash is:
-
-```text
-SHA256("voting_audit_v1" + election_id)
-```
-
-Each subsequent entry is:
-
-```text
-SHA256(previous_hash + entry_data)
-```
-
-Changing an earlier entry causes subsequent hashes to become invalid.
-
----
-
-## Merkle Root
-
-After tallying, a Merkle tree is generated from the result data.
-
-The resulting Merkle root is published alongside the final election results, providing a compact integrity value for result verification.
-
----
-
-# Receipt Tokens
-
-A voter receives a local JSON receipt after registration and after successfully submitting a vote.
-
-Example structure:
-
-```json
-{
-  "voter_id_hash": "SHA256(pubkey)[:8]",
-  "election_id": "election_123",
-  "timestamp": "2024-01-15T10:30:00Z",
-  "ballot_commitment": "SHA256(choice + nonce)",
-  "vote_signature": "Ed25519_sig(ballot_commitment, voter_privkey)"
-}
-```
-
-A receipt allows the voter to establish that their ballot commitment exists in the voting system.
-
-It does not expose their selected choice.
-
----
-
-# Local Development
-
-## Requirements
-
-The current project plan specifies:
-
-- Python
-- Node.js/npm for the React/Vite frontend
-- SQLite
-
-## Installation
-
-Clone the repository and install the Python dependencies:
-
-```bash
+# 1. Backend dependencies
 pip install -r requirements.txt
-```
 
----
+# 2. Build the web interface (served by the backend)
+cd frontend && npm install && npm run build && cd ..
 
-## Start the Application
+# 3. Create the admin account (first time only)
+python run.py --create-admin
 
-```bash
+# 4. Run
 python run.py
 ```
 
-The application will be available at:
+Open **http://localhost:8080**.
 
-```text
-http://localhost:8080
-```
-
-For devices on the same LAN, the application may be accessed through the host machine's local IP:
-
-```text
-http://192.168.1.x:8080
-```
-
----
-
-## Data Storage
-
-Local election data is stored in:
-
-```text
-data/
-├── elections.db
-├── keys/
-└── votes_audit.log
-```
-
-The SQLite database contains the application's election, voter, and ballot data.
-
-The audit log is maintained separately as an append-only text file.
-
----
-
-# Testing
-
-## Unit Tests
-
-Unit tests are located in:
-
-```text
-tests/unit/
-```
-
-| Test               | Purpose                                 |
-| ------------------ | --------------------------------------- |
-| `test_keygen.py`   | Ed25519 key generation and verification |
-| `test_sign_verify` | Signature round-trip                    |
-| `test_aes_gcm`     | AES-GCM encryption/decryption           |
-| `test_commitment`  | Commitment properties                   |
-| `test_hash_chain`  | Audit-chain integrity                   |
-| `test_db_schema`   | SQLite schema validation                |
-
-Run:
+<details>
+<summary><b>Development mode (hot reload)</b></summary>
 
 ```bash
-pytest tests/unit/ -v
+python run.py                  # backend on 127.0.0.1:8080
+cd frontend && npm run dev     # Vite on http://localhost:5173, proxies /api to the backend
 ```
 
----
+</details>
 
-## End-to-End Testing
+<details>
+<summary><b>Demo data</b></summary>
 
-The complete voting flow tests:
-
-1. Application startup
-2. Election creation
-3. Voter registration
-4. Receipt generation
-5. Vote submission
-6. Duplicate-vote rejection
-7. Receipt verification
-8. Election closing
-9. Ballot decryption and tallying
-10. Merkle-root generation
-11. Audit-chain verification
-
-Run:
+With the server stopped and no `data/` folder present:
 
 ```bash
-pytest tests/e2e/ -v --timeout=60
+python scripts/seed_demo.py
 ```
 
----
+This creates one admin, six voters and four elections in every stage (open, closed, counted). Sign-in details are in [DEMO_ACCOUNTS.md](DEMO_ACCOUNTS.md).
 
-# Roadmap
+</details>
 
-Current project progress:
+## How it works
 
-| Phase   | Status | Focus                 |
-| ------- | :----: | --------------------- |
-| Phase 1 |   ☐    | Foundation            |
-| Phase 2 |   ☐    | Voter Flow            |
-| Phase 3 |   ☐    | Vote Submission       |
-| Phase 4 |   ☐    | Verification & Tally  |
-| Phase 5 |   ☐    | Hardening & Packaging |
+```mermaid
+flowchart LR
+    V([Voter]) -->|passphrase stays local| B[Browser<br/>scrypt unlock · Ed25519 sign]
+    B --> S[Seal ballot<br/>X25519 + AES-GCM<br/>SHA-256 commitment]
+    S -->|ciphertext + signature| C{Server checks<br/>signature · window<br/>one vote each}
+    C -->|valid| D[(SQLite + audit chain)]
+    C -->|invalid| R[Rejected]
+    D -->|admin closes with<br/>master passphrase| T[Tally<br/>decrypt in memory]
+    T --> O([Results + Merkle root])
+    O -.->|inclusion proof| V
+```
 
-### Progress Checklist
+1. **Create.** An admin creates an election with candidates, a voting window, an optional age rule and a master passphrase. The server generates the election's X25519 key pair and stores the private key sealed under that passphrase. The passphrase itself is never stored.
+2. **Join.** A voter signs a fresh challenge with their account key. The server checks the age rule, and the browser creates a new ballot key pair for this election.
+3. **Vote.** The browser commits to the choice with a secret 256-bit salt, encrypts the ballot to the election key, and signs it. The server verifies the signature, the voting window, the timestamp and the one-vote rule, then stores the ballot and appends an audit entry.
+4. **Count.** After closing, the admin enters the master passphrase. The server unseals the election key in memory, re-verifies and decrypts every ballot, rejects anything invalid, counts the rest and publishes the totals with a Merkle root.
+5. **Verify.** Voters check their receipt code and fetch a Merkle inclusion proof. Anyone can recompute the audit chain.
 
-- [ ] **Phase 1:** Foundation
-- [ ] **Phase 2:** Voter Flow
-- [ ] **Phase 3:** Vote Submission
-- [ ] **Phase 4:** Verification & Tally
-- [ ] **Phase 5:** Hardening & Packaging
+## Cryptography
 
-The roadmap should be updated as implementation progresses.
+The same primitives are implemented twice: [`backend/crypto.py`](backend/crypto.py) (PyCA `cryptography`) and [`frontend/src/services/crypto.ts`](frontend/src/services/crypto.ts) (`@noble/*`). Parity tests pin both to identical bytes.
 
----
+| Purpose | Primitive | Parameters |
+| --- | --- | --- |
+| Voter identity and ballot signatures | Ed25519 (RFC 8032) | 32-byte keys, 64-byte signatures |
+| Ballot encryption | X25519 (RFC 7748) → HKDF-SHA256 (RFC 5869) → AES-256-GCM | info `zetavote/ballot/v1`, 96-bit nonce, 128-bit tag |
+| Sealing private keys | scrypt (RFC 7914) + AES-256-GCM | N = 2¹⁶ (voter), 2¹⁸ (election, admin), r = 8, p = 1, 16-byte salt |
+| Receipt commitment | SHA-256 over canonical JSON | `{election_id, voter_pubkey, reveal_salt, choice}`, 256-bit salt |
+| Replay key | SHA-256 | `{election_id, voter_pubkey, vote_nonce}`, choice excluded |
+| Audit log | SHA-256 hash chain | genesis `SHA256("voting_audit_v1")` |
+| Results | SHA-256 Merkle tree | sorted commitments, `SHA256(left \| right)` |
 
-# Project Status
+Sessions use a random 32-byte token stored only as a hash, in an `HttpOnly`, `SameSite=Strict` cookie. Login challenges are single-use, last 60 seconds and are bound to one role and account. Failed sign-ins are limited to eight per five minutes.
 
-ZetaVote is currently in the **planning / implementation stage**.
+## Screenshots
 
-The authoritative implementation plan is maintained in:
+<table>
+  <tr>
+    <td width="50%"><img src="docs/assets/signin.png" alt="Sign-in screen"><br><sub><b>Sign in.</b> The passphrase unlocks the key in the browser and is never sent.</sub></td>
+    <td width="50%"><img src="docs/assets/receipt.png" alt="Vote receipt"><br><sub><b>Receipt.</b> A public receipt code and a private key, printed on the ballot stub.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/assets/verify.png" alt="Receipt verification"><br><sub><b>Verify.</b> The receipt is matched to the record without showing the choice.</sub></td>
+    <td width="50%"><img src="docs/assets/results.png" alt="Published results"><br><sub><b>Results.</b> Counted totals with the rule fingerprint and Merkle root.</sub></td>
+  </tr>
+</table>
+
+## API
+
+All routes are under `/api` on `http://localhost:8080`.
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/auth/challenge` | Issue a single-use login challenge |
+| `POST` | `/api/auth/voter/login` | Verify a signed challenge and start a session |
+| `POST` | `/api/auth/admin/login` | Check the admin passphrase against its scrypt verifier |
+| `POST` | `/api/accounts` | Create a voter account with its sealed key |
+| `GET` `POST` | `/api/elections` | List or create elections |
+| `POST` | `/api/elections/{id}/enrol` | Join an election under its eligibility rule |
+| `POST` | `/api/elections/{id}/vote` | Submit an encrypted, signed ballot |
+| `GET` | `/api/elections/{id}/verify/{commitment}` | Check a receipt without revealing the choice |
+| `POST` | `/api/elections/{id}/close` | Close voting (master passphrase) |
+| `POST` | `/api/elections/{id}/tally` | Decrypt, count and publish results (master passphrase) |
+| `GET` | `/api/elections/{id}/results` | Published totals, rule hash and Merkle root |
+| `GET` | `/api/elections/{id}/results/{commitment}/proof` | Merkle inclusion proof for one ballot |
+| `GET` | `/api/audit`, `/api/audit/verify` | Read the audit log, recompute the chain |
+
+## Project layout
 
 ```text
-plan.md
+backend/        FastAPI app, crypto, auth, audit chain, Merkle tree, SQLite schema
+frontend/       React 19 + Vite client (pages by role: Admin, Voter, Verify, Login)
+tests/          pytest suite, including TypeScript ↔ Python crypto parity vectors
+scripts/        demo seeding and browser walkthrough checks
+data/           local state: elections.db, keys/, votes_audit.log (not committed)
+run.py          starts the server on 127.0.0.1:8080
 ```
 
-The plan contains the current architecture, implementation phases, API design, cryptographic design, and testing strategy.
+## Testing
 
----
+```bash
+pytest -q
+```
+
+273 tests across 17 files cover crypto parity, commitments, voting and replay, the audit chain, tally and verification, authentication, eligibility (including birthdays and leap years), enrolment and input hardening. The suite runs the real API through FastAPI's test client and plays the browser's role, so the full pipeline is exercised rather than mocked.
+
+## Limitations
+
+ZetaVote states its limits plainly:
+
+- **Trust in the key holder.** The server links each ballot to a voter account. Whoever holds the master passphrase could decrypt ballots one by one and match them to voters.
+- **No receipt-freeness.** A voter can use the reveal salt to prove how they voted, which would allow vote buying or coercion in a real election.
+- **Single server.** One server and one administrator. Threshold decryption across several trustees would remove this single point of trust.
+- **Personal data.** The date of birth is stored readable so the age rule can be checked, and nothing stops one person creating two accounts.
+- **Local scope.** Built for loopback use only. Not hardened for the internet and not independently audited.
+
+**Future work:** threshold election keys, homomorphic tallying, passkey (FIDO2 / WebAuthn) sign-in, post-quantum signatures and key exchange (ML-DSA / ML-KEM), and an external command-line verifier for the audit chain and Merkle proofs.
+
+## Team
+
+Built at **Symbiosis Artificial Intelligence Institute** for the Cryptography mini project, B.Sc in AI, under the guidance of **Dr. Reema Roychaudhary**.
+
+| Name | PRN |
+| --- | --- |
+| Sreehari S | 25030421045 |
+| Samruddha Dumbhare | 25030421036 |
+| Vedant Phand | 25030421048 |
 
 ## License
 

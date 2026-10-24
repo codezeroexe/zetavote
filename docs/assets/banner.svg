@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-labelledby="t d">
+  <title id="t">ZetaVote</title>
+  <desc id="d">ZetaVote: secure on-device cryptographic voting. Signed, sealed, counted, provable.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B1B33"/>
+      <stop offset="0.55" stop-color="#12345C"/>
+      <stop offset="1" stop-color="#1F6FA8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.82" cy="0.18" r="0.6">
+      <stop offset="0" stop-color="#7CC8F2" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#7CC8F2" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.16"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    </linearGradient>
+    <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.3" fill="#FFFFFF" fill-opacity="0.09"/>
+    </pattern>
+    <symbol id="mark" viewBox="-204.8 -205.71 2123.41 2123.41">
+      <g transform="matrix(1,0,0,1,-144,-144)"><g transform="matrix(1.332296,0,0,1.332296,-318.306615,-418.228794)">
+        <g transform="matrix(0.958606,0,0,0.958606,261.1939,1082.46841)"><rect x="347" y="422" width="1083" height="229.5"/></g>
+        <g transform="matrix(1.089109,0,0,1.264368,-30.920792,-150.635808)"><rect x="347" y="751" width="202" height="174"/></g>
+        <g transform="matrix(0.726369,-0.743685,0.86953,0.849284,-1092.641863,801.539322)"><path d="M1319.371,1189L1531,1370L347,1370L558.629,1189L1319.371,1189Z"/></g>
+        <g transform="matrix(-0.732791,0.737358,-0.862133,-0.856793,3066.433599,1339.942704)"><path d="M1319.371,1189L1531,1370L347,1370L558.629,1189L1319.371,1189Z"/></g>
+        <g transform="matrix(1.089109,0,0,1.264368,1034.079208,152.829732)"><rect x="347" y="751" width="202" height="174"/></g>
+        <g transform="matrix(0.958606,0,0,0.958606,14.363834,17.46841)"><rect x="347" y="422" width="1083" height="229.5"/></g>
+      </g></g>
+    </symbol>
+  </defs>
+
+  <rect width="1280" height="400" rx="24" fill="url(#bg)"/>
+  <rect width="1280" height="400" rx="24" fill="url(#dots)"/>
+  <rect width="1280" height="400" rx="24" fill="url(#glow)"/>
+
+  <!-- left: logo + wordmark -->
+  <g transform="translate(72 92)">
+    <rect width="92" height="92" rx="22" fill="#3BA7E1"/>
+    <use href="#mark" x="14" y="14" width="64" height="64" fill="#0B1B33"/>
+  </g>
+  <g font-family="-apple-system, 'Segoe UI', Inter, Helvetica, Arial, sans-serif" fill="#FFFFFF">
+    <text x="186" y="160" font-size="76" font-weight="800" letter-spacing="-2">ZetaVote</text>
+    <text x="74" y="236" font-size="27" font-weight="500" fill="#CFE6F7">Secure on-device cryptographic voting.</text>
+    <text x="74" y="274" font-size="20" fill="#9CC3E0">Every vote secret. Every vote counted. Every voter can prove it.</text>
+  </g>
+
+  <!-- chips -->
+  <g font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="15" font-weight="600" fill="#E8F4FC">
+    <g transform="translate(74 312)">
+      <rect width="104" height="34" rx="17" fill="url(#glass)" stroke="#FFFFFF" stroke-opacity="0.25"/>
+      <text x="52" y="22" text-anchor="middle">Ed25519</text>
+    </g>
+    <g transform="translate(190 312)">
+      <rect width="196" height="34" rx="17" fill="url(#glass)" stroke="#FFFFFF" stroke-opacity="0.25"/>
+      <text x="98" y="22" text-anchor="middle">X25519 + AES-GCM</text>
+    </g>
+    <g transform="translate(398 312)">
+      <rect width="92" height="34" rx="17" fill="url(#glass)" stroke="#FFFFFF" stroke-opacity="0.25"/>
+      <text x="46" y="22" text-anchor="middle">scrypt</text>
+    </g>
+    <g transform="translate(502 312)">
+      <rect width="172" height="34" rx="17" fill="url(#glass)" stroke="#FFFFFF" stroke-opacity="0.25"/>
+      <text x="86" y="22" text-anchor="middle">SHA-256 chain</text>
+    </g>
+    <g transform="translate(686 312)">
+      <rect width="138" height="34" rx="17" fill="url(#glass)" stroke="#FFFFFF" stroke-opacity="0.25"/>
+      <text x="69" y="22" text-anchor="middle">Merkle root</text>
+    </g>
+  </g>
+
+  <!-- right: ballot stub card -->
+  <g transform="translate(880 70) rotate(4 170 130)">
+    <rect x="8" y="12" width="330" height="250" rx="18" fill="#000000" fill-opacity="0.25"/>
+    <rect width="330" height="250" rx="18" fill="url(#glass)" stroke="#FFFFFF" stroke-opacity="0.35"/>
+    <g font-family="-apple-system, 'Segoe UI', Inter, Helvetica, Arial, sans-serif" fill="#FFFFFF">
+      <text x="26" y="44" font-size="13" font-weight="700" letter-spacing="2" fill="#9CC3E0">BALLOT RECORDED</text>
+      <text x="26" y="80" font-size="24" font-weight="700">Your receipt</text>
+    </g>
+    <g font-family="ui-monospace, 'SF Mono', Menlo, Consolas, monospace" font-size="13" fill="#CFE6F7">
+      <text x="26" y="114">commitment</text>
+      <text x="26" y="136" fill="#FFFFFF">3204062f673f1e3b161a…</text>
+      <text x="26" y="166">merkle proof</text>
+      <text x="26" y="188" fill="#FFFFFF">10 hashes · verified</text>
+    </g>
+    <line x1="20" y1="208" x2="310" y2="208" stroke="#FFFFFF" stroke-opacity="0.45" stroke-dasharray="6 6"/>
+    <g transform="translate(26 222)">
+      <circle cx="9" cy="9" r="9" fill="#34C27A"/>
+      <path d="M4.5 9.2l3 3 6-6.4" stroke="#0B1B33" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="28" y="14" font-family="-apple-system, 'Segoe UI', Inter, Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#FFFFFF">Counted. Choice never shown.</text>
+    </g>
+  </g>
+</svg>
