@@ -311,8 +311,8 @@ const ElectionRow: React.FC<{
   onAct: (kind: Action) => void;
 }> = ({ election, onAct }) => {
   const state = rank(election);
-  // Counts only exist once the election has closed and been counted.
-  const resultsOut = election.counts !== undefined;
+  // Closed is not counted: results exist only once the admin has tallied.
+  const resultsOut = election.tallied;
 
   const status: { text: string; tone: PillTone } =
     state === "none"

@@ -208,7 +208,7 @@ export const CastVote: React.FC<{
       : ` · ${when.toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}`;
     return (
       <div className="zv-cast">
-        <Stub id={`${result.election_id.slice(0, 8)}${stamp}`.toUpperCase()}>
+        <Stub id={`${result.election_id}${stamp}`.toUpperCase()}>
           <h2 className="zv-stub-title">Your receipt</h2>
           <p className="zv-hint-text">
             Save both codes. You need them to prove your vote was counted.

@@ -227,6 +227,8 @@ export interface MyElection {
   /** Has a ballot from this account landed? */
   voted: boolean;
   accepting_votes: boolean;
+  /** Have the votes been counted and the results published? */
+  tallied: boolean;
   /** Absent while voting is open, present once it closes. */
   counts?: { registered: number; ballots: number; turnout: number | null };
 }

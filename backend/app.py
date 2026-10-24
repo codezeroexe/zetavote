@@ -1144,7 +1144,8 @@ def my_elections(request: Request) -> dict[str, object]:
                    (en.account_id IS NOT NULL) AS registered,
                    (b.id IS NOT NULL) AS voted,
                    (SELECT COUNT(*) FROM enrolments e2 WHERE e2.election_id = e.id) AS n_registered,
-                   (SELECT COUNT(*) FROM ballots b2 WHERE b2.election_id = e.id) AS n_ballots
+                   (SELECT COUNT(*) FROM ballots b2 WHERE b2.election_id = e.id) AS n_ballots,
+                   EXISTS (SELECT 1 FROM results r WHERE r.election_id = e.id) AS tallied
             FROM elections e
             LEFT JOIN enrolments en ON en.election_id = e.id AND en.account_id = ?
             LEFT JOIN ballots b ON b.election_id = e.id AND b.voter_id = ?
@@ -1165,6 +1166,8 @@ def my_elections(request: Request) -> dict[str, object]:
             "registered": bool(r["registered"]),
             "voted": bool(r["voted"]),
             "accepting_votes": accepting,
+            # Closed is not the same as counted: results exist only after tally.
+            "tallied": bool(r["tallied"]),
             # Judged on the server, so the rule is the server's answer to give and
             # the browser never has to know this account's date of birth.
             "eligible": meets_criteria(dob, r["min_age"], r["max_age"], date.today()),

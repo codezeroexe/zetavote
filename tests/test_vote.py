@@ -193,3 +193,21 @@ def test_my_ballots_lists_only_the_callers_own_ballots(client):
 
     register(client, "e1", "v2")
     assert client.get("/api/me/ballots").json()["ballots"] == []
+
+
+
+def test_my_elections_separates_closed_from_counted(client):
+    """Closed is not counted: the dashboard must not say "Results out" until a
+    tally has published results."""
+    make_election(client, "e1")
+    cast(client, "e1", "v1", "Alice")
+
+    def tallied():
+        rows = client.get("/api/me/elections").json()["elections"]
+        return {e["id"]: e for e in rows}["e1"]["tallied"]
+
+    assert tallied() is False
+    assert client.post("/api/elections/e1/close", json=admin(client, "e1")).status_code == 200
+    assert tallied() is False
+    assert client.post("/api/elections/e1/tally", json=admin(client, "e1")).status_code == 200
+    assert tallied() is True
