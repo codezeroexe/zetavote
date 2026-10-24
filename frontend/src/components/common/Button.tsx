@@ -1,10 +1,14 @@
-import React from "react";
+import React, { useSyncExternalStore } from "react";
+import { shortcutAria, shortcutLabel, type Shortcut } from "../../hooks/usePlatform";
+import { isOnline, subscribeOnline } from "../../services/online";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "outline" | "danger" | "ghost";
   size?: "sm" | "md" | "lg";
   isLoading?: boolean;
   icon?: React.ReactNode;
+  /** Semantic shortcut hint, e.g. "submit". Renders the platform label (⌘↵ or Ctrl+Enter). */
+  shortcut?: Shortcut;
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -13,22 +17,38 @@ export const Button: React.FC<ButtonProps> = ({
   size = "md",
   isLoading = false,
   icon,
+  shortcut,
   className = "",
   disabled,
+  type,
   ...props
 }) => {
+  const online = useSyncExternalStore(subscribeOnline, isOnline, isOnline);
+  // A submit button whose request cannot leave the machine should not be
+  // pressable. Done here rather than in each of the nine forms.
+  const blocked = type === "submit" && !online;
+
   return (
     <button
       className={`zv-btn zv-btn-${variant} zv-btn-${size} ${className}`}
-      disabled={disabled || isLoading}
+      disabled={disabled || isLoading || blocked}
+      aria-busy={isLoading || undefined}
+      type={type}
+      aria-keyshortcuts={shortcut ? shortcutAria(shortcut) : undefined}
       {...props}
     >
-      {isLoading ? (
-        <span className="zv-spinner" aria-label="Loading" />
-      ) : (
-        icon && <span className="zv-btn-icon">{icon}</span>
-      )}
+      {/* The label stays put and the spinner sits beside it. Swapping the label
+          out for a spinner left a button reading "Loading" with no way to tell
+          which of four actions was running, and changed the button's width
+          mid-click, which moved everything next to it. */}
+      {isLoading && <span className="zv-spinner" aria-hidden="true" />}
+      {!isLoading && icon && <span className="zv-btn-icon">{icon}</span>}
       <span>{children}</span>
+      {shortcut && (
+        <kbd className="zv-kbd" aria-hidden="true">
+          {shortcutLabel(shortcut)}
+        </kbd>
+      )}
     </button>
   );
 };

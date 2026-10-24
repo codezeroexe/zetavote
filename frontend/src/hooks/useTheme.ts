@@ -1,37 +1,57 @@
 import { useCallback, useEffect, useState } from "react";
 
-export type Theme = "light" | "dark";
+/** The stored choice. "auto" follows the system and is the default. */
+export type Theme = "auto" | "light" | "dark";
+export type ResolvedTheme = "light" | "dark";
 
 const STORAGE_KEY = "zetavote-theme";
+const QUERY = "(prefers-color-scheme: dark)";
 
-function getInitialTheme(): Theme {
-  if (typeof window !== "undefined") {
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored === "light" || stored === "dark") {
-      return stored;
-    }
-    if (window.matchMedia("(prefers-color-scheme: light)").matches) {
-      return "light";
-    }
+function readStored(): Theme {
+  try {
+    const v = window.localStorage.getItem(STORAGE_KEY);
+    return v === "light" || v === "dark" ? v : "auto";
+  } catch {
+    return "auto";
   }
-  return "dark";
 }
 
+function systemTheme(): ResolvedTheme {
+  return window.matchMedia(QUERY).matches ? "dark" : "light";
+}
+
+/**
+ * Auto / Light / Dark. The pre-paint script in index.html applies the same rule
+ * before first paint; this hook keeps it live (Auto tracks the system setting).
+ */
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [theme, setThemeState] = useState<Theme>(readStored);
+  const [system, setSystem] = useState<ResolvedTheme>(systemTheme);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
+    const mq = window.matchMedia(QUERY);
+    const onChange = () => setSystem(mq.matches ? "dark" : "light");
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  const resolved: ResolvedTheme = theme === "auto" ? system : theme;
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = resolved;
+    const meta = document.querySelector('meta[name="theme-color"]');
+    meta?.setAttribute("content", resolved === "light" ? "#1b2a41" : "#0e1624");
+  }, [resolved]);
+
+  const setTheme = useCallback((next: Theme) => {
+    setThemeState(next);
     try {
-      window.localStorage.setItem(STORAGE_KEY, theme);
+      if (next === "auto") window.localStorage.removeItem(STORAGE_KEY);
+      else window.localStorage.setItem(STORAGE_KEY, next);
     } catch {
       // Storage unavailable (private mode, etc.) — theme still applies.
     }
-  }, [theme]);
-
-  const toggleTheme = useCallback(() => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   }, []);
 
-  return { theme, toggleTheme };
+  return { theme, resolved, setTheme };
 }

@@ -1,0 +1,55 @@
+/* ZetaVote phase 2: account screens. Loaded after App.css so these rules win the cascade. */
+
+.zv-acct-page { max-width: 60rem; }
+
+/* Sign in and first run: form beside the side panel. */
+.zv-acct {
+  display: grid;
+  grid-template-columns: minmax(0, 26rem) minmax(0, 20rem);
+  gap: var(--zv-space-8);
+  align-items: start;
+}
+.zv-acct--solo { grid-template-columns: minmax(0, 26rem); }
+
+.zv-acct-title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--zv-ink);
+  margin: 0;
+}
+.zv-acct-sub {
+  margin: var(--zv-space-1) 0 0;
+  font-size: 0.875rem;
+  color: var(--zv-ink-muted);
+}
+
+.zv-acct-door {
+  display: flex;
+  flex-direction: column;
+  gap: var(--zv-space-4);
+  padding: var(--zv-space-6);
+  background: var(--zv-surface);
+  border: 1px solid var(--zv-line);
+  border-radius: var(--zv-radius-lg);
+}
+.zv-acct-door-title { font-size: 1.0625rem; font-weight: 700; margin: 0; color: var(--zv-ink); }
+.zv-acct-door-list {
+  margin: 0;
+  padding-left: var(--zv-space-5);
+  display: grid;
+  gap: var(--zv-space-2);
+  font-size: 0.9375rem;
+  color: var(--zv-ink-muted);
+}
+
+/* Create account: two groups side by side. */
+.zv-acct-register { display: flex; flex-direction: column; gap: var(--zv-space-5); }
+.zv-acct-head { display: flex; align-items: center; justify-content: space-between; }
+.zv-acct-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--zv-space-6);
+  align-items: start;
+}
+.zv-acct-group { font-size: 1rem; font-weight: 700; margin: 0; color: var(--zv-ink); }
+.zv-acct-match .zv-form-hint { color: var(--zv-ok); font-weight: 600; }

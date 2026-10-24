@@ -1,0 +1,7 @@
+SIL OPEN FONT LICENSE Version 1.1 — 26 February 2007
+
+The font files `ibm-plex-mono-regular.woff2` and `ibm-plex-mono-semibold.woff2`
+in this directory are subsets of IBM Plex Mono, © 2017 IBM Corp., and are
+redistributed under the SIL Open Font License 1.1. The full licence text is at
+https://scripts.sil.org/OFL. The subsets were produced with fontTools from the
+original release; no glyph outlines were modified.

@@ -7,8 +7,18 @@ a = Analysis(
     ["run.py"],
     pathex=["."],
     binaries=[],
-    datas=[],
-    hiddenimports=["backend", "backend.app", "backend.database", "backend.crypto", "backend.config"],
+    # The built UI. backend/app.py mounts frontend/dist, so without this the
+    # packaged app serves the API and nothing else.
+    datas=[("frontend/dist", "frontend/dist")],
+    hiddenimports=[
+        "backend",
+        "backend.app",
+        "backend.audit",
+        "backend.config",
+        "backend.crypto",
+        "backend.database",
+        "backend.merkle",
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

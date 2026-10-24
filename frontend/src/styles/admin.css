@@ -1,0 +1,74 @@
+/* Admin screens. Classes prefixed zv-a- so nothing here collides with App.css. */
+
+.zv-a-who { margin-left: auto; align-self: center; font-size: 0.8125rem; color: var(--zv-ink-muted); }
+.zv-a-lede { color: var(--zv-ink-muted); font-size: 0.9375rem; margin: 0 0 var(--zv-space-3); }
+.zv-a-empty { padding: var(--zv-space-4); margin: 0; }
+.zv-a-link {
+  background: none; border: 0; padding: 0; font: inherit; color: var(--zv-punch-ink);
+  text-decoration: underline; cursor: pointer; text-align: left;
+}
+.zv-a-tabs { margin-bottom: var(--zv-space-4); }
+
+/* Toolbar (PageToolbar): search and filter, primary action trails. Controls are 36px. */
+.zv-a-toolbar { display: flex; align-items: flex-end; gap: var(--zv-space-3); margin-bottom: var(--zv-space-4); flex-wrap: wrap; }
+.zv-a-search { width: 280px; }
+.zv-a-toolbar .zv-a-search { flex: 0 1 280px; }
+.zv-toolbar .zv-a-search { width: 240px; }
+.zv-toolbar .zv-a-status-filter { width: 170px; }
+.zv-toolbar .zv-a-new { margin-left: 6px; }
+
+/* Tables */
+.zv-a-table-card { padding: 6px 8px; }
+.zv-a-table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+.zv-a-table th, .zv-a-table td { padding: var(--zv-space-3) var(--zv-space-3); text-align: left; border-bottom: 1px solid var(--zv-line); vertical-align: middle; }
+.zv-a-table thead th { font-size: 0.8125rem; font-weight: 600; color: var(--zv-ink-muted); }
+.zv-a-table tbody tr:last-child > * { border-bottom: 0; }
+.zv-a-table tbody th { font-weight: 400; }
+.zv-a-name { display: block; font-weight: 600; }
+.zv-a-id { display: block; font-size: 0.75rem; color: var(--zv-ink-muted); }
+.zv-a-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.zv-a-actions { display: flex; gap: var(--zv-space-2); justify-content: flex-end; align-items: center; }
+.zv-a-row-on > * { background: var(--zv-punch-bg); }
+.zv-a-detail { padding: var(--zv-space-3); border-top: 1px solid var(--zv-line); }
+
+/* Manage menu */
+.zv-a-menu { position: relative; }
+.zv-a-menu-list {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 12rem;
+  display: flex; flex-direction: column; padding: 4px; border-radius: 12px;
+  --zv-ink: var(--zv-glass-ink); --zv-surface-hover: var(--zv-glass-sel); --zv-focus: var(--zv-glass-ink);
+}
+.zv-a-menu-item {
+  min-height: 36px; padding: 0 var(--zv-space-3); text-align: left; font: inherit; font-size: 0.9375rem;
+  color: var(--zv-ink); background: none; border: 0; border-radius: var(--zv-radius-sm); cursor: pointer;
+}
+.zv-a-menu-item:hover, .zv-a-menu-item:focus-visible { background: var(--zv-surface-hover); }
+.zv-a-menu-danger { color: var(--zv-seal-ink); }
+
+/* Block dialog: glass surface, lighter scrim; fields stay solid. */
+.zv-a-sheet { border-radius: 18px; }
+.zv-a-sheet::backdrop { background: rgb(15 24 40 / 0.28); }
+.zv-a-sheet .zv-input { background: var(--zv-surface); color: var(--zv-card-ink, var(--zv-ink)); }
+
+/* Flow: stepper + two columns */
+.zv-a-flow { max-width: 900px; display: flex; flex-direction: column; gap: var(--zv-space-4); }
+.zv-a-narrow { max-width: 640px; }
+.zv-a-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--zv-space-4); align-items: start; }
+.zv-a-side-title { font-size: 1rem; font-weight: 700; margin: 0 0 var(--zv-space-2); }
+.zv-a-kv { display: grid; grid-template-columns: max-content 1fr; gap: var(--zv-space-2) var(--zv-space-4); margin: 0; font-size: 0.9375rem; }
+.zv-a-kv dt { color: var(--zv-ink-muted); }
+.zv-a-kv dd { margin: 0; }
+.zv-a-danger-card { background: var(--zv-seal-bg); border-color: var(--zv-seal-line); }
+.zv-a-danger-card .zv-a-side-title { color: var(--zv-seal-ink); }
+.zv-a-tech { margin-top: var(--zv-space-3); font-size: 0.875rem; color: var(--zv-ink-muted); }
+.zv-a-tech summary { cursor: pointer; color: var(--zv-ink); }
+.zv-a-results { list-style: none; margin: var(--zv-space-3) 0 0; padding: 0; display: grid; gap: var(--zv-space-2); }
+.zv-a-results li { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
+
+/* Activity record status line */
+.zv-a-chain { margin: 0; padding: 6px 12px; border-radius: var(--zv-radius-md); font-size: 0.9375rem; border: 1px solid; }
+.zv-a-chain strong { font-weight: 700; }
+.zv-a-chain-ok { background: var(--zv-ok-bg); border-color: var(--zv-ok); color: var(--zv-ink); }
+.zv-a-chain-ok strong::before { content: "✓ "; }
+.zv-a-chain-bad { background: var(--zv-seal-bg); border-color: var(--zv-seal-line); color: var(--zv-seal-ink); }
+.zv-a-chain-bad strong::before { content: "! "; }

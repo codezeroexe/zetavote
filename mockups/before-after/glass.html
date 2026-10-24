@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZetaVote Frosted Glass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#EEF2F6;--card:#fff;--ink:#1B2A41;--muted:#55627A;--line:#D5DCE5;--inb:#8A95A8;
+  --sky:#3BA7E0;--sky-ink:#1F5F86;--sky-bg:#E3F1FA;--red:#B4232A;--red-bg:#FBE9E9;--ok:#1E7A4C;--ok-bg:#E4F4EB;
+  /* glass */
+  --g-fill:rgb(255 255 255/.78);--g-fill-thin:rgb(255 255 255/.66);--g-edge:rgb(255 255 255/.75);
+  --g-rim:rgb(27 42 65/.10);--g-ink:#1B2A41;--g-muted:#46536A;--g-sel:rgb(255 255 255/.9);
+  --g-shadow:0 1px 0 rgb(255 255 255/.7) inset,0 10px 30px rgb(27 42 65/.14),0 2px 6px rgb(27 42 65/.06);
+  --g-blur:blur(28px) saturate(1.45);
+  --wash:radial-gradient(60% 55% at 12% 0%,rgb(59 167 224/.55),transparent 72%),radial-gradient(45% 50% at 85% 8%,rgb(27 42 65/.22),transparent 70%),radial-gradient(40% 45% at 60% 100%,rgb(59 167 224/.14),transparent 70%);
+}
+[data-theme=dark]{
+  --page:#0F1828;--card:#18243A;--ink:#EEF2F6;--muted:#AEB8C6;--line:#2A3852;--inb:#5D6B84;
+  --sky-ink:#8CCBEE;--sky-bg:#173048;--red:#F08A8F;--red-bg:#3A1C22;--ok:#7FD6A4;--ok-bg:#163226;
+  --g-fill:rgb(24 36 58/.80);--g-fill-thin:rgb(24 36 58/.68);--g-edge:rgb(255 255 255/.10);
+  --g-rim:rgb(0 0 0/.35);--g-ink:#EEF2F6;--g-muted:#C3CCD8;--g-sel:rgb(255 255 255/.12);
+  --g-shadow:0 1px 0 rgb(255 255 255/.06) inset,0 12px 32px rgb(0 0 0/.45);
+  --wash:radial-gradient(60% 55% at 12% 0%,rgb(59 167 224/.28),transparent 70%),radial-gradient(45% 50% at 85% 8%,rgb(120 140 200/.14),transparent 70%),radial-gradient(40% 45% at 60% 100%,rgb(59 167 224/.10),transparent 70%);
+}
+*{box-sizing:border-box}
+body{margin:0;background:#DDE4EC;color:#1B2A41;font:14px/1.5 "Public Sans",Inter,system-ui,sans-serif;font-feature-settings:"tnum" 1}
+[data-theme=dark] body{background:#0A111D;color:#EEF2F6}
+header.top,.board,section.cmp,.controls,footer{max-width:1180px;margin:0 auto;padding:0 24px}
+header.top{padding-top:32px}
+header.top h1{margin:0 0 6px;font-size:26px}
+header.top p{margin:0;max-width:78ch;opacity:.8}
+.controls{display:flex;gap:10px;align-items:center;margin-top:16px;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid #9AA6B6;border-radius:8px;overflow:hidden;background:#fff}
+.seg button{border:0;background:transparent;padding:6px 12px;font:600 13px "Public Sans";color:#1B2A41;cursor:pointer}
+.seg button[aria-pressed=true]{background:#1B2A41;color:#fff}
+.controls label{font-size:13px;display:flex;gap:6px;align-items:center}
+[data-theme=dark] .controls label{color:#EEF2F6}
+
+/* board */
+.board{margin-top:20px}
+.board .wrap{background:#fff;color:#1B2A41;border:1px solid #D5DCE5;border-radius:12px;padding:20px;display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.board h3{margin:0 0 8px;font-size:14px}
+.board p,.board li{font-size:13px;color:#55627A;margin:4px 0}
+.board ul{padding-left:18px;margin:0}
+.board code{font-size:12px;background:#EEF2F6;padding:0 4px;border-radius:4px}
+.board table{border-collapse:collapse;font-size:12px;width:100%}
+.board td{padding:3px 6px;border-bottom:1px solid #EDF1F5}
+.board td:last-child{text-align:right;font-weight:600}
+
+section.cmp{margin-top:36px}
+.cmp-head{display:flex;justify-content:space-between;align-items:baseline}
+.cmp-head h2{margin:0 0 4px;font-size:18px}
+.cite{font-size:13px;opacity:.75;margin:0 0 10px}
+.cite code{font-size:12px}
+
+/* slider */
+.reveal{--pos:50%;position:relative;height:var(--h,480px);border-radius:12px;overflow:hidden;border:1px solid #C9D2DD;box-shadow:0 10px 30px rgb(27 42 65/.15)}
+.layer{position:absolute;inset:0;background:var(--page);color:var(--ink)}
+.layer.after{clip-path:inset(0 0 0 var(--pos))}
+.tag{position:absolute;bottom:10px;z-index:30;font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;pointer-events:none}
+.tag.b{left:10px;background:#fff;color:#55627A;border:1px solid #D5DCE5}.tag.a{right:10px;background:#1B2A41;color:#fff}
+.handle{position:absolute;top:0;bottom:0;left:var(--pos);width:2px;margin-left:-1px;background:var(--sky);z-index:31;pointer-events:none}
+.handle::after{content:"⟷";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:var(--sky);color:#fff;display:grid;place-items:center;box-shadow:0 2px 8px rgb(0 0 0/.25)}
+.reveal input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize;z-index:32}
+.reveal:focus-within .handle::after{outline:3px solid #1B2A41;outline-offset:2px}
+.notes{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}
+.notes div{background:#fff;color:#1B2A41;border:1px solid #D5DCE5;border-radius:8px;padding:10px 14px;font-size:13px}
+.notes b{display:block;font-size:12px;color:#55627A}
+
+/* app (shared) */
+.app{position:absolute;inset:0;display:flex}
+.side{width:196px;flex:none;display:flex;flex-direction:column;padding:16px 10px;background:#1B2A41;color:#C9D3E0}
+.brand{display:flex;align-items:center;gap:8px;font-weight:700;color:#fff;padding:0 8px 14px;border-bottom:1px solid rgb(255 255 255/.12)}
+.chip{width:26px;height:26px;border-radius:7px;background:#3BA7E0;display:grid;place-items:center}
+.chip svg{width:16px;height:16px}
+.nav{display:flex;flex-direction:column;gap:2px;margin-top:12px}
+.nav span{padding:8px 10px;border-radius:7px;font-size:13px;position:relative}
+.nav span.on{background:rgb(255 255 255/.1);color:#fff}
+.nav span.on::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:2px;background:#3BA7E0}
+.who{margin-top:auto;padding:12px 8px 0;border-top:1px solid rgb(255 255 255/.12);font-size:12px}
+.main{flex:1;position:relative;overflow:hidden}
+.scroll{position:absolute;inset:0;padding:22px 28px}
+.bar{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.bar h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em;margin-right:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px}
+.card h3{margin:0 0 4px;font-size:15px}
+.sub{color:var(--muted);font-size:13px;margin:0 0 10px}
+.btn{height:36px;padding:0 14px;border-radius:8px;border:1px solid transparent;font:600 13px "Public Sans";display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn.p{background:#3BA7E0;color:#1B2A41;box-shadow:inset 0 -2px 0 rgb(27 42 65/.18)}
+.btn.s{background:var(--card);border-color:var(--inb);color:var(--ink)}
+.btn.d{background:#B4232A;color:#fff}
+.btn.sm{height:32px;padding:0 10px}
+.kbd{font-size:11px;border:1px solid rgb(0 0 0/.2);border-radius:4px;padding:0 4px}
+.in{height:36px;border:1px solid var(--inb);border-radius:8px;background:var(--card);padding:0 10px;display:flex;align-items:center;font-size:13px;color:var(--muted)}
+.mono{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink)}
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);padding:8px}
+table.t td{border-bottom:1px solid var(--line);padding:11px 8px}
+.pill{font-size:12px;font-weight:600;padding:2px 8px 2px 18px;border-radius:6px;position:relative;display:inline-block}
+.pill::before{content:"";position:absolute;left:7px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;background:currentColor}
+.pill.open{background:var(--sky-bg);color:var(--sky-ink)}.pill.done{background:var(--ok-bg);color:var(--ok)}.pill.closed{background:var(--line);color:var(--muted)}.pill.closed::before{border-radius:1px}
+.grid32{display:grid;grid-template-columns:1.55fr 1fr;gap:16px}
+.hint{font-size:12px;color:var(--muted)}
+label.f{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
+.stub{position:relative;padding-top:22px}
+.stub::before{content:"";position:absolute;left:14px;right:14px;top:0;border-top:2px dashed var(--inb)}
+.stub .sid{position:absolute;right:14px;top:-10px;background:var(--page);padding:0 6px;font:600 11px/20px "IBM Plex Mono";color:var(--muted)}
+.dimmed{opacity:.5}
+
+/* ===== AFTER: frosted glass on the functional layer only ===== */
+.after .main{background:var(--page)}
+.after .wash{position:absolute;inset:0;background:var(--wash);pointer-events:none}
+.after .app{background:var(--page)}
+.after .app::before{content:"";position:absolute;inset:0;background:var(--wash)}
+.glass{background:var(--g-fill);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur);border:1px solid var(--g-edge);box-shadow:var(--g-shadow),0 0 0 1px var(--g-rim);color:var(--g-ink)}
+.after .side{position:absolute;left:12px;top:12px;bottom:12px;width:200px;border-radius:16px;z-index:5;padding:14px 10px;color:var(--g-muted)}
+.after .side .brand{color:var(--g-ink);border-color:var(--line)}
+.after .side .nav span.on{background:var(--g-sel);color:var(--g-ink);box-shadow:0 1px 2px rgb(27 42 65/.08)}
+.after .side .who{border-color:var(--line)}
+.after .main{margin-left:0;position:absolute;inset:0;background:transparent}
+.after .scroll{left:224px;padding:0 28px 22px;top:0}
+.after .toolbar{position:absolute;top:12px;left:236px;right:16px;z-index:4;height:56px;border-radius:14px;display:flex;align-items:center;gap:10px;padding:0 10px 0 18px}
+.after .toolbar h1{margin:0 auto 0 0;font-size:19px;font-weight:700}
+.after .toolbar .in{background:var(--g-fill-thin);border-color:var(--g-rim)}
+.after .content{padding-top:58px}
+.after .edge{position:absolute;left:224px;right:0;top:0;height:86px;z-index:3;pointer-events:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);-webkit-mask:linear-gradient(#000 60%,transparent);mask:linear-gradient(#000 60%,transparent)}
+.after .card{position:relative}
+.menu{position:absolute;z-index:6;width:200px;border-radius:12px;padding:5px;font-size:13px}
+.menu div{padding:7px 10px;border-radius:7px}
+.menu div.hl{background:var(--g-sel)}
+.menu div.dz{color:var(--red)}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
+.scrim{position:absolute;inset:0;z-index:7;background:rgb(15 24 40/.28)}
+.sheet{position:absolute;z-index:8;left:50%;top:50%;transform:translate(-50%,-50%);width:440px;border-radius:18px;padding:22px}
+.sheet.solid{background:var(--card);border:1px solid var(--line);box-shadow:0 20px 48px rgb(0 0 0/.25);border-radius:10px}
+.toast{position:absolute;z-index:6;left:50%;bottom:22px;transform:translateX(-50%);border-radius:999px;padding:9px 16px;font-size:13px;font-weight:600;display:flex;gap:8px;align-items:center}
+.focus{outline:3px solid #3BA7E0;outline-offset:2px}
+
+/* accessibility fallbacks: opaque surfaces */
+.rt .glass{background:var(--card) !important;-webkit-backdrop-filter:none !important;backdrop-filter:none !important;border-color:var(--line)}
+.rt .after .app::before{opacity:.35}
+@media (prefers-reduced-transparency:reduce){.glass{background:var(--card) !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important}}
+@media (prefers-contrast:more){.glass{background:var(--card) !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;border-color:var(--ink) !important}}
+footer{margin:40px auto;font-size:13px;opacity:.75}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>ZetaVote: frosted glass proposal</h1>
+  <p>A simplified Liquid Glass: a heavy frost (28px blur, 78% fill) on the floating controls only. That means the sidebar, page toolbars, menus, sheets and toasts. Cards, tables and forms stay solid white, because ballots and receipts are content. Drag each slider. Use the controls to see dark mode and the opaque fallback.</p>
+</header>
+<div class="controls">
+  <span class="seg" role="group" aria-label="Appearance"><button aria-pressed="true" data-t="light">Light</button><button aria-pressed="false" data-t="dark">Dark</button></span>
+  <label><input type="checkbox" id="rt"> Simulate Reduce transparency / Increase contrast</label>
+</div>
+
+<section class="board"><div class="wrap">
+  <div>
+    <h3>Where glass goes, and where it never goes</h3>
+    <ul>
+      <li><b>Glass:</b> floating sidebar, page toolbar, Manage menu, sheets, toasts. Five surfaces at most per screen.</li>
+      <li><b>Solid:</b> every card, table, form field, receipt stub and result. Votes and receipts are content.</li>
+      <li><b>Something to frost:</b> a quiet sky and slate wash in the content layer that scrolls under the bars. The brand colour lives here, not on the bars.</li>
+    </ul>
+    <p><code>liquid-glass.md › Where the material belongs</code>: "Don't use Liquid Glass in the content layer."</p>
+  </div>
+  <div>
+    <h3>Material spec</h3>
+    <table>
+      <tr><td>Blur, saturate</td><td>28px, 1.45×</td></tr>
+      <tr><td>Fill light / dark</td><td>white 78% / slate 80%</td></tr>
+      <tr><td>Menu / toolbar field</td><td>66% (thinner)</td></tr>
+      <tr><td>Edge</td><td>1px light rim + inner top highlight</td></tr>
+      <tr><td>Radius</td><td>sidebar 16, toolbar 14, menu 12, sheet 18</td></tr>
+      <tr><td>Scroll edge</td><td>6px blur band, fades out</td></tr>
+      <tr><td>Accent on glass</td><td>primary button only</td></tr>
+    </table>
+  </div>
+  <div>
+    <h3>Legibility (worst case, light)</h3>
+    <table>
+      <tr><td>Slate text, glass over sky</td><td>11.8:1</td></tr>
+      <tr><td>Glass muted #46536A over sky</td><td>5.9:1</td></tr>
+      <tr><td>Old muted #55627A over sky</td><td>5.0:1</td></tr>
+      <tr><td>Dark: #EEF2F6 on 80% slate over white</td><td>6.4:1</td></tr>
+    </table>
+    <p>Fallback: <code>prefers-reduced-transparency</code> and <code>prefers-contrast: more</code> swap glass for solid card fill. Toggle above to preview.</p>
+  </div>
+</div></section>
+
+<!-- 1 -->
+<section class="cmp">
+  <div class="cmp-head"><h2>1. Your ballots: floating sidebar and toolbar</h2></div>
+  <p class="cite"><code>sidebars.md › Best practices</code>: "Extend visually rich content beneath the sidebar." The table scrolls under the toolbar's frost.</p>
+  <div class="reveal" style="--h:500px">
+    <div class="layer before"><div class="app">
+      <div class="side"><div class="brand"><span class="chip">%MARK%</span>ZetaVote</div><div class="nav"><span class="on">Your ballots</span><span>Verify</span></div><div class="who">ada.l.4821<br>Sign out</div></div>
+      <div class="main"><div class="scroll">
+        <div class="bar"><h1>Your ballots</h1><span class="btn s sm">Refresh</span></div>
+        <div class="grid32"><div class="card" style="padding:4px 8px"><table class="t"><tr><th>Election</th><th>Status</th><th>Closes</th><th></th></tr>
+          <tr><td><b>Student council 2026</b></td><td><span class="pill open">Open</span></td><td>24 Oct</td><td style="text-align:right"><span class="btn p sm">Join</span></td></tr>
+          <tr><td><b>Library hours</b></td><td><span class="pill open">Joined</span></td><td>30 Oct</td><td style="text-align:right"><span class="btn p sm">Vote</span></td></tr>
+          <tr><td><b>Club budget</b></td><td><span class="pill done">Results out</span></td><td>—</td><td style="text-align:right"><span class="btn s sm">See results</span></td></tr>
+          <tr><td><b>Sports day date</b></td><td><span class="pill closed">Counting</span></td><td>—</td><td class="hint" style="text-align:right">Results soon</td></tr>
+          <tr><td><b>Canteen menu</b></td><td><span class="pill done">Results out</span></td><td>—</td><td style="text-align:right"><span class="btn s sm">See results</span></td></tr></table></div>
+          <div class="card stub"><span class="sid">2 STUBS</span><h3>Saved receipts</h3><p class="sub">On this computer</p><div class="in mono">3c9a…71ee · Club budget</div></div></div>
+      </div></div></div></div>
+    <div class="layer after"><div class="app">
+      <div class="side glass"><div class="brand"><span class="chip">%MARK%</span>ZetaVote</div><div class="nav"><span class="on">Your ballots</span><span>Verify</span></div><div class="who">ada.l.4821<br>Sign out</div></div>
+      <div class="main">
+        <div class="toolbar glass"><h1>Your ballots</h1><div class="in" style="width:220px">Search</div><span class="btn s sm">Refresh</span></div>
+        <div class="edge"></div>
+        <div class="scroll"><div class="content" style="padding-top:40px">
+        <div class="grid32"><div class="card" style="padding:4px 8px"><table class="t"><tr><th>Election</th><th>Status</th><th>Closes</th><th></th></tr>
+          <tr><td><b>Student council 2026</b></td><td><span class="pill open">Open</span></td><td>24 Oct</td><td style="text-align:right"><span class="btn p sm">Join</span></td></tr>
+          <tr><td><b>Library hours</b></td><td><span class="pill open">Joined</span></td><td>30 Oct</td><td style="text-align:right"><span class="btn p sm">Vote</span></td></tr>
+          <tr><td><b>Club budget</b></td><td><span class="pill done">Results out</span></td><td>—</td><td style="text-align:right"><span class="btn s sm">See results</span></td></tr>
+          <tr><td><b>Sports day date</b></td><td><span class="pill closed">Counting</span></td><td>—</td><td class="hint" style="text-align:right">Results soon</td></tr>
+          <tr><td><b>Canteen menu</b></td><td><span class="pill done">Results out</span></td><td>—</td><td style="text-align:right"><span class="btn s sm">See results</span></td></tr></table></div>
+          <div class="card stub"><span class="sid">2 STUBS</span><h3>Saved receipts</h3><p class="sub">On this computer</p><div class="in mono">3c9a…71ee · Club budget</div></div></div>
+        </div></div>
+      </div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal frosted design for your ballots">
+  </div>
+  <div class="notes"><div><b>Before</b>A solid slate sidebar fixed to the edge. The page title scrolls away with the content.</div><div><b>After</b>Inset frosted sidebar and toolbar float over a soft wash. The title and actions stay put while rows slide under them.</div></div>
+</section>
+
+<!-- 2 -->
+<section class="cmp">
+  <div class="cmp-head"><h2>2. Elections: frosted Manage menu</h2></div>
+  <p class="cite"><code>liquid-glass.md › Color on glass</code>: "Apply color sparingly." Menu items stay monochrome, and only the destructive item is red.</p>
+  <div class="reveal" style="--h:460px">
+    <div class="layer before"><div class="app">
+      <div class="side"><div class="brand"><span class="chip">%MARK%</span>ZetaVote</div><div class="nav"><span class="on">Elections</span><span>Activity record</span></div><div class="who">admin<br>Sign out</div></div>
+      <div class="main"><div class="scroll">
+        <div class="bar"><h1>Elections</h1><div class="in" style="width:240px">Search elections</div><span class="btn p">New election <span class="kbd">⌘N</span></span></div>
+        <div class="card" style="padding:4px 8px"><table class="t"><tr><th>Election</th><th>Status</th><th>Turnout</th><th></th></tr>
+          <tr><td><b>Student council 2026</b></td><td><span class="pill open">Open</span></td><td>48 of 120 (40%)</td><td style="text-align:right"><span class="btn s sm">Manage ▾</span></td></tr>
+          <tr><td><b>Library hours</b></td><td><span class="pill open">Open</span></td><td>12 of 40 (30%)</td><td style="text-align:right"><span class="btn s sm">Manage ▾</span></td></tr>
+          <tr><td><b>Club budget</b></td><td><span class="pill closed">Ready to count</span></td><td>30 of 30</td><td style="text-align:right"><span class="btn p sm">Count votes</span></td></tr></table></div>
+        <div class="menu" style="right:36px;top:150px;background:var(--card);border:1px solid var(--line);box-shadow:0 8px 24px rgb(27 42 65/.18)"><div class="hl">View details</div><div>Copy election ID</div><hr><div class="dz">Close voting…</div></div>
+      </div></div></div></div>
+    <div class="layer after"><div class="app">
+      <div class="side glass"><div class="brand"><span class="chip">%MARK%</span>ZetaVote</div><div class="nav"><span class="on">Elections</span><span>Activity record</span></div><div class="who">admin<br>Sign out</div></div>
+      <div class="main">
+        <div class="toolbar glass"><h1>Elections</h1><div class="in" style="width:240px">Search elections</div><span class="btn p">New election <span class="kbd">⌘N</span></span></div>
+        <div class="edge"></div>
+        <div class="scroll"><div class="content" style="padding-top:84px">
+        <div class="card" style="padding:4px 8px"><table class="t"><tr><th>Election</th><th>Status</th><th>Turnout</th><th></th></tr>
+          <tr><td><b>Student council 2026</b></td><td><span class="pill open">Open</span></td><td>48 of 120 (40%)</td><td style="text-align:right"><span class="btn s sm">Manage ▾</span></td></tr>
+          <tr><td><b>Library hours</b></td><td><span class="pill open">Open</span></td><td>12 of 40 (30%)</td><td style="text-align:right"><span class="btn s sm">Manage ▾</span></td></tr>
+          <tr><td><b>Club budget</b></td><td><span class="pill closed">Ready to count</span></td><td>30 of 30</td><td style="text-align:right"><span class="btn p sm">Count votes</span></td></tr></table></div></div></div>
+        <div class="menu glass" style="right:36px;top:178px"><div class="hl">View details</div><div>Copy election ID</div><hr><div class="dz">Close voting…</div></div>
+      </div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal frosted design for the manage menu">
+  </div>
+  <div class="notes"><div><b>Before</b>A solid white menu with a drop shadow, same weight as the cards.</div><div><b>After</b>The menu frosts the table behind it, so it reads as a temporary layer above the content.</div></div>
+</section>
+
+<!-- 3 -->
+<section class="cmp">
+  <div class="cmp-head"><h2>3. Block account: frosted sheet</h2></div>
+  <p class="cite"><code>sheets.md › Desktop (macOS)</code>: a sheet is "a cardlike view with rounded corners that floats on top of its parent window."</p>
+  <div class="reveal" style="--h:440px">
+    <div class="layer before"><div class="app">
+      <div class="side"><div class="brand"><span class="chip">%MARK%</span>ZetaVote</div><div class="nav"><span class="on">Elections</span><span>Activity record</span></div><div class="who">admin</div></div>
+      <div class="main"><div class="scroll dimmed"><div class="bar"><h1>Blocked accounts</h1></div><div class="card" style="height:220px"></div></div></div>
+      <div class="scrim" style="background:rgb(15 24 40/.4)"></div>
+      <div class="sheet solid"><h3 style="margin:0 0 6px;font-size:17px">Block ada.l.4821?</h3><p class="sub">They will not be able to sign in or vote until unblocked.</p><label class="f">Reason</label><div class="in"></div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><span class="btn s focus">Cancel <span class="kbd">esc</span></span><span class="btn d">Block account</span></div></div>
+    </div></div>
+    <div class="layer after"><div class="app">
+      <div class="side glass"><div class="brand"><span class="chip">%MARK%</span>ZetaVote</div><div class="nav"><span class="on">Elections</span><span>Activity record</span></div><div class="who">admin</div></div>
+      <div class="main"><div class="toolbar glass"><h1>Blocked accounts</h1></div><div class="scroll"><div class="content" style="padding-top:84px"><div class="card" style="height:220px"></div></div></div></div>
+      <div class="scrim"></div>
+      <div class="sheet glass"><h3 style="margin:0 0 6px;font-size:17px">Block ada.l.4821?</h3><p class="sub" style="color:var(--g-muted)">They will not be able to sign in or vote until unblocked.</p><label class="f">Reason</label><div class="in"></div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px"><span class="btn s focus">Cancel <span class="kbd">esc</span></span><span class="btn d">Block account</span></div></div>
+    </div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal frosted design for the block sheet">
+  </div>
+  <div class="notes"><div><b>Before</b>A heavy 40% scrim and an opaque dialog.</div><div><b>After</b>A lighter 28% scrim, and the sheet frosts what is behind it. The field inside stays solid so typing stays crisp.</div></div>
+</section>
+
+<!-- 4 -->
+<section class="cmp">
+  <div class="cmp-head"><h2>4. Receipt: the stub stays solid, the toast is glass</h2></div>
+  <p class="cite"><code>feedback.md › Best practices</code>: "Consider integrating status feedback into your interface." A toast confirms Copy without moving the receipt.</p>
+  <div class="reveal" style="--h:470px">
+    <div class="layer before"><div class="app">
+      <div class="side"><div class="brand"><span class="chip">%MARK%</span>ZetaVote</div><div class="nav"><span class="on">Your ballots</span><span>Verify</span></div><div class="who">ada.l.4821</div></div>
+      <div class="main"><div class="scroll"><div class="bar"><h1>Vote recorded</h1></div>
+        <div class="card stub" style="max-width:640px"><span class="sid">LIB-0039 · 21 OCT 14:02</span><h3>Your receipt</h3><p class="sub">Save both codes. You need them to prove your vote was counted.</p>
+          <label class="f">Receipt code</label><div style="display:flex;gap:8px"><div class="in mono" style="flex:1">9f2c4e1a7b0d…e83a51c6</div><span class="btn s sm">Copied ✓</span></div>
+          <label class="f">Private key for this receipt</label><div style="display:flex;gap:8px"><div class="in mono" style="flex:1">b71d03ae…4f0c92</div><span class="btn s sm">Copy</span></div>
+          <div style="margin-top:14px"><span class="btn p">Download receipt</span></div></div></div></div></div></div>
+    <div class="layer after"><div class="app">
+      <div class="side glass"><div class="brand"><span class="chip">%MARK%</span>ZetaVote</div><div class="nav"><span class="on">Your ballots</span><span>Verify</span></div><div class="who">ada.l.4821</div></div>
+      <div class="main"><div class="toolbar glass"><h1>Vote recorded</h1><span class="btn s sm">Back to my ballots</span></div>
+        <div class="scroll"><div class="content" style="padding-top:84px">
+        <div class="card stub" style="max-width:640px"><span class="sid">LIB-0039 · 21 OCT 14:02</span><h3>Your receipt</h3><p class="sub">Save both codes. You need them to prove your vote was counted.</p>
+          <label class="f">Receipt code</label><div style="display:flex;gap:8px"><div class="in mono" style="flex:1">9f2c4e1a7b0d…e83a51c6</div><span class="btn s sm">Copy</span></div>
+          <label class="f">Private key for this receipt</label><div style="display:flex;gap:8px"><div class="in mono" style="flex:1">b71d03ae…4f0c92</div><span class="btn s sm">Copy</span></div>
+          <div style="margin-top:14px"><span class="btn p">Download receipt</span></div></div></div></div>
+        <div class="toast glass" style="left:calc(50% + 112px)"><span style="color:var(--ok)">✓</span> Receipt code copied</div>
+      </div></div></div>
+    <span class="tag b">Before</span><span class="tag a">After</span><div class="handle"></div>
+    <input type="range" min="0" max="100" value="50" aria-label="Reveal frosted design for the receipt">
+  </div>
+  <div class="notes"><div><b>Before</b>The Copy button turns into "Copied ✓" inline, and the button width jumps.</div><div><b>After</b>The receipt is untouched and solid. A frosted toast confirms the copy and fades after 2 seconds, with a polite live region for screen readers.</div></div>
+</section>
+
+<footer>Cost: <code>backdrop-filter</code> is GPU work. Five surfaces at most per screen, none animate their blur, and the wash is static. Code path: one <code>.zv-glass</code> utility plus <code>--zv-glass-*</code> tokens in theme.css, applied to Sidebar, page toolbar, ManageMenu, the BlockList dialog and a new Toast. Content components are unchanged.</footer>
+
+<script>
+const MARK='<svg viewBox="-204.8 -205.71 2123.41 2123.41" fill="#1B2A41"><g transform="matrix(1,0,0,1,-144,-144)"><g transform="matrix(1.332296,0,0,1.332296,-318.306615,-418.228794)"><g transform="matrix(0.958606,0,0,0.958606,261.1939,1082.46841)"><rect x="347" y="422" width="1083" height="229.5"/></g><g transform="matrix(1.089109,0,0,1.264368,-30.920792,-150.635808)"><rect x="347" y="751" width="202" height="174"/></g><g transform="matrix(0.726369,-0.743685,0.86953,0.849284,-1092.641863,801.539322)"><path d="M1319.371,1189L1531,1370L347,1370L558.629,1189L1319.371,1189Z"/></g><g transform="matrix(-0.732791,0.737358,-0.862133,-0.856793,3066.433599,1339.942704)"><path d="M1319.371,1189L1531,1370L347,1370L558.629,1189L1319.371,1189Z"/></g><g transform="matrix(1.089109,0,0,1.264368,1034.079208,152.829732)"><rect x="347" y="751" width="202" height="174"/></g><g transform="matrix(0.958606,0,0,0.958606,14.363834,17.46841)"><rect x="347" y="422" width="1083" height="229.5"/></g></g></g></svg>';
+document.querySelectorAll('.chip').forEach(c=>c.innerHTML=MARK);
+document.querySelectorAll('.reveal').forEach(r=>{const i=r.querySelector('input');const s=()=>r.style.setProperty('--pos',i.value+'%');i.addEventListener('input',s);s();});
+document.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{document.documentElement.dataset.theme=b.dataset.t;document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));}));
+document.getElementById('rt').addEventListener('change',e=>document.body.classList.toggle('rt',e.target.checked));
+</script>
+</body>
+</html>

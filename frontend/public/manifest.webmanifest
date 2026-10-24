@@ -4,8 +4,8 @@
   "description": "Secure, privacy-focused digital voting platform.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#E1DCC9",
-  "theme_color": "#1F150C",
+  "background_color": "#EEF2F6",
+  "theme_color": "#1B2A41",
   "icons": [
     {
       "src": "/icons/favicon-16x16.png",

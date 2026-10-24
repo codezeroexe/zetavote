@@ -1,174 +1,300 @@
-import React, { useState } from "react";
-import type { VerifyVoteResponse } from "../../types/api";
-import { api, toMessage } from "../../services/api";
+import React, { useEffect, useRef, useState } from "react";
+import type { MyBallot, VerifyVoteResponse } from "../../types/api";
+import { api } from "../../services/api";
+import { useSubmit } from "../../hooks/useSubmit";
+import { useSubmitShortcut } from "../../hooks/useSubmitShortcut";
+import { PageToolbar } from "../../components/common/PageToolbar";
+import { Stub } from "../../components/common/Stub";
+import { looksLikeHash, normaliseHash } from "../../services/format";
 import { Card } from "../../components/common/Card";
 import { Button } from "../../components/common/Button";
 import { Alert } from "../../components/common/Alert";
+import { Field } from "../../components/common/Field";
+import { HashBlock } from "../../components/common/CopyButton";
+
+/** A receipt code checked on this machine, so the same receipt is one click away. */
+const LAST_VERIFIED_KEY = "zetavote-last-verified";
+
+function rememberLast(electionId: string, commitment: string): void {
+  try {
+    localStorage.setItem(
+      LAST_VERIFIED_KEY,
+      JSON.stringify({ electionId, commitment }),
+    );
+  } catch {
+    // Not being able to remember is not worth reporting.
+  }
+}
+
+function recallLast(): { electionId: string; commitment: string } | null {
+  try {
+    const raw = localStorage.getItem(LAST_VERIFIED_KEY);
+    return raw ? (JSON.parse(raw) as { electionId: string; commitment: string }) : null;
+  } catch {
+    return null;
+  }
+}
 
 export const VerifyPage: React.FC = () => {
   const [electionId, setElectionId] = useState("");
   const [commitment, setCommitment] = useState("");
+  const [recalled, setRecalled] = useState<{ electionId: string; commitment: string } | null>(null);
+  // The account's own ballots, so checking one is a choice rather than typing a
+  // 64-character value. `null` while loading; typing stays available as a fallback.
+  const [ballots, setBallots] = useState<MyBallot[] | null>(null);
+  const [typing, setTyping] = useState(false);
 
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<VerifyVoteResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { loading, result, error, run, clear } =
+    useSubmit<VerifyVoteResponse>();
 
-  const canSubmit = electionId.trim() !== "" && commitment.trim() !== "";
+  // The commonest case by far is checking the same receipt twice, or checking one
+  // this browser produced. Both values are still on the machine.
+  useEffect(() => {
+    const last = recallLast();
+    if (last === null) return;
+    setRecalled(last);
+    setElectionId(last.electionId);
+    setCommitment(last.commitment);
+  }, []);
+
+  useEffect(() => {
+    let current = true;
+    void api
+      .myBallots()
+      .then((answer) => current && setBallots(answer.ballots))
+      .catch(() => current && setBallots([]));
+    return () => {
+      current = false;
+    };
+  }, []);
+
+  const pickedIndex =
+    ballots?.findIndex(
+      (b) => b.election_id === electionId && b.commitment === commitment,
+    ) ?? -1;
+
+  const [fieldError, setFieldError] = useState<string | undefined>();
+  const formRef = useRef<HTMLFormElement>(null);
+  useSubmitShortcut(formRef);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canSubmit || loading) return;
-
-    setLoading(true);
-    setResult(null);
-    setError(null);
-
-    try {
-      const res = await api.verifyVote(electionId.trim(), commitment.trim());
-      setResult(res);
-    } catch (err: unknown) {
-      setError(toMessage(err, "Ballot verification failed"));
-    } finally {
-      setLoading(false);
+    if (loading) return;
+    if (electionId.trim() === "") {
+      setFieldError("Choose or enter the election first.");
+      return;
     }
+    if (!looksLikeHash(commitment)) {
+      setFieldError(
+        `Receipt codes are 64 letters and numbers. This one has ${commitment.trim().length}. Paste it again.`,
+      );
+      return;
+    }
+    setFieldError(undefined);
+
+    // Compared as the server compares it. A receipt code read out of a JSON file
+    // can carry different casing or a wrapped newline, and treating that as
+    // "not recorded" is the one answer this page must never give about a valid
+    // ballot.
+    const value = normaliseHash(commitment);
+    const id = electionId.trim();
+
+    const answer = await run(() => api.verifyVote(id, value), {
+      fallbackMessage: "Ballot verification failed",
+    });
+    // Remembered only once the server has answered, so the field never pre-fills
+    // with something that was never actually checked.
+    if (answer !== null) rememberLast(id, value);
   };
 
   const handleReset = () => {
     setElectionId("");
     setCommitment("");
-    setResult(null);
-    setError(null);
+    setFieldError(undefined);
+    clear();
   };
+
+  // The banner is driven by the answer, never assumed from the response arriving.
+  const recorded = !!result && result.valid && result.checks.audit_chain_valid && result.checks.in_audit_chain;
+  const yesNo = (ok: boolean) => (ok ? "Yes" : "No");
 
   return (
     <div className="zv-page-container">
-      <header className="zv-page-header">
-        <div className="zv-page-badge">VERIFICATION SUITE</div>
-        <h1 className="zv-page-title">Ballot &amp; Commitment Verification</h1>
-        <p className="zv-page-subtitle">
-          Verify vote inclusion and cryptographic record integrity without compromising ballot secrecy.
-        </p>
-      </header>
+      <PageToolbar title="Verify a ballot" />
+      <p className="zv-page-subtitle">
+        Open to anyone — no account needed. Confirms that a ballot
+        was recorded, without revealing how that person voted.
+      </p>
 
       <div className="zv-admin-sections">
         <section className="zv-admin-section" aria-labelledby="verify-ballot-heading">
           <header className="zv-admin-section-header">
-            <h2 id="verify-ballot-heading" className="zv-admin-section-title">Verify Ballot Inclusion</h2>
+            <h2 id="verify-ballot-heading" className="zv-admin-section-title">
+              Check that a ballot was counted
+            </h2>
             <p className="zv-admin-section-desc">
-              Query the public ledger using your unique ballot commitment hash.
+              Paste the election id and the receipt code from a vote receipt.
             </p>
           </header>
-          <Card>
-            {result ? (
-              <div className="zv-admin-result zv-verify-success">
+          {result ? (
+              <ResultShell recorded={recorded}>
                 <Alert
-                  type="success"
-                  title="✓ Ballot Valid"
-                  message="This ballot commitment is authentic and officially recorded in the election database."
+                  type={recorded ? "success" : "error"}
+                  title={recorded ? "Your ballot is recorded" : "This ballot could not be confirmed"}
+                  message={
+                    recorded
+                      ? "The receipt matches the record, and the record has not been changed."
+                      : "One or more checks failed. The rows below say which. Do not treat this ballot as counted."
+                  }
                 />
 
-                <div className="zv-result-details">
-                  <div className="zv-result-row">
-                    <span className="zv-result-label">Status</span>
-                    <span className="zv-result-value zv-result-valid">
-                      {result.valid ? "✓ RECORDED & VALID" : "INVALID"}
-                    </span>
-                  </div>
-                  <div className="zv-result-row">
-                    <span className="zv-result-label">Election ID</span>
-                    <code className="zv-result-value">{result.election_id}</code>
-                  </div>
-                  <div className="zv-result-row">
-                    <span className="zv-result-label">Voter ID</span>
-                    <code className="zv-result-value zv-mono">{result.voter_id}</code>
-                  </div>
-                  <div className="zv-result-row">
-                    <span className="zv-result-label">Timestamp</span>
-                    <span className="zv-result-value">
-                      {new Date(result.timestamp).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
+                <dl className="zv-verify-rows">
+                  <dt>In the record</dt>
+                  <dd>{yesNo(result.checks.in_audit_chain)}</dd>
+                  <dt>Record intact</dt>
+                  <dd>{yesNo(result.checks.audit_chain_valid)}</dd>
+                  {!recorded && (
+                    <>
+                      <dt>Signature</dt>
+                      <dd>{result.checks.signature_valid ? "Valid" : "Invalid"}</dd>
+                      <dt>Ballot id</dt>
+                      <dd>{result.checks.ballot_id_consistent ? "Matches" : "Does not match"}</dd>
+                    </>
+                  )}
+                  <dt>Recorded at</dt>
+                  <dd>{new Date(result.recorded_at).toLocaleString()}</dd>
+                  <dt>Election id</dt>
+                  <dd><code className="zv-mono">{result.election_id}</code></dd>
+                </dl>
 
-                <div className="zv-merkle-root">
-                  <span className="zv-merkle-label">Verified Commitment Hash</span>
-                  <code className="zv-merkle-hash">{result.commitment}</code>
-                </div>
+                <HashBlock label="Your receipt" value={result.commitment} tone="live" />
 
                 <Alert
                   type="info"
-                  title="Ballot Secrecy Maintained"
-                  message="The verification result does not reveal the selected vote."
+                  title="Your choice stays private"
+                  message="This says a ballot was recorded. It does not say, and cannot say, who it was for."
                 />
 
                 <div className="zv-form-actions">
                   <Button variant="outline" size="sm" onClick={handleReset}>
-                    Verify Another Ballot
+                    Verify another ballot
                   </Button>
                 </div>
-              </div>
-            ) : (
-              <form className="zv-form zv-verify-form" onSubmit={(e) => void handleSubmit(e)}>
+              </ResultShell>
+          ) : (
+            <Card>
+              <form
+                ref={formRef}
+                className="zv-form"
+                onSubmit={(e) => void handleSubmit(e)}
+                noValidate
+              >
                 {error && (
-                  <div className="zv-verify-failure">
-                    <Alert
-                      type="error"
-                      title="Verification Failed"
-                      message={error}
-                    />
-                  </div>
+                  <Alert type="error" title="Verification failed" message={error} />
                 )}
 
-              <label className="zv-form-label">
-                <span className="zv-label-text">
-                  Election ID <span className="zv-required">*</span>
-                </span>
-                <input
-                  type="text"
-                  className="zv-input"
-                  placeholder="e.g. election_2026"
-                  value={electionId}
-                  onChange={(e) => setElectionId(e.target.value)}
-                  required
-                  autoComplete="off"
-                  disabled={loading}
-                />
-              </label>
+                {recalled && recalled.commitment === commitment && (
+                  <span className="zv-form-hint">
+                    Filled in from the last receipt checked in this browser.
+                  </span>
+                )}
 
-              <label className="zv-form-label">
-                <span className="zv-label-text">
-                  Ballot Commitment <span className="zv-required">*</span>
-                </span>
-                <input
-                  type="text"
-                  className="zv-input zv-mono"
-                  placeholder="Enter 64-character SHA-256 commitment hash"
-                  value={commitment}
-                  onChange={(e) => setCommitment(e.target.value)}
-                  required
-                  autoComplete="off"
-                  disabled={loading}
-                />
-                <span className="zv-form-hint">
-                  Provided in your vote receipt after ballot submission.
-                </span>
-              </label>
+                {ballots && ballots.length > 0 && !typing ? (
+                  <div className="zv-form-label">
+                    <label className="zv-label-text" htmlFor="zv-ballot-pick">
+                      Your ballot
+                    </label>
+                    <select
+                      id="zv-ballot-pick"
+                      className="zv-select"
+                      value={pickedIndex >= 0 ? String(pickedIndex) : ""}
+                      disabled={loading}
+                      onChange={(e) => {
+                        const picked = ballots[Number(e.target.value)];
+                        if (!picked) return;
+                        setElectionId(picked.election_id);
+                        setCommitment(picked.commitment);
+                        setFieldError(undefined);
+                      }}
+                    >
+                      <option value="" disabled>
+                        Choose a ballot you cast
+                      </option>
+                      {ballots.map((b, i) => (
+                        <option key={`${b.election_id}-${b.commitment}`} value={i}>
+                          {b.election_name} · {new Date(b.ballot_timestamp).toLocaleString()}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="zv-form-hint">
+                      Every ballot cast from this account.
+                    </span>
+                    {fieldError && (
+                      <span className="zv-form-error-hint" role="alert">{fieldError}</span>
+                    )}
+                    <button
+                      type="button"
+                      className="zv-btn-link"
+                      onClick={() => setTyping(true)}
+                    >
+                      Enter an election id and receipt code instead
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {ballots && ballots.length === 0 && (
+                      <span className="zv-form-hint">
+                        This account has not cast a ballot yet. Enter the details from a receipt.
+                      </span>
+                    )}
+                    <Field
+                      label="Election id"
+                      required
+                      placeholder="e.g. election_2026"
+                      value={electionId}
+                      onChange={(e) => setElectionId(e.target.value)}
+                      controlClassName="zv-mono"
+                      autoComplete="off"
+                      disabled={loading}
+                    />
 
-              <div className="zv-form-actions">
-                <Button
-                  type="submit"
-                  variant="primary"
-                  isLoading={loading}
-                  disabled={!canSubmit}
-                >
-                  Verify Ballot
-                </Button>
-              </div>
-            </form>
+                    <Field
+                      label="Receipt code"
+                      required
+                      placeholder="64 letters and numbers"
+                      value={commitment}
+                      onChange={(e) => {
+                        setCommitment(e.target.value);
+                        setFieldError(undefined);
+                      }}
+                      controlClassName="zv-mono"
+                      autoComplete="off"
+                      disabled={loading}
+                      error={fieldError}
+                      hint="From the receipt shown after voting, or the downloaded JSON file."
+                    />
+                  </>
+                )}
+
+                <div className="zv-form-actions">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    isLoading={loading}
+                    shortcut="submit"
+                  >
+                    Verify ballot
+                  </Button>
+                </div>
+              </form>
+            </Card>
           )}
-        </Card>
-      </section>
+        </section>
+      </div>
     </div>
-  </div>
   );
 };
+
+/** Only a confirmed match is the voter's receipt, so only it gets the stub. */
+const ResultShell: React.FC<{ recorded: boolean; children: React.ReactNode }> = ({ recorded, children }) =>
+  recorded ? <Stub id="MATCHED">{children}</Stub> : <Card><div className="zv-receipt">{children}</div></Card>;
